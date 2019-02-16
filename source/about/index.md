@@ -9,4 +9,4 @@ comments: false
 [简书主页](https://www.jianshu.com/u/e39f5dccff81)
 
 微信号 欢迎加我一起交流 
-![wechat](http://img.souche.com/f2e/261ad4297e027e9a5b7f265f8b45e746.jpeg)
+![wechat](http://img.souche.com/f2e/1499db84e478160d884507b019044601.jpeg)
