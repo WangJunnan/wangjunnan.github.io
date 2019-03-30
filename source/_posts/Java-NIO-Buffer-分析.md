@@ -201,6 +201,32 @@ public final Buffer reset() {
 ```
 方法的内部实现非常简单，通过对变量`mark`的编辑来标记当前位置，在需要重置的时候，把变量`mark`的值赋给当前下标索引`position`来达到重置的目的。
 
+## clear
+
+`clear`方法比较简单，将`position = 0`，`limit = capacity`，`mark = -1`。有点类似初始化时的操作
+
+## compact
+
+最后再来介绍一下`compact`方法，首先我们先来看一个场景
+
+```
+  while (in.read(buf) >= 0 || buf.position != 0) {
+     buf.flip();
+     out.write(buf);
+     buf.clear();
+ }
+```
+上面这个例子，在非阻塞模式下是会有问题的，因为`write`方法我们并不知道一次性可以写多少个字节，所以有可能还有未写入的字节数据，这时候我们却又重新读取了新的数据，就会导致覆盖了原有还未写入的数据。
+
+只需要改成以下的方式即可，该方法的作用是将`position`与`limit`之间的数据复制到`buffer`的开始位置，复制后`position  = limit -position`,`limit = capacity`
+
+```
+  while (in.read(buf) >= 0 || buf.position != 0) {
+     buf.flip();
+     out.write(buf);
+     buf.compact();
+ }
+```
 
 ## 总结
 

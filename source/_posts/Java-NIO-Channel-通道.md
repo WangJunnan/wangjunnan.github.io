@@ -34,7 +34,7 @@ date: 2019-01-10 16:35:06
 
 ## 文件通道 FileChannel
 
-我们无法直接打开一个`FileChannel`，需要通过使用一个`InputStream`、`OutputStream`或`RandomAccessFile`来获取一个FileChannel实例。并且**`FileChannel`无法设置为非阻塞模式，它总是运行在阻塞模式下**。
+我们无法直接打开一个`FileChannel`，需要通过使用一个`InputStream`、`OutputStream`或`RandomAccessFile`来获取一个FileChannel实例。并且**`FileChannel`无法设置为非阻塞模式，它总是运行在阻塞模式下,也就是说FileChannel的read write方法都是阻塞的**。
 
 ### 读写数据
 
