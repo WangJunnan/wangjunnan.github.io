@@ -15,7 +15,7 @@ date: 2019-02-13 16:41:26
 
 ## 整体架构
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-502a745b5956d6bd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-502a745b5956d6bd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 上图完整了概括了整个`Connector`的架构体系，先简单的介绍一下各个组件的功能

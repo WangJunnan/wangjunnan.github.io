@@ -16,7 +16,7 @@ date: 2019-04-02 15:35:40
 
 类从被加载到java虚拟机内存中开始，被分为7个阶段，包括`加载`，`验证`，`准备`，`解析`，`初始化`，`使用`，`卸载`
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-793f9be59d3a7ea2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-793f9be59d3a7ea2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 

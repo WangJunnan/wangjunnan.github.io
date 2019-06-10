@@ -16,7 +16,7 @@ date: 2018-12-15 15:58:07
 
 好了，现在我们开始分析代理对象的创建过程，首先，先来看一下`AspectJAwareAdvisorAutoProxyCreator.class`类的继承体系
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-ed0086ad7288463b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-ed0086ad7288463b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 可以看到`AspectJAwareAdvisorAutoProxyCreator.class`主要实现了这几个接口
 

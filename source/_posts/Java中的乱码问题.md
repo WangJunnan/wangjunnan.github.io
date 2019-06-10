@@ -53,7 +53,7 @@ System.out.println(bytes.length); // 输出 3
 
 看下图，可知任何编码转换都会经由`Unicode`字符集中转。例如我们读取`UTF-8`编码的字符，会先转化成`Unicode`字符，然后再转成`UTF-16`编码在内存中存储。反过来也是类似
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-4400037665660f6a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-4400037665660f6a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 ## 乱码问题出现在哪一步

@@ -24,7 +24,7 @@ date: 2018-12-20 16:37:46
 
 下面我们先来看下`ThreadPoolExecutor`类的继承结构
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-0812461a560d9dc0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-0812461a560d9dc0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ￼
 
 * Executor接口只含有一个`execute(Runnable command)`方法，加入一个新的线程
@@ -384,7 +384,7 @@ private Runnable getTask() {
 
 整个流程到这里大概就分析完了，下图基本绘制了线程池提交任务，执行任务的整个流程
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-2bcb9a98382451a7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-2bcb9a98382451a7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 

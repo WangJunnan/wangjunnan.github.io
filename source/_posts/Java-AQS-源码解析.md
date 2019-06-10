@@ -20,7 +20,7 @@ date: 2019-03-12 16:21:26
 
 其实`AQS`内部为了一个`volatile int state`变量来表示当前资源是否已经被其他线程占有，对于独占锁来说，只有当`state = 0`时才说明该资源当前没有线程占有，后续线程可以开始争抢改资源，后续线程需要通过`CAS`操作来确保修改`state`变量成功才能成功抢占该资源。
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-b08b642e54d9c66a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-b08b642e54d9c66a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ## 重要方法
 
@@ -617,7 +617,7 @@ private void unparkSuccessor(Node node) {
 
 上文基本完成了对独占锁获取锁的流程的分析，这里简单画个图来更清晰的展示整个获取锁的过程：
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-376c9c2663fd07fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-376c9c2663fd07fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 ### 独占锁的释放

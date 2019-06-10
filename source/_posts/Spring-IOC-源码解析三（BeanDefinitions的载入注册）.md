@@ -15,7 +15,7 @@ date: 2018-10-20 14:12:47
 > 如果没有看过前面几期的话，建议先过一下前面几期
 
 * 为了帮助大家理清整个调用过程，简单的画了一个图
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-bc31933caf9f1fb9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-bc31933caf9f1fb9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 * 关键类

@@ -76,7 +76,7 @@ attribute_info | attributes 属性表 | attributes_count
 
 常量池中主要存放两大类变量: 字面量和符号引用。字面量类似常量的概念，而符号引用则引至编译原理的概念，包括三类(类和接口的全限定名，字段的名称和描述符，方法的名称和描述符)，这里要注意的是，Java在`javac`编译的时候不会进行`Class`文件的动态连接，**只有在运行时才会进行具体的`Class`文件的解析操作**
 
-![常量池分类类型](https://upload-images.jianshu.io/upload_images/2717496-9a9644b61564b4b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![常量池分类类型](http://upload-images.jianshu.io/upload_images/2717496-9a9644b61564b4b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 #### 常量池表结构
 
@@ -84,8 +84,8 @@ attribute_info | attributes 属性表 | attributes_count
 
 每种常量类型的起始位都有一个`u1`类型的tag标识符，用于标识当前的常量类型
 
-![截图至深入理解java虚拟机](https://upload-images.jianshu.io/upload_images/2717496-100be34bc99676c0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-![截图至深入理解java虚拟机](https://upload-images.jianshu.io/upload_images/2717496-16c3df5c9fded87b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![截图至深入理解java虚拟机](http://upload-images.jianshu.io/upload_images/2717496-100be34bc99676c0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![截图至深入理解java虚拟机](http://upload-images.jianshu.io/upload_images/2717496-16c3df5c9fded87b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ### 访问标志 
 

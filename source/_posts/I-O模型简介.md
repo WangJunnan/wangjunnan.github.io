@@ -26,7 +26,7 @@ date: 2018-12-27 16:01:31
 
 ## 阻塞式I/O
 
-![阻塞IO.png](https://upload-images.jianshu.io/upload_images/2717496-d6ae0b9e0e239803.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![阻塞IO.png](http://upload-images.jianshu.io/upload_images/2717496-d6ae0b9e0e239803.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 我们最熟悉的`I/O模型`就是阻塞式I/O模型，在上图中，应用进程系统调用`recvfrom`接收数据，但是此时`内核缓冲区`中数据报还未准备好，所以应用进程会一直阻塞直到`内核缓冲区`有数据报到达且被复制到`应用进程缓冲区`
 
@@ -42,7 +42,7 @@ date: 2018-12-27 16:01:31
 
 如果不想进程一直阻塞在那里的话，我们可以设置本次套接字连接为非阻塞的
 
-![非阻塞IO.png](https://upload-images.jianshu.io/upload_images/2717496-e027a460cb85cb20.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![非阻塞IO.png](http://upload-images.jianshu.io/upload_images/2717496-e027a460cb85cb20.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 查看上图可知，在设置连接为非阻塞时，当应用进程系统调用`recvfrom`没有数据返回时，内核会立即返回一个`EWOULDBLOCK`错误，而不会一直阻塞到数据准备好。如上图在第四次调用时有一个数据报准备好了，所以这时数据会被复制到`应用进程缓冲区`，于是`recvfrom`成功返回数据
@@ -54,7 +54,7 @@ date: 2018-12-27 16:01:31
 
 ## I/O 复用
 
-![IO多路复用.png](https://upload-images.jianshu.io/upload_images/2717496-e87b3c24ec91d9fe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![IO多路复用.png](http://upload-images.jianshu.io/upload_images/2717496-e87b3c24ec91d9fe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 Linux I/O复用模型提供了`select poll epoll`三组系统调用可做选择，进程通过将一个或多个`文件描述符(fd)`传递给`select`或`poll`或`epoll`系统调用，通过它们来监测多个`fd`是否处于就绪状态。`select`或`poll`是顺序扫描`fd`是否就绪，而且支持的`fd`数量有限，因此使用上有制约。`epoll`调用基于事件驱动，因此性能更高，当`fd`就绪时会立即回调`rollback`
@@ -70,7 +70,7 @@ Linux I/O复用模型提供了`select poll epoll`三组系统调用可做选择�
 
 ## 信号驱动I/O
 
-![信号驱动I/O.png](https://upload-images.jianshu.io/upload_images/2717496-775e3b5afed414fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![信号驱动I/O.png](http://upload-images.jianshu.io/upload_images/2717496-775e3b5afed414fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 信号驱动I/O的意思就是我们现在不用傻等着了，也不用去轮询。而是让内核在数据就绪时，发送信号通知我们。
@@ -81,7 +81,7 @@ Linux I/O复用模型提供了`select poll epoll`三组系统调用可做选择�
 
 ## 异步I/O
 
-![异步IO.png](https://upload-images.jianshu.io/upload_images/2717496-7a531bfa0c353081.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![异步IO.png](http://upload-images.jianshu.io/upload_images/2717496-7a531bfa0c353081.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 `异步I/O` 与 `信号驱动I/O`最大区别在于，`信号驱动`是内核通知我们何时开始一个`I/O操作`，而`异步I/O`是由内核通知我们`I/O`操作何时完成，两者有本质区别

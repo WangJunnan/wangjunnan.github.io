@@ -19,7 +19,7 @@ date: 2019-01-20 16:36:41
 
 再来看`Selector`是如何处理的，首先每接入一个Client，我们可以通过`Selector`选择器注册感兴趣的事件，然后通过一个线程去不停的轮询检测各个Client是否有感兴趣的事件发生，有则顺序处理该Client就绪的各个事件。
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-86f2efcd8869bdcd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-86f2efcd8869bdcd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 ## Selector 使用实例
 

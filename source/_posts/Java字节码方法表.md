@@ -324,7 +324,7 @@ public java.lang.String sayHello();
 
 可以看到上面的四个步骤的操作其实都是基于栈的操作，这里提一下java虚拟机栈的栈帧结构
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-0b89369329932afb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-0b89369329932afb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 关于字节码子令集可以参考[[java字节码子令集](https://blog.csdn.net/zqz_zqz/article/details/79484757)](https://blog.csdn.net/zqz_zqz/article/details/79484757)
 

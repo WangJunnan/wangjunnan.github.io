@@ -72,7 +72,7 @@ cafe babe 0000 0034 0022 0a00 0600 1409
 
 从第9个字节开始往后的两个字节，是`constant_pool_count`，我们把它叫做常量计数器，比较特殊的是它的下标是从1开始的，也就是说真正的常量池数量是`constant_pool_count - 1`个，那好现在让我们来看看上面的那个普通`Class`文件包含了多少个常量表（`cp_info`）
 
-![常量计数](https://upload-images.jianshu.io/upload_images/2717496-1e1c7e2eecf80bc1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![常量计数](http://upload-images.jianshu.io/upload_images/2717496-1e1c7e2eecf80bc1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 可以看到`constant_pool_count`标识位是`0022`，转为10进制就是34。也就是说包含`34 - 1 = 33`个常量表内容
 
@@ -82,22 +82,22 @@ cafe babe 0000 0034 0022 0a00 0600 1409
 
 下面让我们来具体分析下`cp_info`的结构
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-e45775e88817026d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-e45775e88817026d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 可以看到每个`cp_info`的第一个字节位都是`tag`，用于标识常量表所属的具体类型，上篇文章我们说过，常量表之所以非常复杂，就是因为它的类型众多，有多大14种类型。那么这些类型的区分就是通过`tag`来区分。我们会逐个分析这14种类型
 
 先来看下这14常量池类型
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-5f84affafe924089.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-5f84affafe924089.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 还是回到上述字节码的16进制文件，我们接着往下看
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-e413777a45543d46.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-e413777a45543d46.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 可以看到`tag = 10`，根据上文我们列出的细分类型可以确定这第一个出现的常量表类型是`
 constant_Methodref_info`。那好现在我们再去具体的看下`constant_Methodref_info`表的具体内容
 
-![constant_Methodref_info.png](https://upload-images.jianshu.io/upload_images/2717496-10a980be4439b580.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![constant_Methodref_info.png](http://upload-images.jianshu.io/upload_images/2717496-10a980be4439b580.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 可以看到紧跟在`tag`之后其实是两项index索引值，分别指向`constant_Class_info`和`constant_NameAndType_info`。
 
@@ -157,22 +157,22 @@ Constant pool:
 
 先找到索引值为`6`的`constant_Class_info`的内容，可以发现其具体内容也是指向了一个索引值`27`，继续找索引值为`27`常量项
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-5c7eb023de534a0b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-5c7eb023de534a0b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 找到索引值为`27`的常量项，可以发现是一个`constant_utf8_info`类型的字符串(java/lang/Object)，这也就是我们之前提到的类的全限定名称
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-22a9e1eb96234b8d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-22a9e1eb96234b8d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
 到目前为止大家应该已经找到了阅读常量池的感觉了，那么我们去查看索引项为`20`的`constant_NameAndType_info`的方法也是一样的
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-4332f33c24364301.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-4332f33c24364301.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 `constant_NameAndType_info`指向索引值为`7`和`8`的内容
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-0e0729faf2be3012.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-0e0729faf2be3012.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 可以知道方法名称为`init`，类型为`void`方法

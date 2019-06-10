@@ -126,7 +126,7 @@ HeapByteBuffer(int cap, int lim) {            // package-private
 * position = 0
 * limit = capacity = 6
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-5ccc66ee0bdf8205.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-5ccc66ee0bdf8205.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 二. 然后我们现在通过`put`方法加入`1`个字节数据
@@ -136,7 +136,7 @@ HeapByteBuffer(int cap, int lim) {            // package-private
 * position = 1
 * limit = capacity = 6
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-25630231ed83f140.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-25630231ed83f140.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 三. 加一个太少了，我们再添加`3`个字节数据至缓冲区中
@@ -146,7 +146,7 @@ HeapByteBuffer(int cap, int lim) {            // package-private
 * position = 4
 * limit = capacity = 6
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-bd13f3bc473ed7cb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-bd13f3bc473ed7cb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
@@ -163,7 +163,7 @@ public final Buffer flip() {
 ```
 `flip`内部其实是将 `position`的值赋给了`limit`，并将`position`位置归0，如下图显示
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-68af4168b6404910.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-68af4168b6404910.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
@@ -174,7 +174,7 @@ public final Buffer flip() {
 * position = 4
 * limit = 4
 * capacity = 6
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-92461ceb4e5e554a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-92461ceb4e5e554a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 

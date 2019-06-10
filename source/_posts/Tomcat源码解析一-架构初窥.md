@@ -17,7 +17,7 @@ date: 2019-01-20 16:39:01
 
 先上一张总体架构图
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-68dd25ac0647213d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-68dd25ac0647213d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 这张图可以说每篇介绍`Tomcat`的博客都是必放，既然每个人都认可这张图，说明此图非常重要。接下来我们就围绕这张图对`Tomcat`的整体架构进行分析。
@@ -67,7 +67,7 @@ date: 2019-01-20 16:39:01
 
 `Server`是Tomcat最顶层的容器，一个`Tomcat`实例只会有一个`Server`。一个`Server`至少需要包含一个`Service`，在配置文件中的体现就是至少需要包含一个`Service`节点。这里我们可以看下Tomcat对于`Server`的标准实现类`org.apache.catalina.core.StandardServer`，其中`Lifecycle`这个接口是`Tomcat`对于生命周期维护的重要接口，每个组件都必须实现，从而保证了统一启动/统一关闭的效果
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-eb27865ccfb2bce0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-eb27865ccfb2bce0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 
@@ -90,7 +90,7 @@ date: 2019-01-20 16:39:01
 
 上述的每一个概念都是实现了`org.apache.catalina.Container`接口的，这四个实现的标准类分别对应`StandardEngine`,`StandardHost`,`StandardContetx`,`StandardWrapper`。我们可以通过下图理清它们的层次关系。一般情况下，一个容器可以有0个或多个低层次的子容器
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-6bf0f595524707ca.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-6bf0f595524707ca.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 ### Engine

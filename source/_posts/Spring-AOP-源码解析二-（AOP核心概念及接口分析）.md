@@ -135,7 +135,7 @@ public interface PointcutAdvisor extends Advisor {
 
 这时候就是`Spring IOC` 容器大展身手的时候，我们在之前分析`Spring IOC`容器的时候有提到过扩展点`BeanPostProcessor`接口，上篇文章我们也有提到一个代理创建的核心类`AspectJAwareAdvisorAutoProxyCreator`，我们来看一下这个类的结构
 
-![AspectJAwareAdvisorAutoProxyCreator.class](https://upload-images.jianshu.io/upload_images/2717496-9f1ab92940b81d43.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![AspectJAwareAdvisorAutoProxyCreator.class](http://upload-images.jianshu.io/upload_images/2717496-9f1ab92940b81d43.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 通过查看该类的接口，可以知道`AspectJAwareAdvisorAutoProxyCreator`是`BeanPostProcessor`接口的具体实现，所以我们知道代理类创建必定是在Bean创建前后被创建的。具体的创建逻辑是在Bean完成初始化，执行`BeanPostProcessor`接口的`postProcessAfterInitialization`方法时执行
 

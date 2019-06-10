@@ -18,9 +18,9 @@ date: 2019-03-25 16:19:02
 
 * ReentrantLock.class
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-de0aa2e9894c7a7d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-de0aa2e9894c7a7d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-![image.png](https://upload-images.jianshu.io/upload_images/2717496-94b5fd02f6a75420.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![image.png](http://upload-images.jianshu.io/upload_images/2717496-94b5fd02f6a75420.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 `ReentrantLock`实现了`Lock`接口，但是通过查看源码可知`ReentrantLock`的具体实现其实都委托给了`NonfairSyns（非公平锁）`或则`FairSync（公平锁）`两个类实现，`NonfairSyns`和`FairSync`继承了抽象静态类`Sync`，`Sync`则是`AQS`的子类
 
@@ -126,4 +126,4 @@ final boolean nonfairTryAcquire(int acquires) {
 
 总的来说，`ReentrantLock`和`synchronized`非常相似，但是也还是比较大的区别，`ReentrantLock`的功能更丰富灵活，`synchronized`只支持非公平锁，`ReentrantLock`可以支持`公平锁`，并且`ReentrantLock`支持`Condition`等，可以批量分组唤醒等待线程。
 
-
+`
