@@ -6,7 +6,6 @@ categories:
   - java基础
 date: 2019-06-19 16:16:53
 ---
-
 ## 记录原由 
 
 之前虽然泛型一直在使用，但使用的过程中总是没有那么得心应手，有些细节还是过于模糊。究其原因其实是一直都没有系统深入的去理解过，最近花了一点时间去深入的理解了一下java的泛型机制，也希望借这次记录能够彻底的理解java的泛型
@@ -92,7 +91,9 @@ bananaPlant.set(apple); // 编译报错
 
 可以看到使用了泛型之后，既提高了代码的可重用性，在实际使用时也对类型进行了约束，装苹果的盘子是装不了香蕉的！
 
-不过要注意的是，java的泛型约束是在编译时生效的，一旦编译成了class字节码文件后，一切都打回原形了，泛型信息会被擦除，如下面字节码文件的最后一行`invokevirtual`命令的方法描述符`Method setT:(Ljava/lang/Object;)V`，可知泛型类型已经被擦除成了`Object`类型，也就是在字节码层面实际上与我们直接用`Object`来实现是一样的
+不过要注意的是，java的泛型约束是在编译时生效的，一旦编译成了class字节码文件后，一切都打回原形了，泛型信息会被擦除，所以我们把`JAVA`的泛型称为伪泛型，跟`C#`等语言的真泛型有着本质区别，在`C#`中，`List<Integer>`和`List<String>` 就是两种不同的类型
+
+如下面字节码文件的最后一行`invokevirtual`命令的方法描述符`Method setT:(Ljava/lang/Object;)V`，可知泛型类型已经被擦除成了`Object`类型，也就是在字节码层面实际上与我们直接用`Object`来实现是一样的
 
 ```
 0: new           #3                  // class com/sunshine/common/test/Plant
@@ -286,6 +287,11 @@ ParameterizedType ---- com.sunshine.common.test.Plant<? extends com.sunshine.com
 ParameterizedType-WildcardType  ---- ? extends com.sunshine.common.test.Apple
 ```
 
-## 总结
+虽然我们再前文说过，因为在字节码层面泛型类型会被擦除成`Object`，所以运行时无法拿到泛型类型。那么我们要如何拿到JAVA的泛型类型呢？
 
-在运行时，我们拿不到泛型类对象的真实类型，因为在字节码层面泛型类型会被擦除成`Object`，那么在哪些情况下可以拿到泛型类型呢？看上文最后一节的例子，我们可以拿到在`Class`文件中已经定义泛型真实类型 包括 1.泛型类型的成员变量 2.泛型类型的方法参数和返回值 3.继承的父类泛型类型
+JAVA虚拟机由此引入了`Signature`属性，`Signature`属性是方法在字节码层面的特征签名，也就是说`Signature`属性中包含泛型信息，虽然在`Code`属性表中泛型信息确实被擦除了，这也是我们可以通过反射获取到泛型真实类型的原因！
+
+
+
+
+
