@@ -1,0 +1,104 @@
+.root-init-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 80px;
+  min-height: 80px;
+  text-align: center;
+}
+
+.root-init-child-container {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@media screen and (max-width: 338px) {
+  .root-init-child-container {
+    width: 100%;
+  }
+}
+
+.init-index-logo {
+  position: relative;
+  display: inline-block;
+  font-size: 40px;
+  color: #a8aebc;
+}
+
+.init-logo-masked {
+  vertical-align: text-bottom;
+}
+
+.absoluted {
+  position: absolute !important;
+}
+
+.logo-masked {
+  background-image: -webkit-linear-gradient(top, #a8aebc 50%, #9fcc6b 50%);
+  text-fill-color: transparent;
+  background-clip: text;
+  background-size: 100% 200%;
+  animation: masked-animation 0.5s infinite linear;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  -webkit-background-size: 100% 200%;
+  -webkit-animation: masked-animation 0.5s infinite linear;
+  -moz-text-fill-color: transparent;
+  -moz-background-clip: text;
+  -moz-background-size: 100% 200%;
+  -moz-animation: masked-animation 0.5s infinite linear;
+  -o-text-fill-color: transparent;
+  -o-background-clip: text;
+  -o-background-size: 100% 200%;
+  -o-animation: masked-animation 0.5s infinite linear;
+}
+
+@keyframes masked-animation {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 0 -100%;
+  }
+}
+
+@-webkit-keyframes masked-animation {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 0 -100%;
+  }
+}
+
+@-moz-keyframes masked-animation {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 0 -100%;
+  }
+}
+
+@-o-keyframes masked-animation {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 0 -100%;
+  }
+}
+
+.index-logo {
+  font-size: 40px;
+  color: #a8aebc;
+}
+
+.default-spinner {
+  visibility: visible !important;
+}
