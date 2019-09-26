@@ -196,7 +196,7 @@ Firut apple = plant.getT(); // 可以获取
 下面我们来看下`<? super T>`的使用
 有了上面`<? extends T>`的使用经验，顾明思议，`<? super T>`必然表示`T`的全部父类型，还是再来看下`<? super T>`的使用吧
 
-```
+```java
 Plant<Firut> firutPlant = new Plant<>();
 Plant<? super Apple> plant = firutPlant;
 
@@ -297,20 +297,9 @@ ParameterizedType ---- com.sunshine.common.test.Plant<? extends com.sunshine.com
 ParameterizedType-WildcardType  ---- ? extends com.sunshine.common.test.Apple
 ```
 
-## 什么情况拿不到泛型类型
-虽然我们在前文说过，因为在字节码层面泛型类型会被擦除成`Object`，所以运行时无法拿到泛型类型。但实际工作中，我们经常需要去拿到泛型类型，那么我们要如何拿到JAVA的泛型类型呢？
+## 什么情况可以拿到泛型类型
 
-这里要区分一个概念，运行时的泛型我们确实拿不到，因为JAVA会进行泛型擦除。举个例子
-
-```java
-public void testMethod() {
-  List<String> list = new ArrayList();
-  // 这里可以拿到 list 对象的泛型吗?
-} 
-
-```
-上面的例子中，我们无论如何都是拿不到 list 的泛型的，因为JAVA 在将其编译成字节码的时候，实际上会变成 `List<Object>` 类型，泛型会被擦除。
-那么什么情况下我们可以拿到泛型呢？再看个例子，回过头看上上段测试代码也可OK
+先看可以拿到泛型的情形，与上面的例子一样，我们可以获取方法入参，超类的参数化类型，举个例子
 
 ```java
 class SuperPlant extend Plant<Apple> {
@@ -330,7 +319,27 @@ class SuperPlant extend Plant<Apple> {
 }
 ```
 
-可以发现以上代码是可以获取到泛型类型，稍微观察一下就知道这两个例子是有些不一样的，其中第一个例子是在运行时定义了泛型类型，而第二个例子其实是在编码阶段就讲泛型写入了代码中，所以自然是可以获取到泛型。
+可以发现以上代码是可以获取到泛型类型。通过`getGenericSuperclass`获取到父类的参数化类型，method的`getGenericParameterTypes`获取到入参的参数化类型数组。
 
+再看一种情况
+```java
+public void testMethod() {
+  Plant<Firut> firutPlant = new Plant<>();
+  // 这里可以拿到 firutPlant 对象的泛型吗?
+} 
 
+```
+上面的例子中，我们是拿不到 firutPlant 的泛型的，因为JAVA 在将其编译成字节码的时候，实际上会变成 `Plant<Object>`类型，泛型会被擦除。
+
+**所以我们其实是无法在运行时通过泛型对象本身拿到泛型类型的，那么有没有黑科技可以拿到运行时泛型本身的泛型信息？上面有提到，我们拿泛型可以通过子类来获取父类的泛型**
+我们依据这个思路将上面例子修改一下
+
+```java
+public void testMethod() {
+  Type type = new Plant<Firut>() {}.getClass().getGenericSuperclass();
+}
+```
+
+其实就是将Plant改成了匿名类方式实现，这种方式可以拿到Plant的泛型信息吗？答案是可以的
+这里通过`getGenericSuperclass`拿到的就是Plant<Firut> 的泛型类型信息。其实这种方式在很多框架源码里很常见，通过匿名类方式获取参数类型，感兴趣的可以看下` Gson`的`TypeToken`的实现，也是一样的原理。
 
