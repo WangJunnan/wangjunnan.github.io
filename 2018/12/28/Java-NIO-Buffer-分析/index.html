@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>java nio buffer 分析 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="NIO">
+  
+  
+  
+  
+  <meta name="description" content="引言JDK 1.4 之后引入了NIO（New IO或 Non Blocking IO），我觉的可以称其为New IO，因为NIO基本重写所有标准IO的API，完全可以替代标准的Java IO API。并且NIO支持面向缓冲区(Buffer)的、基于通道(Channel)的IO操作，可以以更加高效的方式进行文件的读写操作。 NIO的核心主要包括3部分  Buffer 缓冲区 Channel 通道 文">
+<meta name="keywords" content="NIO">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java NIO Buffer 分析">
+<meta property="og:url" content="http://wangjunnan.github.io/2018/12/28/Java-NIO-Buffer-分析/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言JDK 1.4 之后引入了NIO（New IO或 Non Blocking IO），我觉的可以称其为New IO，因为NIO基本重写所有标准IO的API，完全可以替代标准的Java IO API。并且NIO支持面向缓冲区(Buffer)的、基于通道(Channel)的IO操作，可以以更加高效的方式进行文件的读写操作。 NIO的核心主要包括3部分  Buffer 缓冲区 Channel 通道 文">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-5ccc66ee0bdf8205.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-25630231ed83f140.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-bd13f3bc473ed7cb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-68af4168b6404910.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-92461ceb4e5e554a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.196Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java NIO Buffer 分析">
+<meta name="twitter:description" content="引言JDK 1.4 之后引入了NIO（New IO或 Non Blocking IO），我觉的可以称其为New IO，因为NIO基本重写所有标准IO的API，完全可以替代标准的Java IO API。并且NIO支持面向缓冲区(Buffer)的、基于通道(Channel)的IO操作，可以以更加高效的方式进行文件的读写操作。 NIO的核心主要包括3部分  Buffer 缓冲区 Channel 通道 文">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2717496-5ccc66ee0bdf8205.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Java-NIO-Buffer-分析" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Java NIO Buffer 分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/28/Java-NIO-Buffer-分析/" class="article-date">
+	  <time datetime="2018-12-28T08:03:33.000Z" itemprop="datePublished">2018-12-28</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/基础/">基础</a><a class="article-category-link" href="/categories/基础/NIO/">NIO</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>JDK 1.4 之后引入了<code>NIO（New IO或 Non Blocking IO）</code>，我觉的可以称其为<code>New IO</code>，因为<code>NIO</code>基本重写所有标准IO的API，完全可以替代标准的Java IO API。并且<code>NIO</code>支持面向缓冲区(Buffer)的、基于通道(Channel)的IO操作，可以以更加高效的方式进行文件的读写操作。</p>
+<p><code>NIO</code>的核心主要包括3部分</p>
+<ul>
+<li>Buffer 缓冲区</li>
+<li>Channel 通道<ul>
+<li>文件通道</li>
+<li>Socket通道</li>
+</ul>
+</li>
+<li>Selector 选择器</li>
+</ul>
+<p>本篇文章会对NIO<code>Buffer</code>缓冲区的使用及实现原理做分析</p>
+<h2 id="体系"><a href="#体系" class="headerlink" title="体系"></a>体系</h2><p>Java NIO 提供了以下几种<code>Buffer</code>类型可供使用</p>
+<ol>
+<li>ByteBuffer</li>
+<li>MappedByteBuffer</li>
+<li>CharBuffer</li>
+<li>DoubleBuffer</li>
+<li>FloatBuffer</li>
+<li>IntBuffer</li>
+<li>LongBuffer</li>
+<li>ShortBuffer</li>
+</ol>
+<p>这些<code>Buffer</code>的名字已经非常清晰的指明了这些<code>Buffer</code>所各自承载的不同数据类型</p>
+<p>下面的分析我都将以<code>ByteBuffer</code>为例子</p>
+<h2 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h2><p><code>ByteBuffer</code>的使用比较简单，但若不理解其内部实现原理，也非常容易搞混。我们先来介绍其简单的使用</p>
+<h3 id="创建缓冲区"><a href="#创建缓冲区" class="headerlink" title="创建缓冲区"></a>创建缓冲区</h3><p>创建缓冲区主要有两种常用方式</p>
+<ul>
+<li>allocate 开辟指定大小的缓冲区</li>
+<li>wrap 使用字节数组开辟新的缓冲区，对缓冲区的修改将导致数组被修改。新缓冲区的容量（position）和限制（limit）将为该数组的长度</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 通过 allocate 创建</span><br><span class="line">ByteBuffer byteBuffer = ByteBuffer.allocate(1024);</span><br><span class="line"></span><br><span class="line">// 通过 wrap 创建</span><br><span class="line">byte [] buf = new byte[1024];</span><br><span class="line">ByteBuffer.wrap(buf);</span><br></pre></td></tr></table></figure>
+<h3 id="读写数据"><a href="#读写数据" class="headerlink" title="读写数据"></a>读写数据</h3><p>使用ByteBuffer读写数据比较简单</p>
+<h4 id="写数据"><a href="#写数据" class="headerlink" title="写数据"></a>写数据</h4><p>往Buffer中写数据只需要调用<code>put</code>方法，该方法有多个重载，可以以不同的方式写数据<br>这里只列举3个</p>
+<ul>
+<li>put(byte b) 在当前位置将给定字节写入此缓冲区</li>
+<li>put(int i， byte b) 在指定位置将给定字节写入此缓冲区</li>
+<li>put(byte[] src, int offset, int length) 将字节从给定源数组传输到此缓冲区。如果从数组复制的字节比数大于剩余的缓冲区容量，会抛出<code>BufferOverflowException</code>异常</li>
+</ul>
+<h4 id="读数据"><a href="#读数据" class="headerlink" title="读数据"></a>读数据</h4><p>从Buffer中读取数据只需要调用<code>get</code>方法，该方法同样有多个重载，可以以不同的方式读数据</p>
+<ul>
+<li>get() 获取当前位置的单个字节</li>
+<li>get(int i) 获取指定位置的单个字节</li>
+<li>get(byte[] dst, int offset, int length) 从此缓冲区中获取字节并传输到给定的目标数组中，如果缓冲区中的剩余字节少于满足请求所需的字节数，会抛出<code>BufferUnderflowException</code>异常</li>
+</ul>
+<p>下面是一个抛出<code>BufferUnderflowException</code>的例子</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ByteBuffer byteBuffer = ByteBuffer.allocate(1024);</span><br><span class="line">String s =  &quot;hello&quot;;</span><br><span class="line">byteBuffer.put(s.getBytes());</span><br><span class="line">byteBuffer.flip(); // 翻转 下文会提到</span><br><span class="line">byte [] bufs = new byte[9]; // 缓冲区实际只有5个字节大小，大于此大小就会抛出异常</span><br><span class="line">byteBuffer.get(bufs); // 抛出异常</span><br></pre></td></tr></table></figure>
+<h2 id="flip-方法"><a href="#flip-方法" class="headerlink" title="flip 方法"></a>flip 方法</h2><p>上文抛出<code>BufferUnderflowException</code>的例子，不知道大家有没发现，我们的代码在读写转换时用了<code>flip</code>方法来进行读写操作的转换，<strong>缓冲区在进行读写转换的时候必须调用flip方法</strong>，那么为何要这么做呢？下面我将会对<code>flip</code>方法的内部实现原理进行分析，在分析之前，我们有必要先认识一下<code>Buffer</code>的<code>capacity position limit mark</code>四个变量属性</p>
+<ul>
+<li>capacity 表示缓冲区的容量，大小不可变且不可为负</li>
+<li>position 下一个要读取或写入的元素的位置索引</li>
+<li>limit 下一个不应该被读取或写入的元素的位置索引</li>
+<li>mark 标记位，可以通过这个标记位返回此位置</li>
+</ul>
+<p>四者的大小关系 <code>mark &lt;= position &lt;= limit &lt;= capacity</code></p>
+<p>知道了这四个变量的含义之后，我们再来根据例子来看看一步一步往下分析吧</p>
+<p>一. 首先，我们通过<code>ByteBuffer.allocate(6)</code>开辟一个大小为6的缓冲区 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">// 通过allocate 开辟缓冲区</span><br><span class="line">public static ByteBuffer allocate(int capacity) &#123;</span><br><span class="line">    if (capacity &lt; 0)</span><br><span class="line">        throw new IllegalArgumentException();</span><br><span class="line">    return new HeapByteBuffer(capacity, capacity);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// HeapByteBuffer 初始化</span><br><span class="line">HeapByteBuffer(int cap, int lim) &#123;            // package-private</span><br><span class="line">	  // 这里前四个参数依次是 mark position limit capacity</span><br><span class="line">    super(-1, 0, lim, cap, new byte[cap], 0);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过查看<code>allocate</code>方法的源码，可知其内部初始结构如下图(Buffer内部其实是数组实现，下标从0开始)</p>
+<ul>
+<li>mark = -1</li>
+<li>position = 0</li>
+<li>limit = capacity = 6</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-5ccc66ee0bdf8205.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>二. 然后我们现在通过<code>put</code>方法加入<code>1</code>个字节数据<br>此时的内部结构如下图</p>
+<ul>
+<li>mark = -1</li>
+<li>position = 1</li>
+<li>limit = capacity = 6</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-25630231ed83f140.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>三. 加一个太少了，我们再添加<code>3</code>个字节数据至缓冲区中<br>此时的内部结构如下图</p>
+<ul>
+<li>mark = -1</li>
+<li>position = 4</li>
+<li>limit = capacity = 6</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-bd13f3bc473ed7cb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>四. 现在数据已经全部加完了，我们准备读数据了，必须要调用<code>flip</code>方法<br>先来看看<code>flip</code>方法的内部实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public final Buffer flip() &#123;</span><br><span class="line">    limit = position;</span><br><span class="line">    position = 0;</span><br><span class="line">    mark = -1;</span><br><span class="line">    return this;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>flip</code>内部其实是将 <code>position</code>的值赋给了<code>limit</code>，并将<code>position</code>位置归0，如下图显示</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-68af4168b6404910.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>五. 成功翻转之后，就可以往外读数据了，假设往外读4个数据<br>此时内部结构如下图，并且 position = limit了，达到了最大可读字节数</p>
+<ul>
+<li>mark = -1</li>
+<li>position = 4</li>
+<li>limit = 4</li>
+<li>capacity = 6<br><img src="http://upload-images.jianshu.io/upload_images/2717496-92461ceb4e5e554a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></li>
+</ul>
+<p>通过上面这个例子，对<code>flip</code>方法的翻转逻辑已经进行了非常详细的分析，并且可以得出结论<code>capacity</code>的是绝对不变的，不会随着读写操作而改变。<code>mark</code>变量的值会在下文<code>reset mark</code> 方法中用到</p>
+<h2 id="reset-mark-方法"><a href="#reset-mark-方法" class="headerlink" title="reset mark 方法"></a>reset mark 方法</h2><p>顾名思义，<code>mark</code>就是打标记的意思，<code>reset</code>表示重置的意思。这两个操做是紧密联系的，由<code>mark()</code>方法在当前<code>position</code>位置做标记，然后在需要重置到标记位置的时候，调用<code>reset</code>方法重置</p>
+<p>看一下这两个方法的内部实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public final Buffer mark() &#123;</span><br><span class="line">    mark = position;</span><br><span class="line">    return this;</span><br><span class="line">&#125;</span><br><span class="line">public final Buffer reset() &#123;</span><br><span class="line">    int m = mark;</span><br><span class="line">    if (m &lt; 0)</span><br><span class="line">        throw new InvalidMarkException();</span><br><span class="line">    position = m;</span><br><span class="line">    return this;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>方法的内部实现非常简单，通过对变量<code>mark</code>的编辑来标记当前位置，在需要重置的时候，把变量<code>mark</code>的值赋给当前下标索引<code>position</code>来达到重置的目的。</p>
+<h2 id="clear"><a href="#clear" class="headerlink" title="clear"></a>clear</h2><p><code>clear</code>方法比较简单，将<code>position = 0</code>，<code>limit = capacity</code>，<code>mark = -1</code>。有点类似初始化时的操作</p>
+<h2 id="compact"><a href="#compact" class="headerlink" title="compact"></a>compact</h2><p>最后再来介绍一下<code>compact</code>方法，首先我们先来看一个场景</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"> while (in.read(buf) &gt;= 0 || buf.position != 0) &#123;</span><br><span class="line">    buf.flip();</span><br><span class="line">    out.write(buf);</span><br><span class="line">    buf.clear();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面这个例子，在非阻塞模式下是会有问题的，因为<code>write</code>方法我们并不知道一次性可以写多少个字节，所以有可能还有未写入的字节数据，这时候我们却又重新读取了新的数据，就会导致覆盖了原有还未写入的数据。</p>
+<p>只需要改成以下的方式即可，该方法的作用是将<code>position</code>与<code>limit</code>之间的数据复制到<code>buffer</code>的开始位置，复制后<code>position  = limit -position</code>,<code>limit = capacity</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"> while (in.read(buf) &gt;= 0 || buf.position != 0) &#123;</span><br><span class="line">    buf.flip();</span><br><span class="line">    out.write(buf);</span><br><span class="line">    buf.compact();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本编文章比较详细的分析了<code>Java NIO</code>Buffer的基本使用及内部实现原理。Buffer的内部实现其实比较简单，需要着重理解的其实就是<code>capacity position limit mark</code>这四个变量属性。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2018/12/28/Java-NIO-Buffer-分析/" target="_blank" title="Java NIO Buffer 分析">http://wangjunnan.github.io/2018/12/28/Java-NIO-Buffer-分析/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/12/30/Java中的乱码问题/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Java中的乱码问题
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/12/27/I-O模型简介/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">I/O模型简介</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#体系"><span class="nav-number">2.</span> <span class="nav-text">体系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本使用"><span class="nav-number">3.</span> <span class="nav-text">基本使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建缓冲区"><span class="nav-number">3.1.</span> <span class="nav-text">创建缓冲区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#读写数据"><span class="nav-number">3.2.</span> <span class="nav-text">读写数据</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#写数据"><span class="nav-number">3.2.1.</span> <span class="nav-text">写数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#读数据"><span class="nav-number">3.2.2.</span> <span class="nav-text">读数据</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#flip-方法"><span class="nav-number">4.</span> <span class="nav-text">flip 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#reset-mark-方法"><span class="nav-number">5.</span> <span class="nav-text">reset mark 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#clear"><span class="nav-number">6.</span> <span class="nav-text">clear</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#compact"><span class="nav-number">7.</span> <span class="nav-text">compact</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

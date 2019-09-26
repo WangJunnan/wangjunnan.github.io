@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>spring的@configuration @bean注解 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Spring">
+  
+  
+  
+  
+  <meta name="description" content="引言之前Spring 一直用的xml配置文件比较多，现在发现新公司用的注解比较多。也就是通过定义一个配置类(以@Configuration注解的类)内部在方法上注解 @Bean 注解来完成Bean的依赖注入Spring容器。用注解来配置的话，其实就是减少了配置文件的工作，但总体来说代码可读性其实是会下降的。不过也省去了一大堆的xml配置文件 直接看源码下面就从源码层面来看看  通过注解配置有什么不">
+<meta name="keywords" content="Spring">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring的@Configuration @Bean注解">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/09/03/Spring的-Configuration-Bean注解/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言之前Spring 一直用的xml配置文件比较多，现在发现新公司用的注解比较多。也就是通过定义一个配置类(以@Configuration注解的类)内部在方法上注解 @Bean 注解来完成Bean的依赖注入Spring容器。用注解来配置的话，其实就是减少了配置文件的工作，但总体来说代码可读性其实是会下降的。不过也省去了一大堆的xml配置文件 直接看源码下面就从源码层面来看看  通过注解配置有什么不">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.211Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring的@Configuration @Bean注解">
+<meta name="twitter:description" content="引言之前Spring 一直用的xml配置文件比较多，现在发现新公司用的注解比较多。也就是通过定义一个配置类(以@Configuration注解的类)内部在方法上注解 @Bean 注解来完成Bean的依赖注入Spring容器。用注解来配置的话，其实就是减少了配置文件的工作，但总体来说代码可读性其实是会下降的。不过也省去了一大堆的xml配置文件 直接看源码下面就从源码层面来看看  通过注解配置有什么不">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Spring的-Configuration-Bean注解" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Spring的@Configuration @Bean注解
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/09/03/Spring的-Configuration-Bean注解/" class="article-date">
+	  <time datetime="2019-09-03T08:47:31.000Z" itemprop="datePublished">2019-09-03</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/Spring/">Spring</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>之前Spring 一直用的xml配置文件比较多，现在发现新公司用的注解比较多。也就是通过定义一个配置类(以@Configuration注解的类)内部在方法上注解 <a href="#"><a href="#">@Bean</a></a> 注解来完成Bean的依赖注入Spring容器。用注解来配置的话，其实就是减少了配置文件的工作，但总体来说代码可读性其实是会下降的。不过也省去了一大堆的xml配置文件</p>
+<h2 id="直接看源码"><a href="#直接看源码" class="headerlink" title="直接看源码"></a>直接看源码</h2><p>下面就从源码层面来看看  通过注解配置有什么不同</p>
+<p>之前有分析过Spring对Bean的解析，<strong>是通过把我们配置的Bean信息抽象成了一个BeanDefiniion对象。这个对象持有了我们配置的Bean的元数据</strong></p>
+<p>那么其实 <a href="#"><a href="#">@Bean</a></a> 的注解的原理也是类似，也是通过将我们配置的Bean信息抽象成一个BeanDefiniion对象</p>
+<p>这里我们分两种情况讨论，一种是 Spring 通过 xml文件配置实现注解配置，一种就是我们现在非常流行的 SpringBoot实现的注解配置。其实两者实现原理一致，只是配置入口略有不同。</p>
+<p>先看 普通 Spring 应用的配置:</p>
+<p>如果我们要在  普通 Spring 应用中实现注解配置。那么我们需要在Spring的配置文件中配置以下几个配置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&lt;context:annotation-config&gt;</span><br><span class="line"></span><br><span class="line">&lt;context:component-scan&gt;</span><br></pre></td></tr></table></figure>
+<p>这两个配置的意思是什么呢？</p>
+<p>我们直接看Spring是如何解析这两个标签的吧，通过在<code>META-INF/spring.handlers</code>目录下根据<code>spring.handlers</code>文件可以找到 Context 标签  解析入口类 <code>ContextNamespaceHandler</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ContextNamespaceHandler</span> <span class="keyword">extends</span> <span class="title">NamespaceHandlerSupport</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"property-placeholder"</span>, <span class="keyword">new</span> PropertyPlaceholderBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"property-override"</span>, <span class="keyword">new</span> PropertyOverrideBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"annotation-config"</span>, <span class="keyword">new</span> AnnotationConfigBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"component-scan"</span>, <span class="keyword">new</span> ComponentScanBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"load-time-weaver"</span>, <span class="keyword">new</span> LoadTimeWeaverBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"spring-configured"</span>, <span class="keyword">new</span> SpringConfiguredBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"mbean-export"</span>, <span class="keyword">new</span> MBeanExportBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionParser(<span class="string">"mbean-server"</span>, <span class="keyword">new</span> MBeanServerBeanDefinitionParser());</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看了上面的解析源码，可以知道annotation-config由AnnotationConfigBeanDefinitionParser解析。component-scan由ComponentScanBeanDefinitionParser解析。这里就是Spring XML 注解配置的入口，下面我们来依次分析这两个解析类干了什么事情？</p>
+<ul>
+<li>ComponentScanBeanDefinitionParser</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> BeanDefinition <span class="title">parse</span><span class="params">(Element element, ParserContext parserContext)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);</span><br><span class="line"></span><br><span class="line">basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);</span><br><span class="line"></span><br><span class="line">String[] basePackages = StringUtils.tokenizeToStringArray(basePackage,</span><br><span class="line"></span><br><span class="line">ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Actually scan for bean definitions and register them.</span></span><br><span class="line"></span><br><span class="line">ClassPathBeanDefinitionScanner scanner = configureScanner(parserContext, element);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 这里扫描了我们配置的 base-package 包下全部 beanDefinitions，并抽象成了 BeanDefinitionHolder类</span></span><br><span class="line"></span><br><span class="line">Set&lt;BeanDefinitionHolder&gt; beanDefinitions = scanner.doScan(basePackages);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 将抽象的 beanDefinitions 全部注册进 Spring容器中，注 这里包含了被@Configuration注解的类</span></span><br><span class="line"></span><br><span class="line">registerComponents(parserContext.getReaderContext(), beanDefinitions, element);</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>  <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>AnnotationConfigBeanDefinitionParser</li>
+</ul>
+<p>主要逻辑在 AnnotationConfigUtils 工具类的 registerAnnotationConfigProcessors方法中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> BeanDefinition <span class="title">parse</span><span class="params">(Element element, ParserContext parserContext)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">Object source = parserContext.extractSource(element);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 初始化一些 BeanFactoryPostProcessor 进Spring容器，会在getBean之前全部执行。</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 一般用来在容器实例化Bean前，对BeanDefinition做修改，或添加新的BeanDefinition等前置修改</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 主要逻辑就在这里</span></span><br><span class="line"></span><br><span class="line">Set&lt;BeanDefinitionHolder&gt; processorDefinitions =</span><br><span class="line"></span><br><span class="line">AnnotationConfigUtils.registerAnnotationConfigProcessors(parserContext.getRegistry(), source);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Register component for the surrounding &lt;context:annotation-config&gt; element.</span></span><br><span class="line"></span><br><span class="line">CompositeComponentDefinition compDefinition = <span class="keyword">new</span> CompositeComponentDefinition(element.getTagName(), source);</span><br><span class="line"></span><br><span class="line">parserContext.pushContainingComponent(compDefinition);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Nest the concrete beans in the surrounding component.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (BeanDefinitionHolder processorDefinition : processorDefinitions) &#123;</span><br><span class="line"></span><br><span class="line">parserContext.registerComponent(<span class="keyword">new</span> BeanComponentDefinition(processorDefinition));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Finally register the composite component.</span></span><br><span class="line"></span><br><span class="line">parserContext.popAndRegisterContainingComponent();</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>  <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// AnnotationConfigUtils.class</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 添加支持 annotation-config 配置的一些BeanFactoryPostProcessor 实现类</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Set&lt;BeanDefinitionHolder&gt; <span class="title">registerAnnotationConfigProcessors</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">BeanDefinitionRegistry registry, @Nullable Object source)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">DefaultListableBeanFactory beanFactory = unwrapDefaultListableBeanFactory(registry);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (beanFactory != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!(beanFactory.getDependencyComparator() <span class="keyword">instanceof</span> AnnotationAwareOrderComparator)) &#123;</span><br><span class="line"></span><br><span class="line">beanFactory.setDependencyComparator(AnnotationAwareOrderComparator.INSTANCE);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!(beanFactory.getAutowireCandidateResolver() <span class="keyword">instanceof</span> ContextAnnotationAutowireCandidateResolver)) &#123;</span><br><span class="line"></span><br><span class="line">beanFactory.setAutowireCandidateResolver(<span class="keyword">new</span> ContextAnnotationAutowireCandidateResolver());</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Set&lt;BeanDefinitionHolder&gt; beanDefs = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(<span class="number">8</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// @Configuration 注解解析</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">RootBeanDefinition def = <span class="keyword">new</span> RootBeanDefinition(ConfigurationClassPostProcessor.class);</span><br><span class="line"></span><br><span class="line">def.setSource(source);</span><br><span class="line"></span><br><span class="line">beanDefs.add(registerPostProcessor(registry, def, CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// @Autowired 注解解析</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!registry.containsBeanDefinition(AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">RootBeanDefinition def = <span class="keyword">new</span> RootBeanDefinition(AutowiredAnnotationBeanPostProcessor.class);</span><br><span class="line"></span><br><span class="line">def.setSource(source);</span><br><span class="line"></span><br><span class="line">beanDefs.add(registerPostProcessor(registry, def, AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// @Required 注解解析</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!registry.containsBeanDefinition(REQUIRED_ANNOTATION_PROCESSOR_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">RootBeanDefinition def = <span class="keyword">new</span> RootBeanDefinition(RequiredAnnotationBeanPostProcessor.class);</span><br><span class="line"></span><br><span class="line">def.setSource(source);</span><br><span class="line"></span><br><span class="line">beanDefs.add(registerPostProcessor(registry, def, REQUIRED_ANNOTATION_PROCESSOR_BEAN_NAME));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Check for JSR-250 support, and if present add the CommonAnnotationBeanPostProcessor.</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 对 JSR-250做支持 解析注解 @Resource @PostConstruct @PreDestroy </span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (jsr250Present &amp;&amp; !registry.containsBeanDefinition(COMMON_ANNOTATION_PROCESSOR_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">RootBeanDefinition def = <span class="keyword">new</span> RootBeanDefinition(CommonAnnotationBeanPostProcessor.class);</span><br><span class="line"></span><br><span class="line">def.setSource(source);</span><br><span class="line"></span><br><span class="line">beanDefs.add(registerPostProcessor(registry, def, COMMON_ANNOTATION_PROCESSOR_BEAN_NAME));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Check for JPA support, and if present add the PersistenceAnnotationBeanPostProcessor.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (jpaPresent &amp;&amp; !registry.containsBeanDefinition(PERSISTENCE_ANNOTATION_PROCESSOR_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">RootBeanDefinition def = <span class="keyword">new</span> RootBeanDefinition();</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line">def.setBeanClass(ClassUtils.forName(PERSISTENCE_ANNOTATION_PROCESSOR_CLASS_NAME,</span><br><span class="line"></span><br><span class="line">AnnotationConfigUtils.class.getClassLoader()));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">catch</span> (ClassNotFoundException ex) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(</span><br><span class="line"></span><br><span class="line"><span class="string">"Cannot load optional framework class: "</span> + PERSISTENCE_ANNOTATION_PROCESSOR_CLASS_NAME, ex);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">def.setSource(source);</span><br><span class="line"></span><br><span class="line">beanDefs.add(registerPostProcessor(registry, def, PERSISTENCE_ANNOTATION_PROCESSOR_BEAN_NAME));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!registry.containsBeanDefinition(EVENT_LISTENER_PROCESSOR_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">RootBeanDefinition def = <span class="keyword">new</span> RootBeanDefinition(EventListenerMethodProcessor.class);</span><br><span class="line"></span><br><span class="line">def.setSource(source);</span><br><span class="line"></span><br><span class="line">beanDefs.add(registerPostProcessor(registry, def, EVENT_LISTENER_PROCESSOR_BEAN_NAME));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!registry.containsBeanDefinition(EVENT_LISTENER_FACTORY_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">RootBeanDefinition def = <span class="keyword">new</span> RootBeanDefinition(DefaultEventListenerFactory.class);</span><br><span class="line"></span><br><span class="line">def.setSource(source);</span><br><span class="line"></span><br><span class="line">beanDefs.add(registerPostProcessor(registry, def, EVENT_LISTENER_FACTORY_BEAN_NAME));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> beanDefs;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到 annotation-config 配置其实就是添加了几个 BeanFactoryPostProcessor 实现类，以此来实现 Autowired Configuration @Resource @PostConstruct @PreDestroy 等注解的实现。其他的注解暂且不看，我们直接看今天的重点  Configuration 注解是如何解析，@Configuration是通过 BeanFactoryPostProcessor 的实现类 ConfigurationClassPostProcessor 类在Spring启动的时候执行的（具体BeanFactoryPostProcessor的执行时机可以看我另一篇博文[<a href> <a href="https://www.yuque.com/wangjunnan/pnhnfo/bx15ai" target="_blank" rel="noopener">链接](https://www.yuque.com/wangjunnan/pnhnfo/bx15ai)</a></a>）</p>
+<ul>
+<li>ConfigurationClassPostProcessor</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> registryId = System.identityHashCode(registry);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 判断是否已经执行过</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.registriesPostProcessed.contains(registryId)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(</span><br><span class="line"></span><br><span class="line"><span class="string">"postProcessBeanDefinitionRegistry already called on this post-processor against "</span> + registry);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.factoriesPostProcessed.contains(registryId)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(</span><br><span class="line"></span><br><span class="line"><span class="string">"postProcessBeanFactory already called on this post-processor against "</span> + registry);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.registriesPostProcessed.add(registryId);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 正式执行逻辑</span></span><br><span class="line"></span><br><span class="line">processConfigBeanDefinitions(registry);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">processConfigBeanDefinitions</span><span class="params">(BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">List&lt;BeanDefinitionHolder&gt; configCandidates = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">String[] candidateNames = registry.getBeanDefinitionNames();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 遍历所有 BeanDefinition name</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (String beanName : candidateNames) &#123;</span><br><span class="line"></span><br><span class="line">BeanDefinition beanDef = registry.getBeanDefinition(beanName);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 判断是否已经处理过</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (ConfigurationClassUtils.isFullConfigurationClass(beanDef) ||</span><br><span class="line"></span><br><span class="line">ConfigurationClassUtils.isLiteConfigurationClass(beanDef)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line"></span><br><span class="line">logger.debug(<span class="string">"Bean definition has already been processed as a configuration class: "</span> + beanDef);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 条件筛选</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, <span class="keyword">this</span>.metadataReaderFactory)) &#123;</span><br><span class="line"></span><br><span class="line">configCandidates.add(<span class="keyword">new</span> BeanDefinitionHolder(beanDef, beanName));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 栓选完为空  直接返回</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (configCandidates.isEmpty()) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 根据 @Order 注解排序</span></span><br><span class="line"></span><br><span class="line">configCandidates.sort((bd1, bd2) -&gt; &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> i1 = ConfigurationClassUtils.getOrder(bd1.getBeanDefinition());</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> i2 = ConfigurationClassUtils.getOrder(bd2.getBeanDefinition());</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> Integer.compare(i1, i2);</span><br><span class="line"></span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Detect any custom bean name generation strategy supplied through the enclosing application context</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取 BeanName 生成策略</span></span><br><span class="line"></span><br><span class="line">SingletonBeanRegistry sbr = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (registry <span class="keyword">instanceof</span> SingletonBeanRegistry) &#123;</span><br><span class="line"></span><br><span class="line">sbr = (SingletonBeanRegistry) registry;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!<span class="keyword">this</span>.localBeanNameGeneratorSet) &#123;</span><br><span class="line"></span><br><span class="line">BeanNameGenerator generator = (BeanNameGenerator) sbr.getSingleton(CONFIGURATION_BEAN_NAME_GENERATOR);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (generator != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.componentScanBeanNameGenerator = generator;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.importBeanNameGenerator = generator;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.environment == <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.environment = <span class="keyword">new</span> StandardEnvironment();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Parse each @Configuration class</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 解析 @Configuration 注解</span></span><br><span class="line"></span><br><span class="line">ConfigurationClassParser parser = <span class="keyword">new</span> ConfigurationClassParser(</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.metadataReaderFactory, <span class="keyword">this</span>.problemReporter, <span class="keyword">this</span>.environment,</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.resourceLoader, <span class="keyword">this</span>.componentScanBeanNameGenerator, registry);</span><br><span class="line"></span><br><span class="line">Set&lt;BeanDefinitionHolder&gt; candidates = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(configCandidates);</span><br><span class="line"></span><br><span class="line">Set&lt;ConfigurationClass&gt; alreadyParsed = <span class="keyword">new</span> HashSet&lt;&gt;(configCandidates.size());</span><br><span class="line"></span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line"></span><br><span class="line">parser.parse(candidates);</span><br><span class="line"></span><br><span class="line">parser.validate();</span><br><span class="line"></span><br><span class="line">Set&lt;ConfigurationClass&gt; configClasses = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(parser.getConfigurationClasses());</span><br><span class="line"></span><br><span class="line">configClasses.removeAll(alreadyParsed);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Read the model and create bean definitions based on its content</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 读取并解析注册 BeanDefinition</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.reader == <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.reader = <span class="keyword">new</span> ConfigurationClassBeanDefinitionReader(</span><br><span class="line"></span><br><span class="line">registry, <span class="keyword">this</span>.sourceExtractor, <span class="keyword">this</span>.resourceLoader, <span class="keyword">this</span>.environment,</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.importBeanNameGenerator, parser.getImportRegistry());</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.reader.loadBeanDefinitions(configClasses);</span><br><span class="line"></span><br><span class="line">alreadyParsed.addAll(configClasses);</span><br><span class="line"></span><br><span class="line">candidates.clear();</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 处理新加入的</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (registry.getBeanDefinitionCount() &gt; candidateNames.length) &#123;</span><br><span class="line"></span><br><span class="line">String[] newCandidateNames = registry.getBeanDefinitionNames();</span><br><span class="line"></span><br><span class="line">Set&lt;String&gt; oldCandidateNames = <span class="keyword">new</span> HashSet&lt;&gt;(Arrays.asList(candidateNames));</span><br><span class="line"></span><br><span class="line">Set&lt;String&gt; alreadyParsedClasses = <span class="keyword">new</span> HashSet&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (ConfigurationClass configurationClass : alreadyParsed) &#123;</span><br><span class="line"></span><br><span class="line">alreadyParsedClasses.add(configurationClass.getMetadata().getClassName());</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (String candidateName : newCandidateNames) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!oldCandidateNames.contains(candidateName)) &#123;</span><br><span class="line"></span><br><span class="line">BeanDefinition bd = registry.getBeanDefinition(candidateName);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, <span class="keyword">this</span>.metadataReaderFactory) &amp;&amp;</span><br><span class="line"></span><br><span class="line">!alreadyParsedClasses.contains(bd.getBeanClassName())) &#123;</span><br><span class="line"></span><br><span class="line">candidates.add(<span class="keyword">new</span> BeanDefinitionHolder(bd, candidateName));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">candidateNames = newCandidateNames;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (!candidates.isEmpty());</span><br><span class="line"></span><br><span class="line"><span class="comment">// Register the ImportRegistry as a bean in order to support ImportAware @Configuration classes</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (sbr != <span class="keyword">null</span> &amp;&amp; !sbr.containsSingleton(IMPORT_REGISTRY_BEAN_NAME)) &#123;</span><br><span class="line"></span><br><span class="line">sbr.registerSingleton(IMPORT_REGISTRY_BEAN_NAME, parser.getImportRegistry());</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.metadataReaderFactory <span class="keyword">instanceof</span> CachingMetadataReaderFactory) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Clear cache in externally provided MetadataReaderFactory; this is a no-op</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// for a shared cache since it'll be cleared by the ApplicationContext.</span></span><br><span class="line"></span><br><span class="line">((CachingMetadataReaderFactory) <span class="keyword">this</span>.metadataReaderFactory).clearCache();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具体的执行逻辑在ConfigurationClassParser 类的 parse 方法中</p>
+<ul>
+<li>ConfigurationClassParser</li>
+</ul>
+<p>核心解析方法是 doProcessConfigurationClass方法，下面直接看这个方法的实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> SourceClass <span class="title">doProcessConfigurationClass</span><span class="params">(ConfigurationClass configClass, SourceClass sourceClass)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Recursively process any member (nested) classes first</span></span><br><span class="line"></span><br><span class="line">processMemberClasses(configClass, sourceClass);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Process any @PropertySource annotations</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 解析 @PropertySource </span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(</span><br><span class="line"></span><br><span class="line">sourceClass.getMetadata(), PropertySources.class,</span><br><span class="line"></span><br><span class="line">org.springframework.context.annotation.PropertySource.class)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.environment <span class="keyword">instanceof</span> ConfigurableEnvironment) &#123;</span><br><span class="line"></span><br><span class="line">processPropertySource(propertySource);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line"></span><br><span class="line">logger.warn(<span class="string">"Ignoring @PropertySource annotation on ["</span> + sourceClass.getMetadata().getClassName() +</span><br><span class="line"></span><br><span class="line"><span class="string">"]. Reason: Environment must implement ConfigurableEnvironment"</span>);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Process any @ComponentScan annotations</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 解析 @ComponentScan </span></span><br><span class="line"></span><br><span class="line">Set&lt;AnnotationAttributes&gt; componentScans = AnnotationConfigUtils.attributesForRepeatable(</span><br><span class="line"></span><br><span class="line">sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!componentScans.isEmpty() &amp;&amp;</span><br><span class="line"></span><br><span class="line">!<span class="keyword">this</span>.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (AnnotationAttributes componentScan : componentScans) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">// The config class is annotated with @ComponentScan -&gt; perform the scan immediately</span></span><br><span class="line"></span><br><span class="line">Set&lt;BeanDefinitionHolder&gt; scannedBeanDefinitions =</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());</span><br><span class="line"></span><br><span class="line"><span class="comment">// Check the set of scanned definitions for any further config classes and parse recursively if needed</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (BeanDefinitionHolder holder : scannedBeanDefinitions) &#123;</span><br><span class="line"></span><br><span class="line">BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (bdCand == <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line">bdCand = holder.getBeanDefinition();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, <span class="keyword">this</span>.metadataReaderFactory)) &#123;</span><br><span class="line"></span><br><span class="line">parse(bdCand.getBeanClassName(), holder.getBeanName());</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Process any @Import annotations</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 解析 @Import</span></span><br><span class="line"></span><br><span class="line">processImports(configClass, sourceClass, getImports(sourceClass), <span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Process any @ImportResource annotations</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 解析 @ImportResource</span></span><br><span class="line"></span><br><span class="line">AnnotationAttributes importResource =</span><br><span class="line"></span><br><span class="line">AnnotationConfigUtils.attributesFor(sourceClass.getMetadata(), ImportResource.class);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (importResource != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line">String[] resources = importResource.getStringArray(<span class="string">"locations"</span>);</span><br><span class="line"></span><br><span class="line">Class&lt;? extends BeanDefinitionReader&gt; readerClass = importResource.getClass(<span class="string">"reader"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (String resource : resources) &#123;</span><br><span class="line"></span><br><span class="line">String resolvedResource = <span class="keyword">this</span>.environment.resolveRequiredPlaceholders(resource);</span><br><span class="line"></span><br><span class="line">configClass.addImportedResource(resolvedResource, readerClass);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Process individual @Bean methods</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 解析 @Bean</span></span><br><span class="line"></span><br><span class="line">Set&lt;MethodMetadata&gt; beanMethods = retrieveBeanMethodMetadata(sourceClass);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (MethodMetadata methodMetadata : beanMethods) &#123;</span><br><span class="line"></span><br><span class="line">configClass.addBeanMethod(<span class="keyword">new</span> BeanMethod(methodMetadata, configClass));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Process default methods on interfaces</span></span><br><span class="line"></span><br><span class="line">processInterfaces(configClass, sourceClass);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Process superclass, if any</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (sourceClass.getMetadata().hasSuperClass()) &#123;</span><br><span class="line"></span><br><span class="line">String superclass = sourceClass.getMetadata().getSuperClassName();</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (superclass != <span class="keyword">null</span> &amp;&amp; !superclass.startsWith(<span class="string">"java"</span>) &amp;&amp;</span><br><span class="line"></span><br><span class="line">!<span class="keyword">this</span>.knownSuperclasses.containsKey(superclass)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.knownSuperclasses.put(superclass, configClass);</span><br><span class="line"></span><br><span class="line"><span class="comment">// Superclass found, return its annotation metadata and recurse</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> sourceClass.getSuperClass();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// No superclass -&gt; processing is complete</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>  <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到上面的代码依次解析了 @PropertySource，@ComponentScan <a href="#"><a href="#">@Bean</a></a> <a href="#"><a href="#">@Import</a></a> 等注解。这里我们重点关注 <a href="#"><a href="#">@Bean</a></a> 的实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">// 获取 @bean 注解修饰的  方法元数据信息</span></span><br><span class="line"></span><br><span class="line">Set&lt;MethodMetadata&gt; beanMethods = retrieveBeanMethodMetadata(sourceClass);</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (MethodMetadata methodMetadata : beanMethods) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 封装成 BeanMethod </span></span><br><span class="line"></span><br><span class="line">configClass.addBeanMethod(<span class="keyword">new</span> BeanMethod(methodMetadata, configClass));</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面我们回到 ConfigurationClassPostProcessor ，解析完 元数据之后，就是加载注册 BeanDefinition了</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">this</span>.reader.loadBeanDefinitions(configClasses);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitions</span><span class="params">(Set&lt;ConfigurationClass&gt; configurationModel)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">TrackedConditionEvaluator trackedConditionEvaluator = <span class="keyword">new</span> TrackedConditionEvaluator();</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (ConfigurationClass configClass : configurationModel) &#123;</span><br><span class="line"></span><br><span class="line">loadBeanDefinitionsForConfigurationClass(configClass, trackedConditionEvaluator);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitionsForConfigurationClass</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (trackedConditionEvaluator.shouldSkip(configClass)) &#123;</span><br><span class="line"></span><br><span class="line">String beanName = configClass.getBeanName();</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (StringUtils.hasLength(beanName) &amp;&amp; <span class="keyword">this</span>.registry.containsBeanDefinition(beanName)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.registry.removeBeanDefinition(beanName);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.importRegistry.removeImportingClass(configClass.getMetadata().getClassName());</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (configClass.isImported()) &#123;</span><br><span class="line"></span><br><span class="line">registerBeanDefinitionForImportedConfigurationClass(configClass);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (BeanMethod beanMethod : configClass.getBeanMethods()) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 解析之前 解析 @bean 加入的 beanMethod信息</span></span><br><span class="line"></span><br><span class="line">loadBeanDefinitionsForBeanMethod(beanMethod);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());</span><br><span class="line"></span><br><span class="line">loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>看看 loadBeanDefinitionsForBeanMethod 方法的实现，其实就是从BeanMethod中提取信息组装成 BeanDefinition</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitionsForBeanMethod</span><span class="params">(BeanMethod beanMethod)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">ConfigurationClass configClass = beanMethod.getConfigurationClass();</span><br><span class="line"></span><br><span class="line">MethodMetadata metadata = beanMethod.getMetadata();</span><br><span class="line"></span><br><span class="line">String methodName = metadata.getMethodName();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 判断是否需要跳过</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">this</span>.conditionEvaluator.shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN)) &#123;</span><br><span class="line"></span><br><span class="line">configClass.skippedBeanMethods.add(methodName);</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (configClass.skippedBeanMethods.contains(methodName)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">AnnotationAttributes bean = AnnotationConfigUtils.attributesFor(metadata, Bean.class);</span><br><span class="line"></span><br><span class="line">Assert.state(bean != <span class="keyword">null</span>, <span class="string">"No @Bean annotation attributes"</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 考虑别名 名称</span></span><br><span class="line"></span><br><span class="line">List&lt;String&gt; names = <span class="keyword">new</span> ArrayList&lt;&gt;(Arrays.asList(bean.getStringArray(<span class="string">"name"</span>)));</span><br><span class="line"></span><br><span class="line">String beanName = (!names.isEmpty() ? names.remove(<span class="number">0</span>) : methodName);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 注册别名 </span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (String alias : names) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.registry.registerAlias(beanName, alias);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Has this effectively been overridden before (e.g. via XML)?</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 判断是否在 xml配置文件中  已经配置过</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (isOverriddenByExistingDefinition(beanMethod, beanName)) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (beanName.equals(beanMethod.getConfigurationClass().getBeanName())) &#123;</span><br><span class="line"></span><br><span class="line"><span class="keyword">throw</span> <span class="keyword">new</span> BeanDefinitionStoreException(beanMethod.getConfigurationClass().getResource().getDescription(),</span><br><span class="line"></span><br><span class="line">beanName, <span class="string">"Bean name derived from @Bean method '"</span> + beanMethod.getMetadata().getMethodName() +</span><br><span class="line"></span><br><span class="line"><span class="string">"' clashes with bean name for containing configuration class; please make those names unique!"</span>);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">ConfigurationClassBeanDefinition beanDef = <span class="keyword">new</span> ConfigurationClassBeanDefinition(configClass, metadata);</span><br><span class="line"></span><br><span class="line">beanDef.setResource(configClass.getResource());</span><br><span class="line"></span><br><span class="line">beanDef.setSource(<span class="keyword">this</span>.sourceExtractor.extractSource(metadata, configClass.getResource()));</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 这里可以知道 @bean 配置是 通过 FactoryMethod 来初始化的</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (metadata.isStatic()) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">// static @Bean method</span></span><br><span class="line"></span><br><span class="line">beanDef.setBeanClassName(configClass.getMetadata().getClassName());</span><br><span class="line"></span><br><span class="line">beanDef.setFactoryMethodName(methodName);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">// instance @Bean method</span></span><br><span class="line"></span><br><span class="line">beanDef.setFactoryBeanName(configClass.getBeanName());</span><br><span class="line"></span><br><span class="line">beanDef.setUniqueFactoryMethodName(methodName);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">beanDef.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_CONSTRUCTOR);</span><br><span class="line"></span><br><span class="line">beanDef.setAttribute(RequiredAnnotationBeanPostProcessor.SKIP_REQUIRED_CHECK_ATTRIBUTE, Boolean.TRUE);</span><br><span class="line"></span><br><span class="line">AnnotationConfigUtils.processCommonDefinitionAnnotations(beanDef, metadata);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 设置autowire属性</span></span><br><span class="line"></span><br><span class="line">Autowire autowire = bean.getEnum(<span class="string">"autowire"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (autowire.isAutowire()) &#123;</span><br><span class="line"></span><br><span class="line">beanDef.setAutowireMode(autowire.value());</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置initMethod 初始化方法</span></span><br><span class="line"></span><br><span class="line">String initMethodName = bean.getString(<span class="string">"initMethod"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (StringUtils.hasText(initMethodName)) &#123;</span><br><span class="line"></span><br><span class="line">beanDef.setInitMethodName(initMethodName);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置destroyMethod 销毁方法</span></span><br><span class="line"></span><br><span class="line">String destroyMethodName = bean.getString(<span class="string">"destroyMethod"</span>);</span><br><span class="line"></span><br><span class="line">beanDef.setDestroyMethodName(destroyMethodName);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取 scope</span></span><br><span class="line"></span><br><span class="line">ScopedProxyMode proxyMode = ScopedProxyMode.NO;</span><br><span class="line"></span><br><span class="line">AnnotationAttributes attributes = AnnotationConfigUtils.attributesFor(metadata, Scope.class);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (attributes != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line">beanDef.setScope(attributes.getString(<span class="string">"value"</span>));</span><br><span class="line"></span><br><span class="line">proxyMode = attributes.getEnum(<span class="string">"proxyMode"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (proxyMode == ScopedProxyMode.DEFAULT) &#123;</span><br><span class="line"></span><br><span class="line">proxyMode = ScopedProxyMode.NO;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Replace the original bean definition with the target one, if necessary</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如有必要，将原始Bean定义替换为目标Bean定义</span></span><br><span class="line"></span><br><span class="line">BeanDefinition beanDefToRegister = beanDef;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (proxyMode != ScopedProxyMode.NO) &#123;</span><br><span class="line"></span><br><span class="line">BeanDefinitionHolder proxyDef = ScopedProxyCreator.createScopedProxy(</span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> BeanDefinitionHolder(beanDef, beanName), <span class="keyword">this</span>.registry,</span><br><span class="line"></span><br><span class="line">proxyMode == ScopedProxyMode.TARGET_CLASS);</span><br><span class="line"></span><br><span class="line">beanDefToRegister = <span class="keyword">new</span> ConfigurationClassBeanDefinition(</span><br><span class="line"></span><br><span class="line">(RootBeanDefinition) proxyDef.getBeanDefinition(), configClass, metadata);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line"></span><br><span class="line">logger.debug(String.format(<span class="string">"Registering bean definition for @Bean method %s.%s()"</span>,</span><br><span class="line"></span><br><span class="line">configClass.getMetadata().getClassName(), beanName));</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">this</span>.registry.registerBeanDefinition(beanName, beanDefToRegister);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码解析到这里为止，@Bean配置的Bean信息就被全部抽象成了一个 BeanDefinition对象，接下来的Bean加载等等一大堆逻辑走的就是Spring的同一套逻辑了。</p>
+<p>以上是通过在配置文件中配置 <code>&lt;context:annotation-config&gt; &lt;context:component-scan&gt;</code>。</p>
+<h2 id="Springboot怎么做的"><a href="#Springboot怎么做的" class="headerlink" title="Springboot怎么做的"></a>Springboot怎么做的</h2><p>那么Spring Boot并不需要配置文件，它又是在哪里配置了入口呢？</p>
+<p>其实在之前的分析Spring boot的启动过程时 已经有提到了 <a href="https://www.yuque.com/wangjunnan/pnhnfo/qtapgd" target="_blank" rel="noopener"><a href="https://www.yuque.com/wangjunnan/pnhnfo/qtapgd" target="_blank" rel="noopener">链接</a></a> ，其实是在初始化 Spring容器的构造方法中进行了配置的加载，并且最终也是调用了 AnnotationConfigUtils 工具类的 registerAnnotationConfigProcessors方法</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>终于写完了，其实分析来分析去，不论是Spring Boot Spring mvc 其实最核心不变的还是 Spring Framework，只要把核心搞清楚了，下次Spring 又推出什么 Spring xxx 也能应付自如</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/09/03/Spring的-Configuration-Bean注解/" target="_blank" title="Spring的@Configuration @Bean注解">http://wangjunnan.github.io/2019/09/03/Spring的-Configuration-Bean注解/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/09/26/JAVA中时间的表现形式/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          JAVA中时间的表现形式
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/08/30/MVC-HttpRequestHandler接口静态资源的关系/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">MVC-HttpRequestHandler接口静态资源的关系</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#直接看源码"><span class="nav-number">2.</span> <span class="nav-text">直接看源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Springboot怎么做的"><span class="nav-number">3.</span> <span class="nav-text">Springboot怎么做的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

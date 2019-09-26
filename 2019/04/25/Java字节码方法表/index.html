@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>java字节码方法表 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="JVMjava字节码">
+  
+  
+  
+  
+  <meta name="description" content="引言因为字段表和方法表的结构类似，所以我们直接分析Java字节码的方法表内容，理解了方法表，自然就理解了字段表 方法表方法表在Class文件中的位置是在字段表之后的，具体的结构我们根据下表再来回顾一下    类型 名称 数量      u2 access_flas 1    u2 name_index 1   u2 descriptor_index 1   u2 attributes_count">
+<meta name="keywords" content="JVM,java字节码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java字节码方法表">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/04/25/Java字节码方法表/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言因为字段表和方法表的结构类似，所以我们直接分析Java字节码的方法表内容，理解了方法表，自然就理解了字段表 方法表方法表在Class文件中的位置是在字段表之后的，具体的结构我们根据下表再来回顾一下    类型 名称 数量      u2 access_flas 1    u2 name_index 1   u2 descriptor_index 1   u2 attributes_count">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-0b89369329932afb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.197Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java字节码方法表">
+<meta name="twitter:description" content="引言因为字段表和方法表的结构类似，所以我们直接分析Java字节码的方法表内容，理解了方法表，自然就理解了字段表 方法表方法表在Class文件中的位置是在字段表之后的，具体的结构我们根据下表再来回顾一下    类型 名称 数量      u2 access_flas 1    u2 name_index 1   u2 descriptor_index 1   u2 attributes_count">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2717496-0b89369329932afb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Java字节码方法表" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Java字节码方法表
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/04/25/Java字节码方法表/" class="article-date">
+	  <time datetime="2019-04-25T07:50:02.000Z" itemprop="datePublished">2019-04-25</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JVM/">JVM</a><a class="article-category-link" href="/categories/java基础/JVM/java字节码/">java字节码</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>因为字段表和方法表的结构类似，所以我们直接分析Java字节码的方法表内容，理解了方法表，自然就理解了字段表</p>
+<h2 id="方法表"><a href="#方法表" class="headerlink" title="方法表"></a>方法表</h2><p>方法表在<code>Class</code>文件中的位置是在字段表之后的，具体的结构我们根据下表再来回顾一下</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>名称</th>
+<th>数量 </th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>u2</td>
+<td>access_flas</td>
+<td>1 </td>
+</tr>
+<tr>
+<td>u2</td>
+<td>name_index</td>
+<td>1</td>
+</tr>
+<tr>
+<td>u2</td>
+<td>descriptor_index</td>
+<td>1</td>
+</tr>
+<tr>
+<td>u2</td>
+<td>attributes_count</td>
+<td>1</td>
+</tr>
+<tr>
+<td>attribute_info</td>
+<td>属性表</td>
+<td>attributes_count</td>
+</tr>
+</tbody>
+</table>
+<p>还是跟上篇文章一样，我们写一个简单的Java类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">public</span> String <span class="title">sayHello</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> String sayStr = <span class="string">"hello world"</span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> sayStr;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> Test test = <span class="keyword">new</span> Test();</span><br><span class="line"></span><br><span class="line"> System.out.println(test.sayHello());</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用<code>javap</code>翻译字节码文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class com.ymm.agent.Test</span><br><span class="line"></span><br><span class="line"> minor version: 0</span><br><span class="line"></span><br><span class="line"> major version: 52</span><br><span class="line"></span><br><span class="line"> flags: (0x0021) ACC_PUBLIC, ACC_SUPER</span><br><span class="line"></span><br><span class="line"> this_class: #3 // com/ymm/agent/Test</span><br><span class="line"></span><br><span class="line"> super_class: #8  // java/lang/Object</span><br><span class="line"></span><br><span class="line"> interfaces: 0, fields: 0, methods: 3, attributes: 1</span><br><span class="line"></span><br><span class="line">Constant pool:</span><br><span class="line"></span><br><span class="line"> #1 = Methodref #8.#27  // java/lang/Object.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line"></span><br><span class="line"> #2 = String  #28 // hello world</span><br><span class="line"></span><br><span class="line"> #3 = Class #29 // com/ymm/agent/Test</span><br><span class="line"></span><br><span class="line"> #4 = Methodref #3.#27  // com/ymm/agent/Test.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line"></span><br><span class="line"> #5 = Fieldref  #30.#31 // java/lang/System.out:Ljava/io/PrintStream;</span><br><span class="line"></span><br><span class="line"> #6 = Methodref #3.#32  // com/ymm/agent/Test.sayHello:()Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> #7 = Methodref #33.#34 // java/io/PrintStream.println:(Ljava/lang/String;)V</span><br><span class="line"></span><br><span class="line"> #8 = Class #35 // java/lang/Object</span><br><span class="line"></span><br><span class="line"> #9 = Utf8  &lt;init&gt;</span><br><span class="line"></span><br><span class="line"> #10 = Utf8  ()V</span><br><span class="line"></span><br><span class="line"> #11 = Utf8  Code</span><br><span class="line"></span><br><span class="line"> #12 = Utf8  LineNumberTable</span><br><span class="line"></span><br><span class="line"> #13 = Utf8  LocalVariableTable</span><br><span class="line"></span><br><span class="line"> #14 = Utf8  this</span><br><span class="line"></span><br><span class="line"> #15 = Utf8  Lcom/ymm/agent/Test;</span><br><span class="line"></span><br><span class="line"> #16 = Utf8  sayHello</span><br><span class="line"></span><br><span class="line"> #17 = Utf8  ()Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> #18 = Utf8  sayStr</span><br><span class="line"></span><br><span class="line"> #19 = Utf8  Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> #20 = Utf8  main</span><br><span class="line"></span><br><span class="line"> #21 = Utf8  ([Ljava/lang/String;)V</span><br><span class="line"></span><br><span class="line"> #22 = Utf8  args</span><br><span class="line"></span><br><span class="line"> #23 = Utf8  [Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> #24 = Utf8  test</span><br><span class="line"></span><br><span class="line"> #25 = Utf8  SourceFile</span><br><span class="line"></span><br><span class="line"> #26 = Utf8  Test.java</span><br><span class="line"></span><br><span class="line"> #27 = NameAndType #9:#10  // &quot;&lt;init&gt;&quot;:()V</span><br><span class="line"></span><br><span class="line"> #28 = Utf8  hello world</span><br><span class="line"></span><br><span class="line"> #29 = Utf8  com/ymm/agent/Test</span><br><span class="line"></span><br><span class="line"> #30 = Class #36 // java/lang/System</span><br><span class="line"></span><br><span class="line"> #31 = NameAndType #37:#38 // out:Ljava/io/PrintStream;</span><br><span class="line"></span><br><span class="line"> #32 = NameAndType #16:#17 // sayHello:()Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> #33 = Class #39 // java/io/PrintStream</span><br><span class="line"></span><br><span class="line"> #34 = NameAndType #40:#41 // println:(Ljava/lang/String;)V</span><br><span class="line"></span><br><span class="line"> #35 = Utf8  java/lang/Object</span><br><span class="line"></span><br><span class="line"> #36 = Utf8  java/lang/System</span><br><span class="line"></span><br><span class="line"> #37 = Utf8  out</span><br><span class="line"></span><br><span class="line"> #38 = Utf8  Ljava/io/PrintStream;</span><br><span class="line"></span><br><span class="line"> #39 = Utf8  java/io/PrintStream</span><br><span class="line"></span><br><span class="line"> #40 = Utf8  println</span><br><span class="line"></span><br><span class="line"> #41 = Utf8  (Ljava/lang/String;)V</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line"> public com.ymm.agent.Test();</span><br><span class="line"></span><br><span class="line"> descriptor: ()V</span><br><span class="line"></span><br><span class="line"> flags: (0x0001) ACC_PUBLIC</span><br><span class="line"></span><br><span class="line"> Code:</span><br><span class="line"></span><br><span class="line"> stack=1, locals=1, args_size=1</span><br><span class="line"></span><br><span class="line"> 0: aload_0</span><br><span class="line"></span><br><span class="line"> 1: invokespecial #1 // Method java/lang/Object.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line"></span><br><span class="line"> 4: return</span><br><span class="line"></span><br><span class="line"> LineNumberTable:</span><br><span class="line"></span><br><span class="line"> line 9: 0</span><br><span class="line"></span><br><span class="line"> LocalVariableTable:</span><br><span class="line"></span><br><span class="line"> Start Length Slot Name  Signature</span><br><span class="line"></span><br><span class="line"> 0  5  0 this  Lcom/ymm/agent/Test;</span><br><span class="line"></span><br><span class="line"> public java.lang.String sayHello();</span><br><span class="line"></span><br><span class="line"> descriptor: ()Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> flags: (0x0001) ACC_PUBLIC</span><br><span class="line"></span><br><span class="line"> Code:</span><br><span class="line"></span><br><span class="line"> stack=1, locals=2, args_size=1</span><br><span class="line"></span><br><span class="line"> 0: ldc  #2 // String hello world</span><br><span class="line"></span><br><span class="line"> 2: astore_1</span><br><span class="line"></span><br><span class="line"> 3: aload_1</span><br><span class="line"></span><br><span class="line"> 4: areturn</span><br><span class="line"></span><br><span class="line"> LineNumberTable:</span><br><span class="line"></span><br><span class="line"> line 12: 0</span><br><span class="line"></span><br><span class="line"> line 13: 3</span><br><span class="line"></span><br><span class="line"> LocalVariableTable:</span><br><span class="line"></span><br><span class="line"> Start Length Slot Name  Signature</span><br><span class="line"></span><br><span class="line"> 0  5  0 this  Lcom/ymm/agent/Test;</span><br><span class="line"></span><br><span class="line"> 3  2  1 sayStr  Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> public static void main(java.lang.String[]);</span><br><span class="line"></span><br><span class="line"> descriptor: ([Ljava/lang/String;)V</span><br><span class="line"></span><br><span class="line"> flags: (0x0009) ACC_PUBLIC, ACC_STATIC</span><br><span class="line"></span><br><span class="line"> Code:</span><br><span class="line"></span><br><span class="line"> stack=2, locals=2, args_size=1</span><br><span class="line"></span><br><span class="line"> 0: new  #3 // class com/ymm/agent/Test</span><br><span class="line"></span><br><span class="line"> 3: dup</span><br><span class="line"></span><br><span class="line"> 4: invokespecial #4 // Method &quot;&lt;init&gt;&quot;:()V</span><br><span class="line"></span><br><span class="line"> 7: astore_1</span><br><span class="line"></span><br><span class="line"> 8: getstatic  #5 // Field java/lang/System.out:Ljava/io/PrintStream;</span><br><span class="line"></span><br><span class="line"> 11: aload_1</span><br><span class="line"></span><br><span class="line"> 12: invokevirtual #6 // Method sayHello:()Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> 15: invokevirtual #7 // Method java/io/PrintStream.println:(Ljava/lang/String;)V</span><br><span class="line"></span><br><span class="line"> 18: return</span><br><span class="line"></span><br><span class="line"> LineNumberTable:</span><br><span class="line"></span><br><span class="line"> line 17: 0</span><br><span class="line"></span><br><span class="line"> line 18: 8</span><br><span class="line"></span><br><span class="line"> line 19: 18</span><br><span class="line"></span><br><span class="line"> LocalVariableTable:</span><br><span class="line"></span><br><span class="line"> Start Length Slot Name  Signature</span><br><span class="line"></span><br><span class="line"> 0 19  0 args  [Ljava/lang/String;</span><br><span class="line"></span><br><span class="line"> 8 11  1 test  Lcom/ymm/agent/Test;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">SourceFile: &quot;Test.java&quot;</span><br></pre></td></tr></table></figure>
+<p>通过上文的<code>interfaces: 0, fields: 0, methods: 3, attributes: 1</code>，我们可以知道该文件一共包含<code>3</code>个方法，分别对应着<code>无参构造</code>,<code>sayHello</code>,<code>main</code>三个方法</p>
+<p>好了，现在让我们直接略过前面的一大推常量池项，</p>
+<p>直接阅读我们自己写的<code>sayHello</code>方法的字节码内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public java.lang.String sayHello();</span><br><span class="line"></span><br><span class="line"> descriptor: ()Ljava/lang/String; /* 方法描述符 */</span><br><span class="line"></span><br><span class="line"> flags: (0x0001) ACC_PUBLIC /* 访问标识 */</span><br><span class="line"></span><br><span class="line"> Code: /* code属性  也就是我们写的具体代码翻译成的字节码指令内容 */</span><br><span class="line"></span><br><span class="line"> stack=1, locals=2, args_size=1 /* 分别指操作数栈深度；本地变量所需的存储空间（slot为单位）；参数个数 */</span><br><span class="line"></span><br><span class="line"> 0: ldc  #2 // String hello world /*将一个常量加载到操作数栈*/</span><br><span class="line"></span><br><span class="line"> 2: astore_1 /* 将一个数值从操作数栈存储到局部变量表 */</span><br><span class="line"></span><br><span class="line"> 3: aload_1 /* 将一个数值从局部变量表加载到操作数栈 */</span><br><span class="line"></span><br><span class="line"> 4: areturn /* 将栈顶第一个元素返回 */</span><br><span class="line"></span><br><span class="line"> LineNumberTable: /* 字节码与java代码行数对应关系 一般用于调试 */</span><br><span class="line"></span><br><span class="line"> line 12: 0</span><br><span class="line"></span><br><span class="line"> line 13: 3</span><br><span class="line"></span><br><span class="line"> LocalVariableTable: /* 局部变量表 */</span><br><span class="line"></span><br><span class="line"> Start Length Slot Name  Signature</span><br><span class="line"></span><br><span class="line"> 0  5  0 this  Lcom/ymm/agent/Test;</span><br><span class="line"></span><br><span class="line"> 3  2  1 sayStr  Ljava/lang/String;</span><br></pre></td></tr></table></figure>
+<p>根据上表我们知道方法表的第一个内容的是<code>access_flas</code>，占一个字节。表中的<code>access_flas</code>其实就对应着上文中的  <code>flags: (0x0001) ACC_PUBLIC</code>，标识这个方法是<code>public</code>的，接下在的<code>name_index</code>和<code>descriptor_index</code>，在上文中的体现分别对应着<code>sayHello</code>和<code>()Ljava/lang/String;</code>。</p>
+<p>这里解释一下描述符的概念，在介绍<code>Class文件结构</code>的文章中有提到，这里再提一遍:</p>
+<p><strong>描述符的作用是用来描述字段的数据类型，方法的参数列表和返回值</strong>，根据描述符规则，基本数据类型（byte,char,int,long,float,double,short,boolean）以及代表无返回值的<code>void</code>类型都用一个大写字符来表示，而对象类型则用<code>L</code>加对象的全限定名来表示</p>
+<p>最重要的内容其实还是在<code>attribute_info</code>属性表中的<code>code</code>内容，也就是我们写的具体代码翻译成的字节码指令内容，这块内容是我们阅读字节码文件的重中之重。下面我们就来阅读一下上文的字节码内容</p>
+<ol>
+<li><p>ldc #2 将常量池中索引为2的字符串加载到操作数栈顶</p>
+</li>
+<li><p>astore_1 将一个数值从操作数栈存储到局部变量表</p>
+</li>
+<li><p>aload_1 将一个数值从局部变量表加载到操作数栈</p>
+</li>
+<li><p>areturn 将栈顶第一个元素返回</p>
+</li>
+</ol>
+<p>可以看到上面的四个步骤的操作其实都是基于栈的操作，这里提一下java虚拟机栈的栈帧结构</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-0b89369329932afb.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<p>关于字节码子令集可以参考<a href="https://blog.csdn.net/zqz_zqz/article/details/79484757" target="_blank" rel="noopener"><a href="https://blog.csdn.net/zqz_zqz/article/details/79484757" target="_blank" rel="noopener">java字节码子令集</a></a></p>
+<h2 id="有趣的例子-—"><a href="#有趣的例子-—" class="headerlink" title="有趣的例子 —"></a>有趣的例子 —</h2><p>下面我们再来看一个有趣的例子，大家思考一下这个执行这个方法的返回值会是多少？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public class Test &#123;</span><br><span class="line"></span><br><span class="line"> public int inc() &#123;</span><br><span class="line"></span><br><span class="line"> int x;</span><br><span class="line"></span><br><span class="line"> try &#123;</span><br><span class="line"></span><br><span class="line"> x = 1;</span><br><span class="line"></span><br><span class="line"> return x;</span><br><span class="line"></span><br><span class="line"> &#125; catch (Exception e) &#123;</span><br><span class="line"></span><br><span class="line"> x = 2;</span><br><span class="line"></span><br><span class="line"> return x;</span><br><span class="line"></span><br><span class="line"> &#125; finally &#123;</span><br><span class="line"></span><br><span class="line"> x = 3;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码非常简单，我想大家应该也都知道正确答案，当没有出现异常的时候，返回值为1，出现异常的话则为2（当然这里不会抛异常）。可是如果我们在finally快里加句代码<code>System.out.prinln(&quot;do it&quot;)</code>，然后再执行这个方法，其实是可以看到<code>do it</code>被打印了，也就是说在执行<code>return</code>之前，finally快中的代码是被执行了的，那么这里就有一个有趣的问题了，为何返回仍然是2而不是3呢？</p>
+<p>下面我们就从字节码文件中来找出答案</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public int inc();</span><br><span class="line"></span><br><span class="line"> descriptor: ()I</span><br><span class="line"></span><br><span class="line"> flags: (0x0001) ACC_PUBLIC</span><br><span class="line"></span><br><span class="line"> Code:</span><br><span class="line"></span><br><span class="line"> stack=1, locals=5, args_size=1</span><br><span class="line"></span><br><span class="line"> 0: iconst_1 // 将int = 1的值压入栈顶</span><br><span class="line"></span><br><span class="line"> 1: istore_1 // 弹出栈顶元素，存入位置为1的局部变量表</span><br><span class="line"></span><br><span class="line"> 2: iload_1 // 从位置为1的局部变量中取出元素压入栈顶</span><br><span class="line"></span><br><span class="line"> 3: istore_2 // 弹出栈顶元素，存入位置2的局部变量中</span><br><span class="line"></span><br><span class="line"> 4: iconst_3 // 将int = 3的值压入栈顶 （这里执行finally块中的代码了）</span><br><span class="line"></span><br><span class="line"> 5: istore_1 // 弹出栈顶元素，存入位置1的局部变量中</span><br><span class="line"></span><br><span class="line"> 6: iload_2 // 从位置为2的局部变量中取出元素压入栈顶</span><br><span class="line"></span><br><span class="line"> 7: ireturn // 返回栈顶元素2 (哈哈哈  看到没有，这里返回的是2，没有异常的话，这里方法就返回了)</span><br><span class="line"></span><br><span class="line"> 8: astore_2 // 将栈顶的异常引用，存入位置2的局部变量中  （这里就是异常捕获的代码了）</span><br><span class="line"></span><br><span class="line"> 9: iconst_2 // 将int = 2的值压入栈顶</span><br><span class="line"></span><br><span class="line"> 10: istore_1 // 弹出栈顶元素，存入位置1的局部变量中</span><br><span class="line"></span><br><span class="line"> 11: iload_1 // 从位置为1的局部变量中取出元素压入栈顶</span><br><span class="line"></span><br><span class="line"> 12: istore_3 // 弹出栈顶元素，存入位置3的局部变量中</span><br><span class="line"></span><br><span class="line"> 13: iconst_3 // 将int = 3的值压入栈顶</span><br><span class="line"></span><br><span class="line"> 14: istore_1 // 弹出栈顶元素，存入位置1的局部变量中</span><br><span class="line"></span><br><span class="line"> 15: iload_3 // 从位置为3的局部变量中取出元素压入栈顶</span><br><span class="line"></span><br><span class="line"> 16: ireturn // 返回栈顶元素 2</span><br><span class="line"></span><br><span class="line"> 17: astore 4 // 将栈顶异常引用存入位置为4的局部变量表中</span><br><span class="line"></span><br><span class="line"> 19: iconst_3 // 将int = 3的值压入栈顶</span><br><span class="line"></span><br><span class="line"> 20: istore_1 // 弹出栈顶元素，存入位置1的局部变量中</span><br><span class="line"></span><br><span class="line"> 21: aload  4 将位置为4的局部变量引用压入栈顶</span><br><span class="line"></span><br><span class="line"> 23: athrow // 将栈顶的异常抛出</span><br><span class="line"></span><br><span class="line"> Exception table: // 异常表</span><br><span class="line"></span><br><span class="line"> from to target type</span><br><span class="line"></span><br><span class="line"> 0  4  8  Class java/lang/Exception</span><br><span class="line"></span><br><span class="line"> 0  4 17  any</span><br><span class="line"></span><br><span class="line"> 8 13 17  any</span><br><span class="line"></span><br><span class="line"> 17 19 17  any</span><br></pre></td></tr></table></figure>
+<p>如果你已经看懂了上面的字节码，你应该会豁朗开朗。原因其实就是在于这里开辟了两个局部变量，<code>finally</code>块中的代码也确实执行了，只是将变量存入了局部变量表中的另一个位置，并且通过这个例子，也可以发现，无论什么情况<code>finally</code>块中的代码都会执行。</p>
+<h2 id="尾言"><a href="#尾言" class="headerlink" title="尾言"></a>尾言</h2><p>好了，本文到这里就差不多结束了。对于字节码的探索个人觉的还是非常有意思的，之后应该也会探索更多有意思的东西</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/04/25/Java字节码方法表/" target="_blank" title="Java字节码方法表">http://wangjunnan.github.io/2019/04/25/Java字节码方法表/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/06/19/JAVA-泛型-你真的理解了吗？/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          JAVA 泛型 你真的理解了吗？
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">使用Java NIO实现一个HTTP服务器</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#方法表"><span class="nav-number">2.</span> <span class="nav-text">方法表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#有趣的例子-—"><span class="nav-number">3.</span> <span class="nav-text">有趣的例子 —</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#尾言"><span class="nav-number">4.</span> <span class="nav-text">尾言</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

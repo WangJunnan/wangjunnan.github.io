@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>spring ioc 源码解析 （循环依赖的解决） | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Spring">
+  
+  
+  
+  
+  <meta name="description" content="引言之前的几篇对Spring IOC源码分析的文章，大体上把IOC容器内部实现做了分析，但在有些细节上并没有很深入的去分析。本篇文章主要是分析Spring IOC容器对Bean之间的循环依赖是如何解决的 什么是循环依赖那么什么是循环依赖呢？简单的理解一下，A依赖B，B又依赖A，这就构成了一个最简单的循环依赖，为了帮助大家理解，新建两个互相依赖的类（儿子和爸爸互相依赖没有错吧 ..） 1234567">
+<meta name="keywords" content="Spring">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring IOC 源码解析 （循环依赖的解决）">
+<meta property="og:url" content="http://wangjunnan.github.io/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言之前的几篇对Spring IOC源码分析的文章，大体上把IOC容器内部实现做了分析，但在有些细节上并没有很深入的去分析。本篇文章主要是分析Spring IOC容器对Bean之间的循环依赖是如何解决的 什么是循环依赖那么什么是循环依赖呢？简单的理解一下，A依赖B，B又依赖A，这就构成了一个最简单的循环依赖，为了帮助大家理解，新建两个互相依赖的类（儿子和爸爸互相依赖没有错吧 ..） 1234567">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.205Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring IOC 源码解析 （循环依赖的解决）">
+<meta name="twitter:description" content="引言之前的几篇对Spring IOC源码分析的文章，大体上把IOC容器内部实现做了分析，但在有些细节上并没有很深入的去分析。本篇文章主要是分析Spring IOC容器对Bean之间的循环依赖是如何解决的 什么是循环依赖那么什么是循环依赖呢？简单的理解一下，A依赖B，B又依赖A，这就构成了一个最简单的循环依赖，为了帮助大家理解，新建两个互相依赖的类（儿子和爸爸互相依赖没有错吧 ..） 1234567">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Spring-IOC-源码解析-（循环依赖的解决）" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Spring IOC 源码解析 （循环依赖的解决）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/" class="article-date">
+	  <time datetime="2018-12-21T07:59:42.000Z" itemprop="datePublished">2018-12-21</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>之前的几篇对<code>Spring IOC</code>源码分析的文章，大体上把<code>IOC</code>容器内部实现做了分析，但在有些细节上并没有很深入的去分析。本篇文章主要是分析<code>Spring IOC</code>容器对<code>Bean之间的循环依赖</code>是如何解决的</p>
+<h2 id="什么是循环依赖"><a href="#什么是循环依赖" class="headerlink" title="什么是循环依赖"></a>什么是循环依赖</h2><p>那么什么是循环依赖呢？简单的理解一下，A依赖B，B又依赖A，这就构成了一个最简单的循环依赖，为了帮助大家理解，新建两个互相依赖的类（儿子和爸爸互相依赖没有错吧 ..）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public class Father &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    private Son son;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class Son &#123;</span><br><span class="line">    private String name;</span><br><span class="line">    private Father father;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这两个bean交给Spring管理</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;bean id=&quot;son&quot; class=&quot;com.wangjn.demo.impl.Son&quot;&gt;</span><br><span class="line">    &lt;property name=&quot;name&quot; value=&quot;son&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;father&quot; ref=&quot;father&quot;&gt;&lt;/property&gt;</span><br><span class="line">&lt;/bean&gt;</span><br><span class="line"></span><br><span class="line">&lt;bean id=&quot;father&quot; class=&quot;com.wangjn.demo.impl.Father&quot;&gt;</span><br><span class="line">    &lt;property name=&quot;name&quot; value=&quot;father&quot;&gt;&lt;/property&gt;</span><br><span class="line">    &lt;property name=&quot;son&quot; ref=&quot;son&quot;&gt;&lt;/property&gt;</span><br><span class="line">&lt;/bean&gt;</span><br></pre></td></tr></table></figure>
+<p>启动<code>Spring IOC</code>容器，用<code>getBean</code>方法可以成功获取<code>son</code>对象，并且也注入了<code>father</code>对象，可见<code>Spring</code>为我们解决了循环依赖的问题。可是按照正常创建<code>Bean</code>的流程来说，这个过程将会是一个死循环，因为在创建<code>son</code>对象为<code>son</code>注入<code>father</code>属性时，就会去获取<code>father</code>对象，而在获取<code>father</code>对象赋值<code>son</code>属性的时候，又会去获取<code>son</code>对象，从而就陷入了死循环，然后程序崩溃。</p>
+<p>可是结果并不是我们预料的那样，接下来就来分析<code>Spring</code>是如何解决这个问题的</p>
+<h2 id="Spring-如何解决循环依赖"><a href="#Spring-如何解决循环依赖" class="headerlink" title="Spring 如何解决循环依赖"></a>Spring 如何解决循环依赖</h2><p>之前对<code>IOC</code>源码分析的文章中有分析过<code>Bean</code>的创建过程，下面我将对循环依赖实现的某些细节作分析</p>
+<h2 id="Spring-用缓存解决循环依赖"><a href="#Spring-用缓存解决循环依赖" class="headerlink" title="Spring 用缓存解决循环依赖"></a>Spring 用缓存解决循环依赖</h2><p>让我们回到<code>AbstractBeanFactory</code>的<code>doGetBean</code>方法，<code>doGetBean</code>方法就是我们通过容器<code>getBean</code>方法实际调用的逻辑，我们在这里着重关注<code>getSingleton</code>方法，之前的分析中有提到，调用<code>getSingleton(beanName)</code>方法的目的是为了从缓存中直接获取已经创建的Bean，而不必重复去创建。现在让我们进到<code>getSingleton</code>方法里面去看看它都做了啥，从哪个缓存取到了Bean对象</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">protected &lt;T&gt; T doGetBean(</span><br><span class="line">		final String name, final Class&lt;T&gt; requiredType, final Object[] args, boolean typeCheckOnly)</span><br><span class="line">		throws BeansException &#123;</span><br><span class="line"></span><br><span class="line">	final String beanName = transformedBeanName(name);</span><br><span class="line">	Object bean;</span><br><span class="line"></span><br><span class="line">	// 从缓存中获取 bean</span><br><span class="line">	Object sharedInstance = getSingleton(beanName);</span><br><span class="line">	... 省略其他创建bean的代码</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="getSingleton方法"><a href="#getSingleton方法" class="headerlink" title="getSingleton方法"></a>getSingleton方法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">public Object getSingleton(String beanName) &#123;</span><br><span class="line">	// 默认都是允许提前暴露对象</span><br><span class="line">	return getSingleton(beanName, true);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">protected Object getSingleton(String beanName, boolean allowEarlyReference) &#123;	</span><br><span class="line">	// 从创建完成的bean缓存中获取bean</span><br><span class="line">	Object singletonObject = this.singletonObjects.get(beanName);</span><br><span class="line">	// 判断该bean是否仍在创建中，意思是Bean已经完成实例化，但还不完整。属性还未完全注入</span><br><span class="line">	if (singletonObject == null &amp;&amp; isSingletonCurrentlyInCreation(beanName)) &#123;</span><br><span class="line">		synchronized (this.singletonObjects) &#123;</span><br><span class="line">			// 从提前暴露的Bean缓存容器（earlySingletonObjects）中获取</span><br><span class="line">			singletonObject = this.earlySingletonObjects.get(beanName);</span><br><span class="line">			// 仍未获取到则从singletonFactories缓存中获取</span><br><span class="line">			if (singletonObject == null &amp;&amp; allowEarlyReference) &#123;</span><br><span class="line">				ObjectFactory&lt;?&gt; singletonFactory = this.singletonFactories.get(beanName);</span><br><span class="line">				if (singletonFactory != null) &#123;</span><br><span class="line">					singletonObject = singletonFactory.getObject();</span><br><span class="line">					// 加入到提前暴露Bean缓存（earlySingletonObjects）中</span><br><span class="line">					this.earlySingletonObjects.put(beanName, singletonObject);</span><br><span class="line">					// 从singletonFactories缓存中移除</span><br><span class="line">					this.singletonFactories.remove(beanName);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	// 返回对象，这里返回的不一定是完全创建的对象</span><br><span class="line">	return (singletonObject != NULL_OBJECT ? singletonObject : null);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从<code>getSingleton</code>方法中我们需要着重关注几个Bean的缓存，标题已经说了，缓存是解决循环依赖的关键，下面我介绍一下上面代码中提到了三种缓存 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/** Cache of singleton objects: bean name --&gt; bean instance */</span><br><span class="line">private final Map&lt;String, Object&gt; singletonObjects = new ConcurrentHashMap&lt;String, Object&gt;(256);</span><br><span class="line"></span><br><span class="line">/** Cache of singleton factories: bean name --&gt; ObjectFactory */</span><br><span class="line">private final Map&lt;String, ObjectFactory&lt;?&gt;&gt; singletonFactories = new HashMap&lt;String, ObjectFactory&lt;?&gt;&gt;(16);</span><br><span class="line"></span><br><span class="line">/** Cache of early singleton objects: bean name --&gt; bean instance */</span><br><span class="line">private final Map&lt;String, Object&gt; earlySingletonObjects = new HashMap&lt;String, Object&gt;(16);</span><br></pre></td></tr></table></figure>
+<ol>
+<li><code>singletonObjects</code> 用于存放创建完成的单例对象</li>
+<li><code>singletonFactories</code> 用于存放对象工厂类，这里是解决循环依赖的</li>
+<li><code>earlySingletonObjects</code> 用于存放提前暴露的单例对象。指的是已经完成Bean的实例化，但还未完成属性注入的不完整对象</li>
+</ol>
+<p>再来说上面代码中取缓存的步骤，首先肯定是从<code>singletonObjects</code>中获取完全创建完成的Bean对象，如果获取不到，则从提前暴露对象缓存（<code>earlySingletonObjects</code>）中获取，还获取不到再到<code>singletonFactories</code>中获取</p>
+<p>到这里为止，我们只分析了取Bean缓存的过程，所以接下来我们要分析的就是放缓存的过程代码 </p>
+<h3 id="提前暴露Bean"><a href="#提前暴露Bean" class="headerlink" title="提前暴露Bean"></a>提前暴露Bean</h3><p>现在让我们去到创建Bean的过程。如果缓存没取到，会执行创建Bean的逻辑，找到<code>AbstractAutowireCapableBeanFactory</code>类的<code>doCreateBean</code>方法，这个方法在之前的文章中有做过分析，但没有对Bean缓存处理做分析。这里我们着重看中间解决循环依赖的那部分</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><span class="line">protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final Object[] args)</span><br><span class="line">		throws BeanCreationException &#123;</span><br><span class="line"></span><br><span class="line">	// Instantiate the bean.</span><br><span class="line">	// 封装bean的容器</span><br><span class="line">	BeanWrapper instanceWrapper = null;</span><br><span class="line">	if (mbd.isSingleton()) &#123;</span><br><span class="line">		instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);</span><br><span class="line">	&#125;</span><br><span class="line">	if (instanceWrapper == null) &#123;</span><br><span class="line">		// 这里是创建 BeanWrapper </span><br><span class="line">		instanceWrapper = createBeanInstance(beanName, mbd, args);</span><br><span class="line">	&#125;</span><br><span class="line">	final Object bean = (instanceWrapper != null ? instanceWrapper.getWrappedInstance() : null);</span><br><span class="line">	Class&lt;?&gt; beanType = (instanceWrapper != null ? instanceWrapper.getWrappedClass() : null);</span><br><span class="line">	mbd.resolvedTargetType = beanType;</span><br><span class="line"></span><br><span class="line">	// Allow post-processors to modify the merged bean definition.</span><br><span class="line">	synchronized (mbd.postProcessingLock) &#123;</span><br><span class="line">		if (!mbd.postProcessed) &#123;</span><br><span class="line">			try &#123;</span><br><span class="line">				applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);</span><br><span class="line">			&#125;</span><br><span class="line">			catch (Throwable ex) &#123;</span><br><span class="line">				throw new BeanCreationException(mbd.getResourceDescription(), beanName,</span><br><span class="line">						&quot;Post-processing of merged bean definition failed&quot;, ex);</span><br><span class="line">			&#125;</span><br><span class="line">			mbd.postProcessed = true;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 判断是否需要提前暴露对象的引用，用于解决循环依赖</span><br><span class="line">	boolean earlySingletonExposure = (mbd.isSingleton() &amp;&amp; this.allowCircularReferences &amp;&amp;</span><br><span class="line">			isSingletonCurrentlyInCreation(beanName));</span><br><span class="line">	if (earlySingletonExposure) &#123;</span><br><span class="line">		if (logger.isDebugEnabled()) &#123;</span><br><span class="line">			logger.debug(&quot;Eagerly caching bean &apos;&quot; + beanName +</span><br><span class="line">					&quot;&apos; to allow for resolving potential circular references&quot;);</span><br><span class="line">		&#125;</span><br><span class="line">		addSingletonFactory(beanName, new ObjectFactory&lt;Object&gt;() &#123;</span><br><span class="line">			@Override</span><br><span class="line">			public Object getObject() throws BeansException &#123;</span><br><span class="line">                                 // 这里会与AOP相关</span><br><span class="line">				return getEarlyBeanReference(beanName, mbd, bean);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// Initialize the bean instance.</span><br><span class="line">	Object exposedObject = bean;</span><br><span class="line">	try &#123;</span><br><span class="line">		// 依赖注入的主逻辑</span><br><span class="line">		populateBean(beanName, mbd, instanceWrapper);</span><br><span class="line">		if (exposedObject != null) &#123;</span><br><span class="line">			//	执行一些初始化的方法</span><br><span class="line">			exposedObject = initializeBean(beanName, exposedObject, mbd);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	catch (Throwable ex) &#123;</span><br><span class="line">		if (ex instanceof BeanCreationException &amp;&amp; beanName.equals(((BeanCreationException) ex).getBeanName())) &#123;</span><br><span class="line">			throw (BeanCreationException) ex;</span><br><span class="line">		&#125;</span><br><span class="line">		else &#123;</span><br><span class="line">			throw new BeanCreationException(</span><br><span class="line">					mbd.getResourceDescription(), beanName, &quot;Initialization of bean failed&quot;, ex);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	if (earlySingletonExposure) &#123;</span><br><span class="line">		Object earlySingletonReference = getSingleton(beanName, false);</span><br><span class="line">		if (earlySingletonReference != null) &#123;</span><br><span class="line">			if (exposedObject == bean) &#123;</span><br><span class="line">				exposedObject = earlySingletonReference;</span><br><span class="line">			&#125;</span><br><span class="line">			else if (!this.allowRawInjectionDespiteWrapping &amp;&amp; hasDependentBean(beanName)) &#123;</span><br><span class="line">				String[] dependentBeans = getDependentBeans(beanName);</span><br><span class="line">				Set&lt;String&gt; actualDependentBeans = new LinkedHashSet&lt;String&gt;(dependentBeans.length);</span><br><span class="line">				for (String dependentBean : dependentBeans) &#123;</span><br><span class="line">					if (!removeSingletonIfCreatedForTypeCheckOnly(dependentBean)) &#123;</span><br><span class="line">						actualDependentBeans.add(dependentBean);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				if (!actualDependentBeans.isEmpty()) &#123;</span><br><span class="line">					throw new BeanCurrentlyInCreationException(beanName,</span><br><span class="line">							&quot;Bean with name &apos;&quot; + beanName + &quot;&apos; has been injected into other beans [&quot; +</span><br><span class="line">							StringUtils.collectionToCommaDelimitedString(actualDependentBeans) +</span><br><span class="line">							&quot;] in its raw version as part of a circular reference, but has eventually been &quot; +</span><br><span class="line">							&quot;wrapped. This means that said other beans do not use the final version of the &quot; +</span><br><span class="line">							&quot;bean. This is often the result of over-eager type matching - consider using &quot; +</span><br><span class="line">							&quot;&apos;getBeanNamesOfType&apos; with the &apos;allowEagerInit&apos; flag turned off, for example.&quot;);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// Register bean as disposable.</span><br><span class="line">	try &#123;</span><br><span class="line">		registerDisposableBeanIfNecessary(beanName, bean, mbd);</span><br><span class="line">	&#125;</span><br><span class="line">	catch (BeanDefinitionValidationException ex) &#123;</span><br><span class="line">		throw new BeanCreationException(</span><br><span class="line">				mbd.getResourceDescription(), beanName, &quot;Invalid destruction signature&quot;, ex);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	return exposedObject;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过看代码，可知在Bean完成实例化之后，注入属性之前，<code>Spring</code>就将这个不完整的<code>Bean</code>放到了<code>singletonFactories</code>缓存中，从而让这个<code>Bean</code>提前进行了暴露。这样子在后续的属性注入操作中，如果存在循环依赖，就会从缓存中获取到这个提前暴露的<code>Bean</code>，从而可以顺利完成依赖注入。<strong>但是要注意这时候注入的对象是不完整的</strong>，但是因为依赖方已经持有它的引用，所以后续对象的完整性是可以保证的</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本篇文章主要从<code>Spring</code>对<code>Bean</code>的缓存层面分析了其对<code>循环依赖</code>的解决，虽然是<code>Spring</code>帮我们解决了这个问题，但是对于实现的逻辑我们仍然应该去了解，譬如，通过查看源码可知<code>Spring</code>仅仅对单例类型的循环依赖进行解决，对于有状态的<code>Bean</code>Spring并没有去做处理，而是直接跑出异常，这些都是需要注意的。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/" target="_blank" title="Spring IOC 源码解析 （循环依赖的解决）">http://wangjunnan.github.io/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/12/27/I-O模型简介/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          I/O模型简介
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/12/20/Java线程池分析/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Java线程池分析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是循环依赖"><span class="nav-number">2.</span> <span class="nav-text">什么是循环依赖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring-如何解决循环依赖"><span class="nav-number">3.</span> <span class="nav-text">Spring 如何解决循环依赖</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring-用缓存解决循环依赖"><span class="nav-number">4.</span> <span class="nav-text">Spring 用缓存解决循环依赖</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#getSingleton方法"><span class="nav-number">4.1.</span> <span class="nav-text">getSingleton方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#提前暴露Bean"><span class="nav-number">4.2.</span> <span class="nav-text">提前暴露Bean</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

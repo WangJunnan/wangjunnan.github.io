@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>java nio selector 多路复用选择器 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="NIO">
+  
+  
+  
+  
+  <meta name="description" content="引言上篇文章我们简单的使用了NIO的Channel通道，本期我们主要来介绍一下选择器（Selector）的使用，Selector是Java NIO核心组件中的一个。在之前介绍5种I/O模型的时候，有介绍过多路复用模型。多路复用模型使得我们可以使用一个线程来管理成千上万的连接，避免了线程上下文切换带来的开销，使得性能得到极大的提升 基本模型选择器Selector使用的基本模式，跟传统BIO处理模型不">
+<meta name="keywords" content="NIO">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java NIO Selector 多路复用选择器">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/01/20/Java-NIO-Selector-多路复用选择器/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言上篇文章我们简单的使用了NIO的Channel通道，本期我们主要来介绍一下选择器（Selector）的使用，Selector是Java NIO核心组件中的一个。在之前介绍5种I/O模型的时候，有介绍过多路复用模型。多路复用模型使得我们可以使用一个线程来管理成千上万的连接，避免了线程上下文切换带来的开销，使得性能得到极大的提升 基本模型选择器Selector使用的基本模式，跟传统BIO处理模型不">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-86f2efcd8869bdcd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.196Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java NIO Selector 多路复用选择器">
+<meta name="twitter:description" content="引言上篇文章我们简单的使用了NIO的Channel通道，本期我们主要来介绍一下选择器（Selector）的使用，Selector是Java NIO核心组件中的一个。在之前介绍5种I/O模型的时候，有介绍过多路复用模型。多路复用模型使得我们可以使用一个线程来管理成千上万的连接，避免了线程上下文切换带来的开销，使得性能得到极大的提升 基本模型选择器Selector使用的基本模式，跟传统BIO处理模型不">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2717496-86f2efcd8869bdcd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Java-NIO-Selector-多路复用选择器" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Java NIO Selector 多路复用选择器
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/" class="article-date">
+	  <time datetime="2019-01-20T08:36:41.000Z" itemprop="datePublished">2019-01-20</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/NIO/">NIO</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>上篇文章我们简单的使用了<code>NIO</code>的<code>Channel</code>通道，本期我们主要来介绍一下选择器（Selector<br>）的使用，<code>Selector</code>是<code>Java NIO</code>核心组件中的一个。在之前介绍5种I/O模型的时候，有介绍过<code>多路复用模型</code>。多路复用模型使得我们可以使用一个线程来管理成千上万的连接，避免了线程上下文切换带来的开销，使得性能得到极大的提升</p>
+<h2 id="基本模型"><a href="#基本模型" class="headerlink" title="基本模型"></a>基本模型</h2><p>选择器<code>Selector</code>使用的基本模式，跟传统BIO处理模型不一样。传统<code>BIO</code>往往我们会使用多线程来提升处理性能，也就是说每接入一个Client，Server端就会为其新开一个线程，以此来提升并发吞吐量，使用这种模式的弊端很明显，因为线程是系统非常重要的资源，当并发量少的时候，感觉不到，一旦并发量上来，就会出现瓶颈。</p>
+<p>再来看<code>Selector</code>是如何处理的，首先每接入一个Client，我们可以通过<code>Selector</code>选择器注册感兴趣的事件，然后通过一个线程去不停的轮询检测各个Client是否有感兴趣的事件发生，有则顺序处理该Client就绪的各个事件。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-86f2efcd8869bdcd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<h2 id="Selector-使用实例"><a href="#Selector-使用实例" class="headerlink" title="Selector 使用实例"></a>Selector 使用实例</h2><p>我们先来看一个<code>Selector</code>非常常见的使用例子</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">	  <span class="comment">// 打开一个通道</span></span><br><span class="line">    ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();</span><br><span class="line">    serverSocketChannel.socket().bind(<span class="keyword">new</span> InetSocketAddress(<span class="number">8890</span>));</span><br><span class="line">    <span class="comment">// 打开 选择器 selector</span></span><br><span class="line">    Selector selector = Selector.open();</span><br><span class="line">    <span class="comment">// 设置非阻塞</span></span><br><span class="line">    serverSocketChannel.configureBlocking(<span class="keyword">false</span>);</span><br><span class="line">    <span class="comment">// 为ServerSocketChannel注册 OP_ACCEPT 事件，返回一个SelectionKey 对象</span></span><br><span class="line">    serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">    		<span class="comment">// 返回至少有一个事件就绪的通道数，该方法是阻塞的</span></span><br><span class="line">        <span class="keyword">int</span> readyNum = selector.select();</span><br><span class="line">        <span class="keyword">if</span> (readyNum == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">			</span><br><span class="line">			<span class="comment">// 返回就绪的 SelectionKey集合</span></span><br><span class="line">        Set&lt;SelectionKey&gt; selectionKeys = selector.selectedKeys();</span><br><span class="line">        Iterator&lt;SelectionKey&gt; iteratorKeys = selectionKeys.iterator();</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 遍历所有就绪的SelectionKey集合</span></span><br><span class="line">        <span class="keyword">while</span> (iteratorKeys.hasNext()) &#123;</span><br><span class="line">            SelectionKey key = iteratorKeys.next();</span><br><span class="line">            iteratorKeys.remove();</span><br><span class="line">				 <span class="comment">// 判断就绪的具体事件</span></span><br><span class="line">            <span class="keyword">if</span> (key.isValid()) &#123;</span><br><span class="line">                <span class="keyword">if</span> (key.isAcceptable()) &#123;</span><br><span class="line">                    ServerSocketChannel serverChannel = (ServerSocketChannel) key.channel();</span><br><span class="line">                    <span class="comment">// 接受一个新连接</span></span><br><span class="line">                    SocketChannel channel = serverChannel.accept();</span><br><span class="line">                    channel.configureBlocking(<span class="keyword">false</span>);</span><br><span class="line">                    <span class="comment">// 为该Channel注册可读事件</span></span><br><span class="line">                    channel.register(selector, SelectionKey.OP_READ);</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (key.isReadable()) &#123;</span><br><span class="line">                    ...</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过查看上面的代码，可知我们通过<code>Selector.open()</code>创建了一个选择器，并且通过<code>SocketChannel</code>的<code>register</code>方法注册了选择器和事件，其中<code>register</code>方法会返回一个<code>SelectionKey</code>对象，该对象其实就是维护了<code>Channel</code>和<code>Selector</code>的对应关系</p>
+<h3 id="SelectionKey"><a href="#SelectionKey" class="headerlink" title="SelectionKey"></a>SelectionKey</h3><p>上文我们提到<code>SelectionKey</code>对象维护了<code>Channel</code>和<code>Selector</code>的对应关系，现在我们来看下<br><code>SelectionKey</code>对象内部几个非常重要的属性和方法</p>
+<ul>
+<li><p>属性</p>
+<ul>
+<li>OP_READ OP_WRITE OP_CONNECT OP_ACCEPT 可注册的四个感兴趣的项目</li>
+<li>interestOps 所有感兴趣的集合</li>
+<li>readyOps 所有就绪的兴趣集合</li>
+</ul>
+</li>
+<li><p>方法</p>
+<ul>
+<li>boolean isValid() 判断该<code>SelectionKey</code>是否有效</li>
+<li>void cancel() 取消该<code>SelectionKey</code>中 通道与其选择器 的注册</li>
+<li>int interestOps() 返回该<code>SelectionKey</code>所包含的所有兴趣（可读可写）集合</li>
+<li>SelectionKey interestOps(int ops) 设置一个感兴趣的项目</li>
+<li>int readyOps() 返回已经就绪的兴趣集合</li>
+<li>boolean isWritable() 判断是否可写</li>
+<li>boolean isReadable() 判断是否可读</li>
+<li>boolean isConnectable() 判断是否可连接</li>
+<li>boolean isAcceptable() 判断是否可接受</li>
+<li>Object attach(Object ob) 在该<code>SelectionKey</code>中附加一个对象信息</li>
+<li>Object attachment() 获取附加对象信息</li>
+</ul>
+</li>
+</ul>
+<h2 id="Selector"><a href="#Selector" class="headerlink" title="Selector"></a>Selector</h2><p>讲完<code>SelectionKey</code>和<code>Selector</code>的关系之后，我们再次回到<code>Selector</code>类，我们首先需要知道<code>Selector</code>中3个重要的<code>SelectionKey</code>集合</p>
+<ul>
+<li><code>keys</code>：所有注册到Selector的Channel所表示的SelectionKey都会存在于该集合中。keys元素的添加会在Channel注册到Selector时发生。</li>
+<li><code>selectedKeys</code>：该集合中的每个SelectionKey都是其对应的Channel在上一次操作selection期间被检查到至少有一种SelectionKey中所感兴趣的操作已经准备好被处理。该集合是keys的一个子集。</li>
+<li><code>cancelledKeys</code>：执行了取消操作的SelectionKey会被放入到该集合中。该集合是keys的一个子集。</li>
+</ul>
+<p>接下来将会介绍上文例子中所用到的几个方法</p>
+<h3 id="Selector-open"><a href="#Selector-open" class="headerlink" title="Selector.open()"></a>Selector.open()</h3><p>这个静态方法可以打开一个<code>Selector</code>选择器</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Selector <span class="title">open</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> SelectorProvider.provider().openSelector();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过查看源码可知在<code>Linux</code>系统下默认会使用<code>EpollSelectorImpl</code>来作为<code>Selector</code>实现类，注意各个系统下默认的实现类是不同的。</p>
+<h3 id="selector-select"><a href="#selector-select" class="headerlink" title="selector.select()"></a>selector.select()</h3><p><code>Selector</code>的<code>select()</code>方法会返回事件就绪的<code>SelectionKey</code>数目（也就是就绪的Channel数）</p>
+<p>并且该方法会一直阻塞直到至少一个<code>channel</code>被选择(即，该<code>channel</code>注册的事件发生了)为止，除非当前线程发生中断或者<code>selector</code>的<code>wakeup</code>方法被调用</p>
+<p>该方法还有一个重载<code>select(long timeout)</code>，可以自定义超时时间</p>
+<h3 id="selector-selectNow"><a href="#selector-selectNow" class="headerlink" title="selector.selectNow()"></a>selector.selectNow()</h3><p>该方法与上面方法类似，但该方法不会发生阻塞，即使没有一个<code>channel</code>被选择也会立即返回</p>
+<h3 id="selector-selectedKeys"><a href="#selector-selectedKeys" class="headerlink" title="selector.selectedKeys()"></a>selector.selectedKeys()</h3><p>返回已就绪的<code>SelectionKey</code>集合，该方法在执行了<code>selector.select()</code>后调用，因为在执行<code>selector.select()</code>后就表示至少有一个<code>SelectionKey</code>已经就绪</p>
+<h2 id="尾言"><a href="#尾言" class="headerlink" title="尾言"></a>尾言</h2><p>好了，本篇文章就介绍到这里了，篇幅有限加上本人对<code>NIO</code>的理解也有待加深，希望可以在之后更深入的对<code>Java NIO</code>的实现进行分析。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/" target="_blank" title="Java NIO Selector 多路复用选择器">http://wangjunnan.github.io/2019/01/20/Java-NIO-Selector-多路复用选择器/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/01/20/Tomcat源码解析一-架构初窥/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Tomcat源码解析一 架构初窥
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/01/13/无参read返回int类型为何要与上0xff/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">无参read返回int类型为何要与上0xff</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基本模型"><span class="nav-number">2.</span> <span class="nav-text">基本模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Selector-使用实例"><span class="nav-number">3.</span> <span class="nav-text">Selector 使用实例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SelectionKey"><span class="nav-number">3.1.</span> <span class="nav-text">SelectionKey</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Selector"><span class="nav-number">4.</span> <span class="nav-text">Selector</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Selector-open"><span class="nav-number">4.1.</span> <span class="nav-text">Selector.open()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#selector-select"><span class="nav-number">4.2.</span> <span class="nav-text">selector.select()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#selector-selectNow"><span class="nav-number">4.3.</span> <span class="nav-text">selector.selectNow()</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#selector-selectedKeys"><span class="nav-number">4.4.</span> <span class="nav-text">selector.selectedKeys()</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#尾言"><span class="nav-number">5.</span> <span class="nav-text">尾言</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

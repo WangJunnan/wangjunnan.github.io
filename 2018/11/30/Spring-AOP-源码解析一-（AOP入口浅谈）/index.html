@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>spring aop 源码解析一 （aop入口浅谈） | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Spring">
+  
+  
+  
+  
+  <meta name="description" content="引言在进行aop的源码解析之前，我们首先要知道Spring AOP是怎么用的，只有知道怎么用的，我们才能更好的理解aop，才能进行下一步解析 使用AOP好了，废话不多说，我们直接动手来用一下spring的AOP实现  首先新建一个MyPointCut接口，并且实现它  12345678910/** * MyPointCut * * @author wangjn * @date 2018/12/7">
+<meta name="keywords" content="Spring">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring AOP 源码解析一 （AOP入口浅谈）">
+<meta property="og:url" content="http://wangjunnan.github.io/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言在进行aop的源码解析之前，我们首先要知道Spring AOP是怎么用的，只有知道怎么用的，我们才能更好的理解aop，才能进行下一步解析 使用AOP好了，废话不多说，我们直接动手来用一下spring的AOP实现  首先新建一个MyPointCut接口，并且实现它  12345678910/** * MyPointCut * * @author wangjn * @date 2018/12/7">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.204Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring AOP 源码解析一 （AOP入口浅谈）">
+<meta name="twitter:description" content="引言在进行aop的源码解析之前，我们首先要知道Spring AOP是怎么用的，只有知道怎么用的，我们才能更好的理解aop，才能进行下一步解析 使用AOP好了，废话不多说，我们直接动手来用一下spring的AOP实现  首先新建一个MyPointCut接口，并且实现它  12345678910/** * MyPointCut * * @author wangjn * @date 2018/12/7">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Spring-AOP-源码解析一-（AOP入口浅谈）" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Spring AOP 源码解析一 （AOP入口浅谈）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/" class="article-date">
+	  <time datetime="2018-11-30T07:55:08.000Z" itemprop="datePublished">2018-11-30</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在进行aop的源码解析之前，我们首先要知道<code>Spring AOP</code>是怎么用的，只有知道怎么用的，我们才能更好的理解aop，才能进行下一步解析</p>
+<h2 id="使用AOP"><a href="#使用AOP" class="headerlink" title="使用AOP"></a>使用AOP</h2><p>好了，废话不多说，我们直接动手来用一下<code>spring</code>的<code>AOP</code>实现</p>
+<ul>
+<li>首先新建一个<code>MyPointCut</code>接口，并且实现它</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * MyPointCut</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> wangjn</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span> 2018/12/7</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">MyPointCut</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">sayHello</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * MyPointCutImpl</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> wangjn</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@date</span> 2018/12/10</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyPointCutImpl</span> <span class="keyword">implements</span> <span class="title">MyPointCut</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">sayHello</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">"hello world"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>新建一个<code>MyAspect</code>接口，接口里的方法是我们之后要切入的aop逻辑方法</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * MyAspect</span><br><span class="line"> */</span><br><span class="line">public interface MyAspect &#123;</span><br><span class="line"></span><br><span class="line">    void logBefore();</span><br><span class="line">    void logAfter();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * MyAspectImpl</span><br><span class="line"> */</span><br><span class="line">public class MyAspectImpl implements MyAspect &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void logBefore() &#123;</span><br><span class="line">        System.out.println(&quot;log before&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void logAfter() &#123;</span><br><span class="line">        System.out.println(&quot;log after&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>spring xml</code> 配置</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span><br><span class="line">&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;</span><br><span class="line">       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot; xmlns:aop=&quot;http://www.springframework.org/schema/aop&quot;</span><br><span class="line">       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd&quot;&gt;</span><br><span class="line"></span><br><span class="line">    &lt;bean id=&quot;myPointCut&quot; class=&quot;com.wangjn.demo.impl.MyPointCutImpl&quot;&gt;&lt;/bean&gt;</span><br><span class="line">    &lt;bean id=&quot;aspectTest&quot; class=&quot;com.wangjn.demo.MyAspectImpl&quot;/&gt;</span><br><span class="line">    &lt;aop:config&gt;</span><br><span class="line">        &lt;aop:aspect id=&quot;log&quot; ref=&quot;aspectTest&quot;&gt;</span><br><span class="line">            &lt;aop:pointcut id=&quot;addAllMethod&quot; expression=&quot;execution(* com.wangjn.demo.MyPointCut.*(..))&quot; /&gt;</span><br><span class="line">            &lt;aop:before method=&quot;logBefore&quot; pointcut-ref=&quot;addAllMethod&quot; /&gt;</span><br><span class="line">            &lt;aop:after method=&quot;logAfter&quot; pointcut-ref=&quot;addAllMethod&quot; /&gt;</span><br><span class="line">        &lt;/aop:aspect&gt;</span><br><span class="line">    &lt;/aop:config&gt;</span><br><span class="line"></span><br><span class="line">&lt;/beans&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>写个main方法</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Start</span><br><span class="line"> */</span><br><span class="line">public class Start &#123;</span><br><span class="line"></span><br><span class="line">    public static void main(String[] args) throws IOException &#123;</span><br><span class="line">        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]&#123;&quot;spring.xml&quot;&#125;);</span><br><span class="line">        context.start();</span><br><span class="line">        // 取得bean myPointCut</span><br><span class="line">        MyPointCut myPointCut = (MyPointCut)context.getBean(&quot;myPointCut&quot;);</span><br><span class="line">        myPointCut.sayHello();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行结果输出，可知<code>myPointCut</code>的方案前后都额外执行了aop要织入的逻辑，这就是aop的神奇之处，<strong>可以在原代码毫无感知的情况下执行额外逻辑</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">log before</span><br><span class="line">hello world</span><br><span class="line">log after</span><br></pre></td></tr></table></figure>
+<ul>
+<li>通过上面代码简单的演示，我们大致知道了aop是怎么使用的，不过显然知道怎么用并不是我们所要追求的，接下来就我们从aop的源码入口一步一步的解析它的实现原理</li>
+</ul>
+<h2 id="AOP源码入口"><a href="#AOP源码入口" class="headerlink" title="AOP源码入口"></a>AOP源码入口</h2><p>要想知道aop的实现原理，我们首先要了解的就是<code>spinng ioc</code>容器是怎么解析我们的aop配置的，这里我们暂且只看xml形式的配置解析</p>
+<p>好了，回到上面的<code>spring配置文件</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&lt;aop:config&gt;</span><br><span class="line">        &lt;aop:aspect id=&quot;log&quot; ref=&quot;aspectTest&quot;&gt;</span><br><span class="line">            &lt;aop:pointcut id=&quot;addAllMethod&quot; expression=&quot;execution(* com.wangjn.demo.MyPointCut.*(..))&quot; /&gt;</span><br><span class="line">            &lt;aop:before method=&quot;logBefore&quot; pointcut-ref=&quot;addAllMethod&quot; /&gt;</span><br><span class="line">            &lt;aop:after method=&quot;logAfter&quot; pointcut-ref=&quot;addAllMethod&quot; /&gt;</span><br><span class="line">        &lt;/aop:aspect&gt;</span><br><span class="line">    &lt;/aop:config&gt;</span><br></pre></td></tr></table></figure></p>
+<p>可以看到都是<code>spring aop</code>的自定义标签，在之前解析<code>spring ioc源码</code>的时候我们已经知道，spring是支持自定义的标签解析的，自定义标签的入口文件在<code>META-INF/spring.handlers</code>中，我们找到<code>spring aop</code>jar包下的这个目录，打开这个文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http\://www.springframework.org/schema/aop=org.springframework.aop.config.AopNamespaceHandler</span><br></pre></td></tr></table></figure>
+<p>可以看到这里配置了一个aop命名空间的解析器 <code>org.springframework.aop.config.AopNamespaceHandler</code>，现在我们就从这个入口文件来进行源码分析</p>
+<h2 id="AopNamespaceHandler"><a href="#AopNamespaceHandler" class="headerlink" title="AopNamespaceHandler"></a>AopNamespaceHandler</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public class AopNamespaceHandler extends NamespaceHandlerSupport &#123;</span><br><span class="line"></span><br><span class="line">	/**</span><br><span class="line">	 * Register the &#123;@link BeanDefinitionParser BeanDefinitionParsers&#125; for the</span><br><span class="line">	 * &apos;&#123;@code config&#125;&apos;, &apos;&#123;@code spring-configured&#125;&apos;, &apos;&#123;@code aspectj-autoproxy&#125;&apos;</span><br><span class="line">	 * and &apos;&#123;@code scoped-proxy&#125;&apos; tags.</span><br><span class="line">	 */</span><br><span class="line">	@Override</span><br><span class="line">	public void init() &#123;</span><br><span class="line">		// In 2.0 XSD as well as in 2.1 XSD.</span><br><span class="line">		registerBeanDefinitionParser(&quot;config&quot;, new ConfigBeanDefinitionParser());</span><br><span class="line">		// 支持 @AspectJ 声明式配置</span><br><span class="line">		registerBeanDefinitionParser(&quot;aspectj-autoproxy&quot;, new AspectJAutoProxyBeanDefinitionParser());</span><br><span class="line">		registerBeanDefinitionDecorator(&quot;scoped-proxy&quot;, new ScopedProxyBeanDefinitionDecorator());</span><br><span class="line"></span><br><span class="line">		// Only in 2.0 XSD: moved to context namespace as of 2.1</span><br><span class="line">		registerBeanDefinitionParser(&quot;spring-configured&quot;, new SpringConfiguredBeanDefinitionParser());</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里我们可以看到对<code>config</code>属性的解析是由<code>ConfigBeanDefinitionParser</code>完成的。<code>ConfigBeanDefinitionParser</code>是<code>BeanDefinitionParser</code>接口的实现，其中的<code>parse</code>方法封装了对<code>&lt;aop:config&gt;</code>属性标签的解析逻辑</p>
+<h2 id="ConfigBeanDefinitionParser的parse方法"><a href="#ConfigBeanDefinitionParser的parse方法" class="headerlink" title="ConfigBeanDefinitionParser的parse方法"></a>ConfigBeanDefinitionParser的parse方法</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> BeanDefinition <span class="title">parse</span><span class="params">(Element element, ParserContext parserContext)</span> </span>&#123;</span><br><span class="line">	CompositeComponentDefinition compositeDef =</span><br><span class="line">			<span class="keyword">new</span> CompositeComponentDefinition(element.getTagName(), parserContext.extractSource(element));</span><br><span class="line">	parserContext.pushContainingComponent(compositeDef);</span><br><span class="line"></span><br><span class="line">	configureAutoProxyCreator(parserContext, element);</span><br><span class="line"></span><br><span class="line">	List&lt;Element&gt; childElts = DomUtils.getChildElements(element);</span><br><span class="line">	<span class="keyword">for</span> (Element elt: childElts) &#123;</span><br><span class="line">		String localName = parserContext.getDelegate().getLocalName(elt);</span><br><span class="line">		<span class="comment">// pointCut标签</span></span><br><span class="line">		<span class="keyword">if</span> (POINTCUT.equals(localName)) &#123;</span><br><span class="line">			parsePointcut(elt, parserContext);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// advisor标签</span></span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (ADVISOR.equals(localName)) &#123;</span><br><span class="line">			parseAdvisor(elt, parserContext);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// aspect标签</span></span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (ASPECT.equals(localName)) &#123;</span><br><span class="line">			parseAspect(elt, parserContext);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	parserContext.popAndRegisterContainingComponent();</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以清晰的看到，这里分别对<code>pointcut</code>,<code>advisor</code>,<code>aspect</code>三种标签进行解析</p>
+<h2 id="configureAutoProxyCreator-parserContext-element"><a href="#configureAutoProxyCreator-parserContext-element" class="headerlink" title="configureAutoProxyCreator(parserContext, element)"></a>configureAutoProxyCreator(parserContext, element)</h2><p>这里配置了代理创建类，调用了<code>AopNamespaceUtils.registerAspectJAutoProxyCreatorIfNecessary</code>方法完成配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">private void configureAutoProxyCreator(ParserContext parserContext, Element element) &#123;</span><br><span class="line">	AopNamespaceUtils.registerAspectJAutoProxyCreatorIfNecessary(parserContext, element);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们来看下 <code>AopNamespaceUtils.registerAspectJAutoProxyCreatorIfNecessary</code>的实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public static void registerAspectJAutoProxyCreatorIfNecessary(</span><br><span class="line">		ParserContext parserContext, Element sourceElement) &#123;</span><br><span class="line">	// 获取代理创建类 AspectJAwareAdvisorAutoProxyCreator并命名为org.springframework.aop.config.internalAutoProxyCreator</span><br><span class="line">	</span><br><span class="line">	BeanDefinition beanDefinition = AopConfigUtils.registerAspectJAutoProxyCreatorIfNecessary(</span><br><span class="line">			parserContext.getRegistry(), parserContext.extractSource(sourceElement));</span><br><span class="line">	// 判断是否使用 CGLIB 创建代理，指定proxy-target-class=true则使用CGLIB，否则使用JDK动态代理</span><br><span class="line">	useClassProxyingIfNecessary(parserContext.getRegistry(), sourceElement);</span><br><span class="line">	// 往 spring ioc 容器注册AspectJAwareAdvisorAutoProxyCreator代理创建器</span><br><span class="line">	registerComponentIfNecessary(beanDefinition, parserContext);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到这段代码主要做了两件事情</p>
+<ol>
+<li>注册代理创建器 <code>AspectJAwareAdvisorAutoProxyCreator</code>，这个类很重要，是 <code>aop</code>的核心实现类</li>
+<li>指定创建代理的方式，其中如果<code>&lt;aop:config&gt;</code>节点配置了<code>proxy-target-class=true</code>，则使用<code>CGLIB</code>创建代理，否则默认使用<code>JDK 动态代理</code></li>
+</ol>
+<h2 id="parsePointcut"><a href="#parsePointcut" class="headerlink" title="parsePointcut"></a>parsePointcut</h2><p>解析aop的切入点配置，对应 <code>&lt;aop:pointcut&gt;</code>标签<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">private AbstractBeanDefinition parsePointcut(Element pointcutElement, ParserContext parserContext) &#123;</span><br><span class="line">	// 获取我们配置的 pointCut 切入点 id</span><br><span class="line">	String id = pointcutElement.getAttribute(ID);</span><br><span class="line">	// 获取要切入的 expression 表达式</span><br><span class="line">	String expression = pointcutElement.getAttribute(EXPRESSION);</span><br><span class="line"></span><br><span class="line">	AbstractBeanDefinition pointcutDefinition = null;</span><br><span class="line"></span><br><span class="line">	try &#123;</span><br><span class="line">		// 记录当前处理节点</span><br><span class="line">		this.parseState.push(new PointcutEntry(id));</span><br><span class="line">		// 创建 AspectJExpressionPointcut 类型的 beanDefinition，并且把expression属性赋给此bean</span><br><span class="line">		pointcutDefinition = createPointcutDefinition(expression);</span><br><span class="line">// 设置源数据		pointcutDefinition.setSource(parserContext.extractSource(pointcutElement));</span><br><span class="line">		</span><br><span class="line">		// 设置 bean的id名称</span><br><span class="line">		String pointcutBeanName = id;</span><br><span class="line">		if (StringUtils.hasText(pointcutBeanName)) &#123;</span><br><span class="line">		// 注册beanDefinution 至spring容器</span><br><span class="line">		parserContext.getRegistry().registerBeanDefinition(pointcutBeanName, pointcutDefinition);</span><br><span class="line">		&#125;</span><br><span class="line">		else &#123;</span><br><span class="line">			pointcutBeanName = parserContext.getReaderContext().registerWithGeneratedName(pointcutDefinition);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		parserContext.registerComponent(</span><br><span class="line">				new PointcutComponentDefinition(pointcutBeanName, pointcutDefinition, expression));</span><br><span class="line">	&#125;</span><br><span class="line">	finally &#123;</span><br><span class="line">		this.parseState.pop();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	return pointcutDefinition;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里主要是配置了aop切入点的bean <code>AspectJExpressionPointcut</code></p>
+<h2 id="parseAspect"><a href="#parseAspect" class="headerlink" title="parseAspect"></a>parseAspect</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">private void parseAspect(Element aspectElement, ParserContext parserContext) &#123;</span><br><span class="line">	// 获取切面id</span><br><span class="line">	String aspectId = aspectElement.getAttribute(ID);</span><br><span class="line">	// 获取切面要执行的具体逻辑类 这个是必须设置的属性</span><br><span class="line">	String aspectName = aspectElement.getAttribute(REF);</span><br><span class="line"></span><br><span class="line">	try &#123;</span><br><span class="line">		this.parseState.push(new AspectEntry(aspectId, aspectName));</span><br><span class="line">		List&lt;BeanDefinition&gt; beanDefinitions = new ArrayList&lt;BeanDefinition&gt;();</span><br><span class="line">		List&lt;BeanReference&gt; beanReferences = new ArrayList&lt;BeanReference&gt;();</span><br><span class="line"></span><br><span class="line">		List&lt;Element&gt; declareParents = DomUtils.getChildElementsByTagName(aspectElement, DECLARE_PARENTS);</span><br><span class="line">		for (int i = METHOD_INDEX; i &lt; declareParents.size(); i++) &#123;</span><br><span class="line">			Element declareParentsElement = declareParents.get(i);</span><br><span class="line">			beanDefinitions.add(parseDeclareParents(declareParentsElement, parserContext));</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		// We have to parse &quot;advice&quot; and all the advice kinds in one loop, to get the</span><br><span class="line">		// ordering semantics right.</span><br><span class="line">		// 解析advice标签</span><br><span class="line">		NodeList nodeList = aspectElement.getChildNodes();</span><br><span class="line">		boolean adviceFoundAlready = false;</span><br><span class="line">		for (int i = 0; i &lt; nodeList.getLength(); i++) &#123;</span><br><span class="line">			Node node = nodeList.item(i);</span><br><span class="line">			// 判断 advice 的类型是否是限定的几种（after before around）</span><br><span class="line">			if (isAdviceNode(node, parserContext)) &#123;</span><br><span class="line">				if (!adviceFoundAlready) &#123;</span><br><span class="line">					adviceFoundAlready = true;</span><br><span class="line">					// 如果没有配置 ref 属性，抛出异常</span><br><span class="line">					if (!StringUtils.hasText(aspectName)) &#123;</span><br><span class="line">						parserContext.getReaderContext().error(</span><br><span class="line">								&quot;&lt;aspect&gt; tag needs aspect bean reference via &apos;ref&apos; attribute when declaring advices.&quot;,</span><br><span class="line">								aspectElement, this.parseState.snapshot());</span><br><span class="line">						return;</span><br><span class="line">					&#125;</span><br><span class="line">					beanReferences.add(new RuntimeBeanReference(aspectName));</span><br><span class="line">				&#125;</span><br><span class="line">				// 开始解析advice节点</span><br><span class="line">				AbstractBeanDefinition advisorDefinition = parseAdvice(</span><br><span class="line">						aspectName, i, aspectElement, (Element) node, parserContext, beanDefinitions, beanReferences);</span><br><span class="line">				beanDefinitions.add(advisorDefinition);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		AspectComponentDefinition aspectComponentDefinition = createAspectComponentDefinition(</span><br><span class="line">				aspectElement, aspectId, beanDefinitions, beanReferences, parserContext);</span><br><span class="line">		parserContext.pushContainingComponent(aspectComponentDefinition);</span><br><span class="line">		// 解析 aspect 标签中的 pointcut</span><br><span class="line">		List&lt;Element&gt; pointcuts = DomUtils.getChildElementsByTagName(aspectElement, POINTCUT);</span><br><span class="line">		for (Element pointcutElement : pointcuts) &#123;</span><br><span class="line">			parsePointcut(pointcutElement, parserContext);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		parserContext.popAndRegisterContainingComponent();</span><br><span class="line">	&#125;</span><br><span class="line">	finally &#123;</span><br><span class="line">		this.parseState.pop();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="parseAdvice"><a href="#parseAdvice" class="headerlink" title="parseAdvice"></a>parseAdvice</h2><p><code>parseAdvice</code>这段代码的主要逻辑其实就是解析 <code>advice</code>标签，并最终包装成<code>advisor</code>。<code>advisor</code>其实相当于整合了<code>advice 通知</code>和<code>pointcut 切点</code>，相当于通过 <code>advisor</code>把切点和要执行的切面逻辑连接了起来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">private AbstractBeanDefinition parseAdvice(</span><br><span class="line">		String aspectName, int order, Element aspectElement, Element adviceElement, ParserContext parserContext,</span><br><span class="line">		List&lt;BeanDefinition&gt; beanDefinitions, List&lt;BeanReference&gt; beanReferences) &#123;</span><br><span class="line"></span><br><span class="line">	try &#123;</span><br><span class="line">		this.parseState.push(new AdviceEntry(parserContext.getDelegate().getLocalName(adviceElement)));</span><br><span class="line"></span><br><span class="line">		// create the method factory bean</span><br><span class="line">		// 创建切面增强方法对应的 methodDefinition，并设置 methodName targetBeanName属性</span><br><span class="line">		RootBeanDefinition methodDefinition = new RootBeanDefinition(MethodLocatingFactoryBean.class);</span><br><span class="line">		methodDefinition.getPropertyValues().add(&quot;targetBeanName&quot;, aspectName);</span><br><span class="line">		methodDefinition.getPropertyValues().add(&quot;methodName&quot;, adviceElement.getAttribute(&quot;method&quot;));</span><br><span class="line">		methodDefinition.setSynthetic(true);</span><br><span class="line"></span><br><span class="line">		// create instance factory definition</span><br><span class="line">		// 创建切面类 FactoryBean</span><br><span class="line">		RootBeanDefinition aspectFactoryDef =</span><br><span class="line">				new RootBeanDefinition(SimpleBeanFactoryAwareAspectInstanceFactory.class);</span><br><span class="line">		aspectFactoryDef.getPropertyValues().add(&quot;aspectBeanName&quot;, aspectName);</span><br><span class="line">		aspectFactoryDef.setSynthetic(true);</span><br><span class="line"></span><br><span class="line">		// register the pointcut</span><br><span class="line">		// 选择合适的 advice 并注册 pointcut</span><br><span class="line">		AbstractBeanDefinition adviceDef = createAdviceDefinition(</span><br><span class="line">				adviceElement, parserContext, aspectName, order, methodDefinition, aspectFactoryDef,</span><br><span class="line">				beanDefinitions, beanReferences);</span><br><span class="line"></span><br><span class="line">		// configure the advisor</span><br><span class="line">		// 配置 advisor，对应的类型是 AspectJPointcutAdvisor.class</span><br><span class="line">		RootBeanDefinition advisorDefinition = new RootBeanDefinition(AspectJPointcutAdvisor.class);</span><br><span class="line">		advisorDefinition.setSource(parserContext.extractSource(adviceElement));</span><br><span class="line">		advisorDefinition.getConstructorArgumentValues().addGenericArgumentValue(adviceDef);</span><br><span class="line">		if (aspectElement.hasAttribute(ORDER_PROPERTY)) &#123;</span><br><span class="line">			advisorDefinition.getPropertyValues().add(</span><br><span class="line">					ORDER_PROPERTY, aspectElement.getAttribute(ORDER_PROPERTY));</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		// register the final advisor</span><br><span class="line">		parserContext.getReaderContext().registerWithGeneratedName(advisorDefinition);</span><br><span class="line"></span><br><span class="line">		return advisorDefinition;</span><br><span class="line">	&#125;</span><br><span class="line">	finally &#123;</span><br><span class="line">		this.parseState.pop();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>这里划一下上面代码提到的几个重要的类:</strong></p>
+<ul>
+<li><code>Pointcut</code> 对应 <code>AspectJExpressionPointcut.class</code></li>
+<li><code>Advice</code> 对应 <code>AspectJMethodBeforeAdvice</code>,<code>AspectJAfterAdvice</code>， <code>AspectJAfterReturningAdvice</code>, <code>AspectJAfterThrowingAdvice</code>,<code>AspectJAroundAdvice</code>, 五种通知类型</li>
+<li><code>Advisor</code> 对应 <code>AspectJPointcutAdvisor.class</code></li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>到这里，对<code>AOP</code>的配置信息已经解析完成，并成功的放入<code>Spring</code>容器中。看到这里也许大家对<code>aop</code>的实现还是很模糊，并没有一个整体的概念。那是因为我们对<code>Aspect</code>， <code>Pointcut</code> ，<code>Advice</code>，<code>Advisor</code>这几个aop的主要概念还没有一个系统的认识，下篇文章我将会对这几个概念好好的聊一下。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/" target="_blank" title="Spring AOP 源码解析一 （AOP入口浅谈）">http://wangjunnan.github.io/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/12/10/Spring-AOP-源码解析二-（AOP核心概念及接口分析）/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Spring AOP 源码解析二 （AOP核心概念及接口分析）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/11/23/Spring-IOC-源码解析五（非延迟加载bean的初始化）/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Spring IOC 源码解析五（非延迟加载bean的初始化）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用AOP"><span class="nav-number">2.</span> <span class="nav-text">使用AOP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AOP源码入口"><span class="nav-number">3.</span> <span class="nav-text">AOP源码入口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AopNamespaceHandler"><span class="nav-number">4.</span> <span class="nav-text">AopNamespaceHandler</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ConfigBeanDefinitionParser的parse方法"><span class="nav-number">5.</span> <span class="nav-text">ConfigBeanDefinitionParser的parse方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#configureAutoProxyCreator-parserContext-element"><span class="nav-number">6.</span> <span class="nav-text">configureAutoProxyCreator(parserContext, element)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#parsePointcut"><span class="nav-number">7.</span> <span class="nav-text">parsePointcut</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#parseAspect"><span class="nav-number">8.</span> <span class="nav-text">parseAspect</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#parseAdvice"><span class="nav-number">9.</span> <span class="nav-text">parseAdvice</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">10.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

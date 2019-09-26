@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>java 泛型 你真的理解了吗？ | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="java基础">
+  
+  
+  
+  
+  <meta name="description" content="记录原由之前虽然泛型一直在使用，但使用的过程中总是没有那么得心应手，有些细节还是过于模糊。究其原因其实是一直都没有系统深入的去理解过，最近花了一点时间去深入的理解了一下java的泛型机制，也希望借这次记录能够彻底的理解java的泛型 为什么要有泛型泛型的本质是把 类型参数化，什么是类型参数化？举个例子，我们常用的集合类，要是没有类型参数化的话，我们就得实现装不同类型的集合类，会大大降低代码的可重用">
+<meta name="keywords" content="java基础">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JAVA 泛型 你真的理解了吗？">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/06/19/JAVA-泛型-你真的理解了吗？/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="记录原由之前虽然泛型一直在使用，但使用的过程中总是没有那么得心应手，有些细节还是过于模糊。究其原因其实是一直都没有系统深入的去理解过，最近花了一点时间去深入的理解了一下java的泛型机制，也希望借这次记录能够彻底的理解java的泛型 为什么要有泛型泛型的本质是把 类型参数化，什么是类型参数化？举个例子，我们常用的集合类，要是没有类型参数化的话，我们就得实现装不同类型的集合类，会大大降低代码的可重用">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.193Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JAVA 泛型 你真的理解了吗？">
+<meta name="twitter:description" content="记录原由之前虽然泛型一直在使用，但使用的过程中总是没有那么得心应手，有些细节还是过于模糊。究其原因其实是一直都没有系统深入的去理解过，最近花了一点时间去深入的理解了一下java的泛型机制，也希望借这次记录能够彻底的理解java的泛型 为什么要有泛型泛型的本质是把 类型参数化，什么是类型参数化？举个例子，我们常用的集合类，要是没有类型参数化的话，我们就得实现装不同类型的集合类，会大大降低代码的可重用">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-JAVA-泛型-你真的理解了吗？" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      JAVA 泛型 你真的理解了吗？
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/06/19/JAVA-泛型-你真的理解了吗？/" class="article-date">
+	  <time datetime="2019-06-19T08:16:53.000Z" itemprop="datePublished">2019-06-19</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="记录原由"><a href="#记录原由" class="headerlink" title="记录原由"></a>记录原由</h2><p>之前虽然泛型一直在使用，但使用的过程中总是没有那么得心应手，有些细节还是过于模糊。究其原因其实是一直都没有系统深入的去理解过，最近花了一点时间去深入的理解了一下java的泛型机制，也希望借这次记录能够彻底的理解java的泛型</p>
+<h2 id="为什么要有泛型"><a href="#为什么要有泛型" class="headerlink" title="为什么要有泛型"></a>为什么要有泛型</h2><p><strong>泛型的本质是把 类型参数化</strong>，什么是类型参数化？举个例子，我们常用的集合类，要是没有类型参数化的话，我们就得实现装不同类型的集合类，会大大降低代码的可重用性！</p>
+<p>例如我们要设计一个装苹果的盘子和一个装香蕉的盘子，要怎么设计呢？非常简单，最简单的方式就是设计两个盘子类，一个是苹果盘子，一个香蕉盘子，就像下面的代码一样</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ApplePlant</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Apple apple;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Apple <span class="title">getApple</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> apple;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setApple</span><span class="params">(Apple apple)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.apple = apple;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BananaPlant</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Banana banana;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Banana <span class="title">getBanana</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> banana;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setBanana</span><span class="params">(Banana banana)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.banana = banana;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码的确能够满足我们的需求，但就像上文所说的，这样的代码降低了代码的可重用性，那么我们要怎么优化呢，聪明的程序员们马上想到了，可以用<code>Object</code>来代替盘子里所指代的具体类型，就像下面这样</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ObjectPlant</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">private</span> Object object;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Object <span class="title">getObject</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> object;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setObject</span><span class="params">(Object object)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.object = object;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码看似完美解决了代码不可重用的问题，但同时也隐含了很多其他问题，例如在我们取数据的时候，取出来的只能是<code>Object</code>类型，需要我们强转类型，而往盘子中加入数据的时候，也没有任何验证，有可能往放苹果的盘子中加入了香蕉也说不定，因为编译器并没有做任何限制，只要是<code>Object</code>类型，都可以验证通过。</p>
+<p>上面的问题在Java 1.5引入了泛型之后得到了完美的解决，下面让我们来看看用泛型如何优雅的解决上述问题<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Plant</span> &lt;<span class="title">T</span>&gt;</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> T t;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> T <span class="title">getT</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> t;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setT</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.t = t;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在上面的代码中，我们定义了一个泛型类，它表示了一个可以<code>T</code>类型的篮子，而这个<code>T</code>类型需要到我们真正使用的时候才会去指定</p>
+<p>例如现在我们要定义两种盘子，可以这样声明<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Plant&lt;Apple&gt; applePlant = <span class="keyword">new</span> Plant&lt;&gt;();</span><br><span class="line">Plant&lt;Banana&gt; bananaPlant = <span class="keyword">new</span> Plant&lt;&gt;();</span><br><span class="line">Apple apple = <span class="keyword">new</span> Apple();</span><br><span class="line">Banana banana = <span class="keyword">new</span> Banana();</span><br><span class="line">applePlant.set(banana); <span class="comment">// 编译报错</span></span><br><span class="line">bananaPlant.set(apple); <span class="comment">// 编译报错</span></span><br></pre></td></tr></table></figure></p>
+<p>上面的代码之所以实际类型<code>new Plant&lt;&gt;()</code>的<code>&lt;&gt;</code>中没有指明具体类型，是因为Java7之后加了类型自动推断，也就不需要两侧都加上泛型类型</p>
+<p>可以看到使用了泛型之后，既提高了代码的可重用性，在实际使用时也对类型进行了约束，装苹果的盘子是装不了香蕉的！</p>
+<p>不过要注意的是，java的泛型约束是在编译时生效的，一旦编译成了class字节码文件后，一切都打回原形了，泛型信息会被擦除，所以我们把<code>JAVA</code>的泛型称为伪泛型，跟<code>C#</code>等语言的真泛型有着本质区别，在<code>C#</code>中，<code>List&lt;Integer&gt;</code>和<code>List&lt;String&gt;</code> 就是两种不同的类型</p>
+<p>如下面字节码文件的最后一行<code>invokevirtual</code>命令的方法描述符<code>Method setT:(Ljava/lang/Object;)V</code>，可知泛型类型已经被擦除成了<code>Object</code>类型，也就是在字节码层面实际上与我们直接用<code>Object</code>来实现是一样的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">0: new           #3                  // class com/sunshine/common/test/Plant</span><br><span class="line">         3: dup</span><br><span class="line">         4: invokespecial #4                  // Method &quot;&lt;init&gt;&quot;:()V</span><br><span class="line">         7: astore_1</span><br><span class="line">         8: aload_1</span><br><span class="line">         9: new           #5                  // class com/sunshine/common/test/Apple</span><br><span class="line">        12: dup</span><br><span class="line">        13: invokespecial #6                  // Method com/sunshine/common/test/Apple.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line">        16: invokevirtual #7                  // Method setT:(Ljava/lang/Object;)V</span><br></pre></td></tr></table></figure>
+<h2 id="泛型进阶"><a href="#泛型进阶" class="headerlink" title="泛型进阶"></a>泛型进阶</h2><h3 id="使用-lt-T-extends-gt-定义泛型类"><a href="#使用-lt-T-extends-gt-定义泛型类" class="headerlink" title="使用 &lt;T extends ?&gt; 定义泛型类"></a>使用 <code>&lt;T extends ?&gt;</code> 定义泛型类</h3><p>头一次看到上面两个符号，是不是有点懵逼？它们在代码里也非常常见，那么它们究竟是表示什么意思呢？<br>还是通过上文的<code>plant</code>盘子来举例吧，举一种情况，我们只希望这个盘子用来装一些水果，而不希望它被用来装肉，那么我们该怎么做呢？<br>现在的情况是，它既可以实例化成一个装香蕉的盘子，也可以被实例化成一个装肉的盘子<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Plant&lt;Apple&gt; applePlant = <span class="keyword">new</span> Plant&lt;&gt;(); <span class="comment">// </span></span><br><span class="line">Plant&lt;Meat&gt; meatPlant = <span class="keyword">new</span> Plant&lt;&gt;(); <span class="comment">// 都是Ok的</span></span><br></pre></td></tr></table></figure></p>
+<p>现在让我们来重新设计一个盘子类，通过<code>&lt;T extends Firut&gt;</code>来限制泛型，其实如果我们直接用<code>&lt;T&gt;</code>的编译成字节码后也会自动编译成<code>&lt;T extends Object&gt;</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">FirutPlant</span> &lt;<span class="title">T</span> <span class="keyword">extends</span> <span class="title">Firut</span>&gt;</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> T t;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> T <span class="title">getT</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> t;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setT</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.t = t;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FirutPlant&lt;Apple&gt; appleFirutPlant = <span class="keyword">new</span> FirutPlant&lt;&gt;(); <span class="comment">// OK</span></span><br><span class="line">FirutPlant&lt;Firut&gt; firutPlant = <span class="keyword">new</span> FirutPlant&lt;&gt;(); <span class="comment">// OK</span></span><br><span class="line">FirutPlant&lt;Meat&gt; meatFirutPlant = <span class="keyword">new</span> FirutPlant&lt;&gt;(); <span class="comment">// 编译无法通过</span></span><br></pre></td></tr></table></figure></p>
+<p>通过上面的代码可知我们成功的限制了泛型，水果盘子就只能装水果，盘子中的类型只能是水果或则它的子类型。</p>
+<h3 id="lt-extends-T-gt-lt-super-T-gt"><a href="#lt-extends-T-gt-lt-super-T-gt" class="headerlink" title="&lt;? extends T&gt; &lt;? super T&gt;"></a><code>&lt;? extends T&gt; &lt;? super T&gt;</code></h3><p>注意这里的T是泛型参数，跟上面的<t extends ?> T不一样</t></p>
+<p>看完上面的 <code>&lt;T extends ?&gt;</code>，接下来我们再来看<code>&lt;? extends T&gt; &lt;? super T&gt;</code>，可能这里你会非常疑惑，哇 这两个有什么区别？其实简单理解的话，<code>&lt;T extends ?&gt;</code>是在类文件层面就限制了泛型的范围，而<code>&lt;? extends T&gt; &lt;? super T&gt;</code>是在使用泛型的时候再去做限制。明白了这个之后接下来我们就来看下<code>&lt;? extends T&gt; &lt;? super T&gt;</code>的使用。</p>
+<p>让我们回到<code>Firut.class</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Plant</span> &lt;<span class="title">T</span>&gt;</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> T t;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> T <span class="title">getT</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> t;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setT</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>.t = t;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们现在不在定义泛型类的时候做限制，(使用<code>&lt;T&gt;</code>，其实这里还是相当于<code>&lt;T extends Object&gt;</code>)，而是在使用的是去做限制</p>
+<p>下面我们来看下<code>&lt;? extends T&gt;</code>的使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Plant&lt;Apple&gt; applePlant = new Plant&lt;Apple&gt;();</span><br><span class="line">applePlant.setT(new Apple());</span><br><span class="line">// 使用 &lt;? extends T&gt;</span><br><span class="line">Plant&lt;? extends Firut&gt; plant = applePlant;</span><br><span class="line"></span><br><span class="line">plant.setT(new Apple()); // 无法存 编译报错</span><br><span class="line">plant.setT(new Firut()); // 无法存 编译报错</span><br><span class="line">Firut apple = plant.getT(); // 可以获取</span><br></pre></td></tr></table></figure>
+<p>可以看到当<code>&lt;? extends T&gt;</code>做为接收参数时，因为其必然是<code>Firut</code>的子类，这里实例类型是<code>Apple</code>，所以<code>getT()</code>方法仍然可以使用，因为会进行一次隐式的类型转换（向上转型是安全的），但是<code>setT()</code>方法是失效的，这是因为编译器不能确定你一定会往里面添加<code>Apple</code>类型，因为你还可以往里面添加<code>Banana</code>类型，显然<code>Banana</code>类型无法强转<code>Apple</code>类型，所以这里的<code>setT()</code>方法是失效的</p>
+<p>下面我们来看下<code>&lt;? super T&gt;</code>的使用<br>有了上面<code>&lt;? extends T&gt;</code>的使用经验，顾明思议，<code>&lt;? super T&gt;</code>必然表示<code>T</code>的全部父类型，还是再来看下<code>&lt;? super T&gt;</code>的使用吧</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Plant&lt;Firut&gt; firutPlant = new Plant&lt;&gt;();</span><br><span class="line">Plant&lt;? super Apple&gt; plant = firutPlant;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">plant.setT(new Apple()); // 可以存成功，不过这里只能存 Apple类型</span><br><span class="line">Apple apple = plant.getT(); // 编译报错</span><br><span class="line"></span><br><span class="line">Firut firut = firutPlant.getT();</span><br></pre></td></tr></table></figure>
+<p>上面可以存成功的原因和上面<code>&lt;? extends T&gt;</code>可以取成功的原因一样，也是因为存在一个隐式的向上转型，而获取失败的原因 也很容易理解，因为实际类型肯定是<code>Apple</code>的父类（这里是Firut），所以要将<code>Firut</code>转成<code>Apple</code>显然是不可行的！</p>
+<h3 id="lt-gt"><a href="#lt-gt" class="headerlink" title="&lt;?&gt;"></a>&lt;?&gt;</h3><p><code>&lt;?&gt;</code>其实等价与<code>&lt;? extends Object&gt;</code>，这样子我相信就比较好理解了，跟<code>&lt;? extends T&gt;</code>类似，也是取可以，存被限制</p>
+<p><code>&lt;T&gt;</code>一般都是在定义泛型类或则泛型方法时出现，实际使用时都以<code>?</code>或具体类型替代<code>T</code></p>
+<h3 id="Type-与-Class-的区别和联系"><a href="#Type-与-Class-的区别和联系" class="headerlink" title="Type 与 Class 的区别和联系"></a>Type 与 Class 的区别和联系</h3><p>JDK在1.5之后因为泛型的原因引入了<code>Type</code>类型，那么<code>Type</code>到底是什么呢，它表示的范围有多大？？ 其实我们可以直接理解把<code>Class</code>当成是<code>Type</code>的子集，<code>Class</code>对应着jdk1.5之前不是泛型的原始类型</p>
+<p><code>Type</code>下包含了几种不同的类型</p>
+<ul>
+<li><code>Class</code> 原始类型，我这里直接理解成我们常用的<code>Class</code>类型，<code>Class</code>是<code>Type</code>的直接子类</li>
+<li><code>ParameterizedType</code> 参数化类型类似 <code>List&lt;String&gt; list</code> 获取list的类型</li>
+<li><code>TypeVariable</code> 类似 <code>T t</code></li>
+<li><p><code>GenericArrayType</code> 类似 <code>List&lt;String&gt;[]</code> 或则 <code>List&lt;T&gt; []</code></p>
+<ul>
+<li><code>GenericArrayType</code> 接口只有一个方法<code>getGenericComponentType</code>，用户返回<code>ParameterizedType</code>或则<code>TypeVariable</code>类型</li>
+</ul>
+</li>
+<li><p><code>WildcardType</code> 类似 <code>&lt;? super T&gt;</code> 要得到这个类型，首先需要得到<code>ParameterizedType</code>类型，然后通过<code>getActualTypeArguments</code>方法获取<code>WildcardType</code>类型</p>
+</li>
+</ul>
+<p>说了这么多，还是通过实际的代码来详细解释吧<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TypeTest</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testOne</span><span class="params">(Plant&lt;Apple&gt; plant, </span></span></span><br><span class="line"><span class="function"><span class="params">                        Plant&lt;Apple&gt; [] plants, </span></span></span><br><span class="line"><span class="function"><span class="params">                        Plant&lt;? extends Apple&gt; applePlant)</span> </span>&#123;   </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; <span class="function"><span class="keyword">void</span> <span class="title">testOne</span><span class="params">(T t)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>写段测试代码<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">Method [] methods = TypeTest.class.getMethods();</span><br><span class="line"><span class="keyword">for</span> (Method method : methods) &#123;</span><br><span class="line">    <span class="keyword">if</span> (method.getName().equals(<span class="string">"testOne"</span>)) &#123;</span><br><span class="line">        Type [] parameterTypes = method.getGenericParameterTypes();</span><br><span class="line">        System.out.println(<span class="string">"methodOne start --------&gt; "</span>);</span><br><span class="line">        <span class="keyword">for</span> (Type type : parameterTypes) &#123;</span><br><span class="line">            <span class="keyword">if</span> (type <span class="keyword">instanceof</span> Class) &#123;</span><br><span class="line">                System.out.println(<span class="string">"Class ---- "</span> + type.getTypeName());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (type <span class="keyword">instanceof</span> ParameterizedType) &#123;</span><br><span class="line">                System.out.println(<span class="string">"ParameterizedType ---- "</span> + type.getTypeName());</span><br><span class="line">                Type ytpe3[] = ((ParameterizedType) type).getActualTypeArguments();</span><br><span class="line">                <span class="keyword">for</span> (Type type2 : ytpe3) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (type2 <span class="keyword">instanceof</span> WildcardType) &#123;</span><br><span class="line">                        System.out.println(<span class="string">"ParameterizedType-WildcardType  ---- "</span> + type2.getTypeName());</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (type <span class="keyword">instanceof</span> GenericArrayType) &#123;</span><br><span class="line">                System.out.println(<span class="string">"GenericArrayType ---- "</span> + type.getTypeName());</span><br><span class="line">                Type type2 = ((GenericArrayType) type).getGenericComponentType();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (type <span class="keyword">instanceof</span> TypeVariable) &#123;</span><br><span class="line">                System.out.println(<span class="string">"TypeVariable ---- "</span> + type.getTypeName());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (method.getName().equals(<span class="string">"testTwo"</span>)) &#123;</span><br><span class="line"></span><br><span class="line">        Type [] parameterTypes = method.getGenericParameterTypes();</span><br><span class="line">        System.out.println(<span class="string">"methodTwo start --------&gt; "</span>);</span><br><span class="line">        <span class="keyword">for</span> (Type type : parameterTypes) &#123;</span><br><span class="line">            <span class="keyword">if</span> (type <span class="keyword">instanceof</span> TypeVariable) &#123;</span><br><span class="line">                System.out.println(<span class="string">"TypeVariable ---- "</span> + type.getTypeName());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">methodTwo start --------&gt; </span><br><span class="line">TypeVariable ---- T</span><br><span class="line">methodOne start --------&gt; </span><br><span class="line">ParameterizedType ---- com.sunshine.common.test.Plant&lt;com.sunshine.common.test.Apple&gt;</span><br><span class="line">GenericArrayType ---- com.sunshine.common.test.Plant&lt;com.sunshine.common.test.Apple&gt;[]</span><br><span class="line">ParameterizedType ---- com.sunshine.common.test.Plant&lt;? extends com.sunshine.common.test.Apple&gt;</span><br><span class="line">ParameterizedType-WildcardType  ---- ? extends com.sunshine.common.test.Apple</span><br></pre></td></tr></table></figure>
+<p>虽然我们再前文说过，因为在字节码层面泛型类型会被擦除成<code>Object</code>，所以运行时无法拿到泛型类型。那么我们要如何拿到JAVA的泛型类型呢？</p>
+<p>JAVA虚拟机由此引入了<code>Signature</code>属性，<code>Signature</code>属性是方法在字节码层面的特征签名，也就是说<code>Signature</code>属性中包含泛型信息，虽然在<code>Code</code>属性表中泛型信息确实被擦除了，这也是我们可以通过反射获取到泛型真实类型的原因！</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/06/19/JAVA-泛型-你真的理解了吗？/" target="_blank" title="JAVA 泛型 你真的理解了吗？">http://wangjunnan.github.io/2019/06/19/JAVA-泛型-你真的理解了吗？/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/06/21/git-你真的会用吗/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          git 你真的会用吗
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/04/25/Java字节码方法表/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Java字节码方法表</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#记录原由"><span class="nav-number">1.</span> <span class="nav-text">记录原由</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么要有泛型"><span class="nav-number">2.</span> <span class="nav-text">为什么要有泛型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#泛型进阶"><span class="nav-number">3.</span> <span class="nav-text">泛型进阶</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用-lt-T-extends-gt-定义泛型类"><span class="nav-number">3.1.</span> <span class="nav-text">使用 &lt;T extends ?&gt; 定义泛型类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lt-extends-T-gt-lt-super-T-gt"><span class="nav-number">3.2.</span> <span class="nav-text">&lt;? extends T&gt; &lt;? super T&gt;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lt-gt"><span class="nav-number">3.3.</span> <span class="nav-text">&lt;?&gt;</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Type-与-Class-的区别和联系"><span class="nav-number">3.4.</span> <span class="nav-text">Type 与 Class 的区别和联系</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

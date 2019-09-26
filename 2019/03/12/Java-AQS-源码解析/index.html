@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>java aqs 源码解析 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="并发">
+  
+  
+  
+  
+  <meta name="description" content="引言AQS全称java.util.concurrent.locks.AbstractQueuedSynchronizer，是Java 并发包中的一个抽象类，我们一般把它叫做抽象队列同步器，如我们常用的可重入锁ReentrantLock的内部实现就是基于AQS，理解AQS的内部源码实现对于我们深入理解使用java并发包中的各个功能非常重要。 实现原理AQS内部维护了一个双向链表队列来管理多个线程。简">
+<meta name="keywords" content="并发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java AQS 源码解析">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/03/12/Java-AQS-源码解析/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言AQS全称java.util.concurrent.locks.AbstractQueuedSynchronizer，是Java 并发包中的一个抽象类，我们一般把它叫做抽象队列同步器，如我们常用的可重入锁ReentrantLock的内部实现就是基于AQS，理解AQS的内部源码实现对于我们深入理解使用java并发包中的各个功能非常重要。 实现原理AQS内部维护了一个双向链表队列来管理多个线程。简">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-b08b642e54d9c66a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-376c9c2663fd07fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.194Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java AQS 源码解析">
+<meta name="twitter:description" content="引言AQS全称java.util.concurrent.locks.AbstractQueuedSynchronizer，是Java 并发包中的一个抽象类，我们一般把它叫做抽象队列同步器，如我们常用的可重入锁ReentrantLock的内部实现就是基于AQS，理解AQS的内部源码实现对于我们深入理解使用java并发包中的各个功能非常重要。 实现原理AQS内部维护了一个双向链表队列来管理多个线程。简">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2717496-b08b642e54d9c66a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Java-AQS-源码解析" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Java AQS 源码解析
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/03/12/Java-AQS-源码解析/" class="article-date">
+	  <time datetime="2019-03-12T08:21:26.000Z" itemprop="datePublished">2019-03-12</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p><code>AQS</code>全称<code>java.util.concurrent.locks.AbstractQueuedSynchronizer</code>，是Java 并发包中的一个抽象类，我们一般把它叫做抽象队列同步器，如我们常用的可重入锁<code>ReentrantLock</code>的内部实现就是基于<code>AQS</code>，理解<code>AQS</code>的内部源码实现对于我们深入理解使用java并发包中的各个功能非常重要。</p>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p><code>AQS</code>内部维护了一个双向链表队列来管理多个线程。简单介绍一下就是，当有一个新的线程去尝试获取锁，这是如果获取失败，<code>AQS</code>则会将此线程封装成一个<code>Node</code>节点，并将此节点加入到内部维护的队列中。</p>
+<p>上面简单的描述了线程获取锁的过程，那么<code>AQS</code>是使用什么来确认当前线程是否可以尝试获取锁呢？</p>
+<p>其实<code>AQS</code>内部为了一个<code>volatile int state</code>变量来表示当前资源是否已经被其他线程占有，对于独占锁来说，只有当<code>state = 0</code>时才说明该资源当前没有线程占有，后续线程可以开始争抢改资源，后续线程需要通过<code>CAS</code>操作来确保修改<code>state</code>变量成功才能成功抢占该资源。</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-b08b642e54d9c66a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<h2 id="重要方法"><a href="#重要方法" class="headerlink" title="重要方法"></a>重要方法</h2><p><code>AQS</code>内部提供了三组核心方法用来实现一个同步组件。三组方法从字面意思上区分可以分为两种类型：独占锁相关，共享锁相关</p>
+<ol>
+<li>访问<code>state</code>有三种方法</li>
+</ol>
+<ul>
+<li><p><code>getState()</code>  获取同步状态</p>
+</li>
+<li><p><code>setState()</code>  设置同步状态（非<code>CAS</code>操作）</p>
+</li>
+<li><p><code>compareAndSetState()</code>  通过<code>CAS</code>操作修改</p>
+</li>
+</ul>
+<ol start="2">
+<li>一组抽象方法，需要子类实现，主要是获取同步锁并判断是否成功的操作</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>boolean tryAcquire(int arg)</td>
+<td>独占式获取同步状态</td>
+</tr>
+<tr>
+<td>boolean tryRelease(int arg)</td>
+<td>独占式释放同步状态</td>
+</tr>
+<tr>
+<td>int tryAcquireShared(int arg)</td>
+<td>共享式获取同步状态</td>
+</tr>
+<tr>
+<td>boolean tryReleaseShared(int arg)</td>
+<td>共享式释放同步状态</td>
+</tr>
+<tr>
+<td>boolean isHeldExclusively()</td>
+<td>检测当前线程是否获取独占锁</td>
+</tr>
+</tbody>
+</table>
+<ol start="3">
+<li>模板方法，用于子类直接调用</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>void acquire(int arg)</td>
+<td>获取独占锁。会调用<code>tryAcquire</code>方法，如果未获取成功，则会进入同步队列等待</td>
+</tr>
+<tr>
+<td>void acquireInterruptibly(int arg)</td>
+<td>响应中断版的 <code>acquire</code></td>
+</tr>
+<tr>
+<td>boolean tryAcquireNanos(int arg,long nanos)</td>
+<td>超时+响应中断版的 acquire</td>
+</tr>
+<tr>
+<td>void acquireShared(int arg)</td>
+<td>获取共享锁。共享式获取同步状态，同一时刻可能会有多个线程获得同步状态。比如<strong>读写锁的读锁</strong>就是就是调用这个方法获取同步状态的</td>
+</tr>
+<tr>
+<td>void acquireSharedInterruptibly(int arg)</td>
+<td>响应中断版的<code>acquireShared</code></td>
+</tr>
+<tr>
+<td>boolean tryAcquireSharedNanos(int arg,long nanos)</td>
+<td>超时+响应中断版的<code>acquireShared</code></td>
+</tr>
+<tr>
+<td>boolean release(int arg)</td>
+<td>独占式释放同步状态</td>
+</tr>
+<tr>
+<td>boolean releaseShared(int arg)</td>
+<td>释放共享锁</td>
+</tr>
+<tr>
+<td>Collection getQueuedThreads()</td>
+<td>获取同步队列上的线程集合</td>
+</tr>
+</tbody>
+</table>
+<h2 id="源码分析"><a href="#源码分析" class="headerlink" title="源码分析"></a>源码分析</h2><p>上文有提到，进入同步队列的线程会被封装成一个<code>Node</code>节点，下面我们先来看下<code>Node.class</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">static</span>  <span class="keyword">final</span>  <span class="class"><span class="keyword">class</span> <span class="title">Node</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 用于标记一个节点在共享模式下等待</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">static</span> <span class="keyword">final</span> Node SHARED = <span class="keyword">new</span> Node();</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 用于标记一个节点在独占模式下等待</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">static</span> <span class="keyword">final</span> Node EXCLUSIVE = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 等待状态：取消状态</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CANCELLED = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 等待状态：通知(指示后继线程需要阻塞)</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SIGNAL = -<span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 等待状态：条件等待</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CONDITION = -<span class="number">2</span>;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 等待状态：传播</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> PROPAGATE = -<span class="number">3</span>;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 等待状态</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">volatile</span> <span class="keyword">int</span> waitStatus;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 前驱节点</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">volatile</span> Node prev;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 后继节点</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">volatile</span> Node next;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 节点对应的线程</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">volatile</span> Thread thread;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 等待队列中的后继节点</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> Node nextWaiter;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 当前节点是否处于共享模式等待</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">isShared</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> nextWaiter == SHARED;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 获取前驱节点，如果为空的话抛出空指针异常</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="function"><span class="keyword">final</span> Node <span class="title">predecessor</span><span class="params">()</span> <span class="keyword">throws</span> NullPointerException </span>&#123;</span><br><span class="line"></span><br><span class="line"> Node p = prev;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (p == <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">else</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> p;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> Node() &#123;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * addWaiter会调用此构造函数</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> Node(Thread thread, Node mode) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">this</span>.nextWaiter = mode;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">this</span>.thread = thread;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * Condition会用到此构造函数</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> Node(Thread thread, <span class="keyword">int</span> waitStatus) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">this</span>.waitStatus = waitStatus;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">this</span>.thread = thread;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里解释几个重要的属性</p>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>意义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>prev</td>
+<td>前置节点</td>
+</tr>
+<tr>
+<td>next</td>
+<td>后置节点</td>
+</tr>
+<tr>
+<td>CANCELLED</td>
+<td>状态值 表示节点被取消</td>
+</tr>
+<tr>
+<td>SIGNAL</td>
+<td>状态值  表示后置节点需要被阻塞</td>
+</tr>
+<tr>
+<td>CONDITION</td>
+<td>状态值 表示节点进入 CONDITION</td>
+</tr>
+<tr>
+<td>PROPAGATE</td>
+<td>状态值 共享锁传播状态</td>
+</tr>
+</tbody>
+</table>
+<h2 id="独占锁的获取"><a href="#独占锁的获取" class="headerlink" title="独占锁的获取"></a>独占锁的获取</h2><p>在<code>AQS</code>中包含了<code>head</code>和<code>tail</code>两个Node引用，其中<code>head</code>在逻辑上的含义是当前持有锁的线程，<code>tail</code>指示队尾节点。<code>head</code>和<code>tail</code>可以相等</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 获取独占锁，该方法会首先调用tryAcquire（由子类实现）来获取锁，</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 如果获取成功会直接返回，失败则会将当前抢锁失败的线程封装为Node节点加入队尾</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">acquire</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (!tryAcquire(arg) &amp;&amp;</span><br><span class="line"></span><br><span class="line"> acquireQueued(addWaiter(Node.EXCLUSIVE), arg))</span><br><span class="line"></span><br><span class="line"> selfInterrupt();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 增加一个</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> Node <span class="title">addWaiter</span><span class="params">(Node mode)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> Node node = <span class="keyword">new</span> Node(Thread.currentThread(), mode);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Try the fast path of enq; backup to full enq on failure</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 快速执行一次加入队列尾部的操作，如果失败的话则执行 enq</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取队尾节点</span></span><br><span class="line"></span><br><span class="line"> Node pred = tail;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (pred != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取队尾的前驱节点</span></span><br><span class="line"></span><br><span class="line"> node.prev = pred;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// CAS设置新的队尾，有可能失败</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (compareAndSetTail(pred, node)) &#123;</span><br><span class="line"></span><br><span class="line"> pred.next = node;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> node;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果还没有队尾（初始状态），或则入队失败，则执行下面的方法</span></span><br><span class="line"></span><br><span class="line"> enq(node);</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> node;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> Node <span class="title">enq</span><span class="params">(<span class="keyword">final</span> Node node)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 通过CAS 自旋设置新的队尾</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">for</span> (;;) &#123;</span><br><span class="line"></span><br><span class="line"> Node t = tail;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 队尾节点为空，说明是初始状态，必须初始化头尾节点</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (t == <span class="keyword">null</span>) &#123; <span class="comment">// Must initialize</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (compareAndSetHead(<span class="keyword">new</span> Node()))</span><br><span class="line"></span><br><span class="line"> tail = head;</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">else</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 这里注意一个细节</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// node.prev = t 操作是设置当前节点的前驱节点为现在的队尾节点</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 但是该操作没有放到compareAndSetTail操作成功以后，也就是说代码为何不这样写</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// if (compareAndSetTail(t, node)) &#123;</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// node.prev = t;</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// t.next = node;</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// return t;</span></span><br><span class="line"></span><br><span class="line"> <span class="comment">// &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果这样子写的话，队尾节点在某一瞬间会是一个孤立的节点，但是如果先</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 执行 node.prev = t 就把当前节点的前驱指向了还未设置前的队尾，这样子当我们从后往前遍历的时候，就不会出现队列断裂的情况</span></span><br><span class="line"></span><br><span class="line"> node.prev = t;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (compareAndSetTail(t, node)) &#123;</span><br><span class="line"></span><br><span class="line"> t.next = node;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> t;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 节点加入队列之后操作，这里分两种情况</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 1\. 如果当前节点的前驱节点为head 头节点，则尝试获取锁，并设置新的头节点</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 2\. 阻塞自己</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">acquireQueued</span><span class="params">(<span class="keyword">final</span> Node node, <span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">boolean</span> failed = <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">boolean</span> interrupted = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 循环尝试获取锁</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">for</span> (;;) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 获取前驱节点</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">final</span> Node p = node.predecessor();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 前驱节点为head节点 则尝试获取锁</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (p == head &amp;&amp; tryAcquire(arg)) &#123;</span><br><span class="line"></span><br><span class="line"> setHead(node);</span><br><span class="line"></span><br><span class="line"> p.next = <span class="keyword">null</span>; <span class="comment">// help GC</span></span><br><span class="line"></span><br><span class="line"> failed = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> interrupted;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 判断是否需要阻塞自己</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (shouldParkAfterFailedAcquire(p, node) &amp;&amp;</span><br><span class="line"></span><br><span class="line"> parkAndCheckInterrupt())</span><br><span class="line"></span><br><span class="line"> interrupted = <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果抛异常失败，则调用 cancelAcquire 取消该节点</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (failed)</span><br><span class="line"></span><br><span class="line"> cancelAcquire(node);</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">shouldParkAfterFailedAcquire</span><span class="params">(Node pred, Node node)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">int</span> ws = pred.waitStatus;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果前驱节点的 waitStatus 为 -1，则说明当前线程需要阻塞</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (ws == Node.SIGNAL)</span><br><span class="line"></span><br><span class="line"> <span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * This node has already set status asking a release</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * to signal it, so it can safely park.</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// waitStatus大于0，说明前驱节点为取消状态，需要重新设置前驱节点</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (ws &gt; <span class="number">0</span>) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 向前寻找waitStatus&lt;=0的节点，并设置为新的前驱节点</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">do</span> &#123;</span><br><span class="line"></span><br><span class="line"> node.prev = pred = pred.prev;</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">while</span> (pred.waitStatus &gt; <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"> pred.next = node;</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">else</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 如果前驱节点状态为 0 -2 -3，则设置前驱节点 WaitStatus = -1，并重新循环</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> compareAndSetWaitStatus(pred, ws, Node.SIGNAL);</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span>  <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 调用 LockSupport.park(this) 阻塞当前线程</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">parkAndCheckInterrupt</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> LockSupport.park(<span class="keyword">this</span>);</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> Thread.interrupted();</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 取消节点，也就是当前线程放弃获取锁</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">cancelAcquire</span><span class="params">(Node node)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (node == <span class="keyword">null</span>)</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line"> node.thread = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取前驱节点，会跳过状态为取消状态的节点 Skip cancelled predecessors</span></span><br><span class="line"></span><br><span class="line"> Node pred = node.prev;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">while</span> (pred.waitStatus &gt; <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"> node.prev = pred = pred.prev;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取后继节点</span></span><br><span class="line"></span><br><span class="line"> Node predNext = pred.next;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 设置节点状态为取消</span></span><br><span class="line"></span><br><span class="line"> node.waitStatus = Node.CANCELLED;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果当前节点是队尾节点，则设置前驱节点为队尾，并设置前驱节点的后继节点为null</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (node == tail &amp;&amp; compareAndSetTail(node, pred)) &#123;</span><br><span class="line"></span><br><span class="line"> compareAndSetNext(pred, predNext, <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">else</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">int</span> ws;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果前驱节点不是头结点，且前驱节点的 WaitStatus = -1</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (pred != head &amp;&amp;</span><br><span class="line"></span><br><span class="line"> ((ws = pred.waitStatus) == Node.SIGNAL ||</span><br><span class="line"></span><br><span class="line"> (ws &lt;= <span class="number">0</span> &amp;&amp; compareAndSetWaitStatus(pred, ws, Node.SIGNAL))) &amp;&amp;</span><br><span class="line"></span><br><span class="line"> pred.thread != <span class="keyword">null</span>) &#123;</span><br><span class="line"></span><br><span class="line"> Node next = node.next;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 将前置节点和后继节点相连</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (next != <span class="keyword">null</span> &amp;&amp; next.waitStatus &lt;= <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"> compareAndSetNext(pred, predNext, next);</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">else</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 唤醒后继节点</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 这里为何要唤醒后继节点？</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 因为如果当前节点的前置节点为head节点，但是此时head节点的状态为0（当前节点还未来得及设置前置节点状态为 -1），这时head节点释放了锁因为状态还为0，所以不会去唤醒后继线程。这时队列就失去活性了！所以这里需要唤醒后继线程</span></span><br><span class="line"></span><br><span class="line"> unparkSuccessor(node);</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> node.next = node; <span class="comment">// help GC</span></span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 唤醒后继节点</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">unparkSuccessor</span><span class="params">(Node node)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 如果节点 waitStatus &lt; 0，则尝试将状态设为0</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">int</span> ws = node.waitStatus;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (ws &lt; <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"> compareAndSetWaitStatus(node, ws, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"> <span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 获取当前节点的后继节点</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 如果 s!=null 且 s未被取消 则直接唤醒</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> Node s = node.next;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (s == <span class="keyword">null</span> || s.waitStatus &gt; <span class="number">0</span>) &#123;</span><br><span class="line"></span><br><span class="line"> s = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 从尾节点向前查找离node最近的非取消节点</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 注意这里为何要从后向前查找</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 在 enq方法中有段注释，如果从前往后的话，有可能出现队列断裂</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">for</span> (Node t = tail; t != <span class="keyword">null</span> &amp;&amp; t != node; t = t.prev)</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (t.waitStatus &lt;= <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"> s = t;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (s != <span class="keyword">null</span>)</span><br><span class="line"></span><br><span class="line"> LockSupport.unpark(s.thread);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上文基本完成了对独占锁获取锁的流程的分析，这里简单画个图来更清晰的展示整个获取锁的过程：</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-376c9c2663fd07fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="image.png"></p>
+<h3 id="独占锁的释放"><a href="#独占锁的释放" class="headerlink" title="独占锁的释放"></a>独占锁的释放</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 释放锁</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span>  <span class="keyword">final</span>  <span class="keyword">boolean</span> <span class="title">release</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果释放锁成功</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (tryRelease(arg)) &#123;</span><br><span class="line"></span><br><span class="line"> Node h = head;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 且当前持锁的头结点状态不等于0，就去唤醒后继线程</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 思考这里等于0 为何不行？</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 因为当 waitStatus == 0时，说明后继线程还在运行中，还未来得及将waitStatus 状态设为-1</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (h != <span class="keyword">null</span> &amp;&amp; h.waitStatus != <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 与上文unparkSuccessor方法一致</span></span><br><span class="line"></span><br><span class="line"> unparkSuccessor(h);</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span>  <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="共享锁"><a href="#共享锁" class="headerlink" title="共享锁"></a>共享锁</h2><p>共享锁与独占锁最大的区别在于，共享锁允许多个线程持有锁，而独占锁在同一时间只有一个线程可以获取到锁</p>
+<h3 id="共享锁的获取"><a href="#共享锁的获取" class="headerlink" title="共享锁的获取"></a>共享锁的获取</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 获取共享锁</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">acquireShared</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果tryAcquireShared(arg) &lt; 0表示获取共享锁失败</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// 获取失败的原因一般是由于该资源正由独占锁占有</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (tryAcquireShared(arg) &lt; <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line"> doAcquireShared(arg);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doAcquireShared</span><span class="params">(<span class="keyword">int</span> arg)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 加入到队列尾部</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">final</span> Node node = addWaiter(Node.SHARED);</span><br><span class="line"></span><br><span class="line"> <span class="keyword">boolean</span> failed = <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">try</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">boolean</span> interrupted = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">for</span> (;;) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">final</span> Node p = node.predecessor();</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (p == head) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">int</span> r = tryAcquireShared(arg);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 一旦共享获取成功，设置新的头结点，并且唤醒后继线程</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (r &gt;= <span class="number">0</span>) &#123;</span><br><span class="line"></span><br><span class="line"> setHeadAndPropagate(node, r);</span><br><span class="line"></span><br><span class="line"> p.next = <span class="keyword">null</span>; <span class="comment">// help GC</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (interrupted)</span><br><span class="line"></span><br><span class="line"> selfInterrupt();</span><br><span class="line"></span><br><span class="line"> failed = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 判断是否需要阻塞</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (shouldParkAfterFailedAcquire(p, node) &amp;&amp;</span><br><span class="line"></span><br><span class="line"> parkAndCheckInterrupt())</span><br><span class="line"></span><br><span class="line"> interrupted = <span class="keyword">true</span>;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (failed)</span><br><span class="line"></span><br><span class="line"> cancelAcquire(node);</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 在获取共享锁成功后，设置head节点</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 跟据调用tryAcquireShared返回的状态以及节点本身的等待状态来判断是否要需要唤醒后继线程。</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setHeadAndPropagate</span><span class="params">(Node node, <span class="keyword">int</span> propagate)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> Node h = head;</span><br><span class="line"></span><br><span class="line"> setHead(node);</span><br><span class="line"></span><br><span class="line"> <span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * propagate是tryAcquireShared的返回值，这是决定是否传播唤醒的依据之一。</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * h.waitStatus为SIGNAL或者PROPAGATE时也根据node的下一个节点共享来决定是否传播唤醒，</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 思考，这里为什么不能只用propagate &gt; 0来决定是否可以传播</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> * 因为此时有可能有其他线程释放了锁，但propagate还未更新，所以还需要判断h.waitStatus &lt; 0</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (propagate &gt; <span class="number">0</span> || h == <span class="keyword">null</span> || h.waitStatus &lt; <span class="number">0</span> ||</span><br><span class="line"></span><br><span class="line"> (h = head) == <span class="keyword">null</span> || h.waitStatus &lt; <span class="number">0</span>) &#123;</span><br><span class="line"></span><br><span class="line"> Node s = node.next;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 后继节点为共享锁类型</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (s == <span class="keyword">null</span> || s.isShared())</span><br><span class="line"></span><br><span class="line"> doReleaseShared();</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">* 这是共享锁中的核心唤醒函数，主要做的事情就是唤醒下一个线程或者设置传播状态。</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">doReleaseShared</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">for</span> (;;) &#123;</span><br><span class="line"></span><br><span class="line"> Node h = head;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果队列中存在后继线程。</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (h != <span class="keyword">null</span> &amp;&amp; h != tail) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">int</span> ws = h.waitStatus;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (ws == Node.SIGNAL) &#123;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (!compareAndSetWaitStatus(h, Node.SIGNAL, <span class="number">0</span>))</span><br><span class="line"></span><br><span class="line"> <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line"> unparkSuccessor(h);</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 如果h节点的状态为0，需要设置为PROPAGATE用以保证唤醒的传播。</span></span><br><span class="line"></span><br><span class="line"> <span class="keyword">else</span> <span class="keyword">if</span> (ws == <span class="number">0</span> &amp;&amp;</span><br><span class="line"></span><br><span class="line"> !compareAndSetWaitStatus(h, <span class="number">0</span>, Node.PROPAGATE))</span><br><span class="line"></span><br><span class="line"> <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> <span class="keyword">if</span> (h == head)</span><br><span class="line"></span><br><span class="line"> <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="共享锁的释放"><a href="#共享锁的释放" class="headerlink" title="共享锁的释放"></a>共享锁的释放</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public final boolean releaseShared(int arg) &#123;</span><br><span class="line"></span><br><span class="line"> if (tryReleaseShared(arg)) &#123;</span><br><span class="line"></span><br><span class="line"> // 与上文doReleaseShared一样</span><br><span class="line"></span><br><span class="line"> doReleaseShared();</span><br><span class="line"></span><br><span class="line"> return true;</span><br><span class="line"></span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line"> return false;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>AQS</code>的整体理念相对比较容易理解，但是<code>AQS</code>真正难懂的其实是它的细节，因为一个很简单的问题一旦被放在并发环境中就会变的非常抽象，难以理解。要理解<code>AQS</code>的细节实现，还是需要多看，我是前前后后看了有一周，对于有些细节还是略模糊。</p>
+<p>本篇文章参考了</p>
+<p><a href="https://www.cnblogs.com/micrari/p/6937995.html" target="_blank" rel="noopener"><a href="https://www.cnblogs.com/micrari/p/6937995.html" target="_blank" rel="noopener">AbstractQueuedSynchronizer源码解读</a></a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/03/12/Java-AQS-源码解析/" target="_blank" title="Java AQS 源码解析">http://wangjunnan.github.io/2019/03/12/Java-AQS-源码解析/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/03/25/ReentrantLock可重入锁源码分析/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          ReentrantLock可重入锁源码分析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/03/02/Java-CAS/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Java CAS</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#实现原理"><span class="nav-number">2.</span> <span class="nav-text">实现原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#重要方法"><span class="nav-number">3.</span> <span class="nav-text">重要方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#源码分析"><span class="nav-number">4.</span> <span class="nav-text">源码分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#独占锁的获取"><span class="nav-number">5.</span> <span class="nav-text">独占锁的获取</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#独占锁的释放"><span class="nav-number">5.1.</span> <span class="nav-text">独占锁的释放</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#共享锁"><span class="nav-number">6.</span> <span class="nav-text">共享锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#共享锁的获取"><span class="nav-number">6.1.</span> <span class="nav-text">共享锁的获取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#共享锁的释放"><span class="nav-number">6.2.</span> <span class="nav-text">共享锁的释放</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

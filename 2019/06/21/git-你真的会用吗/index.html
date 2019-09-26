@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>git 你真的会用吗 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="git">
+  
+  
+  
+  
+  <meta name="description" content="记录原由最近因为公司新来的同事，在使用Git时犯了一些非常低级的错误，导致团队为了解决这些问题浪费了很多时间。究其原因其实还是对于Git内部实现不清晰，仅仅知道敲几个git命令，但是却不知道敲了这个命令Git会发生什么！这里根据git官方文档节选了一些重要概念分享出来。 几个重要概念三种状态 工作区状态 就是修改了文件还没有做 git add的文件状态   暂存区状态 已经git add但还未gi">
+<meta name="keywords" content="git">
+<meta property="og:type" content="article">
+<meta property="og:title" content="git 你真的会用吗">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/06/21/git-你真的会用吗/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="记录原由最近因为公司新来的同事，在使用Git时犯了一些非常低级的错误，导致团队为了解决这些问题浪费了很多时间。究其原因其实还是对于Git内部实现不清晰，仅仅知道敲几个git命令，但是却不知道敲了这个命令Git会发生什么！这里根据git官方文档节选了一些重要概念分享出来。 几个重要概念三种状态 工作区状态 就是修改了文件还没有做 git add的文件状态   暂存区状态 已经git add但还未gi">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://img.souche.com/f2e/037ab2a225f8b9457af9a40324313f84.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/0efbc0ed98b12c7aadfe4a97d82d2315.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/bc84a1c0611edbcf64756ad321f0d84c.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/d09338fd78877491ec49f7fcb191a491.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/8b8a8539aa7dc810a9a9f371f8751bc3.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/a172111db3abe0d8c6f82c7b3a99607f.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/237c20e005bac4135577ffd143eeb033.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/0c40f40917743bcc75b4871ad7a76bf8.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/cfd70efa478ee439cc8db564681b22c2.jpg">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.212Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="git 你真的会用吗">
+<meta name="twitter:description" content="记录原由最近因为公司新来的同事，在使用Git时犯了一些非常低级的错误，导致团队为了解决这些问题浪费了很多时间。究其原因其实还是对于Git内部实现不清晰，仅仅知道敲几个git命令，但是却不知道敲了这个命令Git会发生什么！这里根据git官方文档节选了一些重要概念分享出来。 几个重要概念三种状态 工作区状态 就是修改了文件还没有做 git add的文件状态   暂存区状态 已经git add但还未gi">
+<meta name="twitter:image" content="http://img.souche.com/f2e/037ab2a225f8b9457af9a40324313f84.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-git-你真的会用吗" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      git 你真的会用吗
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/06/21/git-你真的会用吗/" class="article-date">
+	  <time datetime="2019-06-21T02:26:10.000Z" itemprop="datePublished">2019-06-21</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/git/">git</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="记录原由"><a href="#记录原由" class="headerlink" title="记录原由"></a>记录原由</h2><p>最近因为公司新来的同事，在使用<code>Git</code>时犯了一些非常低级的错误，导致团队为了解决这些问题浪费了很多时间。究其原因其实还是对于<code>Git</code>内部实现不清晰，仅仅知道敲几个git命令，但是却不知道敲了这个命令<code>Git</code>会发生什么！这里根据<a href="https://git-scm.com/book/en/v2" target="_blank" rel="noopener">git官方文档</a>节选了一些重要概念分享出来。</p>
+<h2 id="几个重要概念"><a href="#几个重要概念" class="headerlink" title="几个重要概念"></a>几个重要概念</h2><h3 id="三种状态"><a href="#三种状态" class="headerlink" title="三种状态"></a>三种状态</h3><ol>
+<li>工作区状态<ul>
+<li>就是修改了文件还没有做 <code>git add</code>的文件状态</li>
+</ul>
+</li>
+<li>暂存区状态<ul>
+<li>已经<code>git add</code>但还未<code>git commit</code>的文件状态</li>
+</ul>
+</li>
+<li>已提交状态<ul>
+<li>已经<code>git commit</code>的文件状态，也就是真正存储到<code>git</code>仓库</li>
+</ul>
+</li>
+</ol>
+<h3 id="Branch指针和HEAD指针"><a href="#Branch指针和HEAD指针" class="headerlink" title="Branch指针和HEAD指针"></a>Branch指针和HEAD指针</h3><p><code>Git</code>的分支特性是其最强大最独特的功能，也正是因为这个特性让<code>git</code>得以在众多的版本控制系统中脱颖而出，在理解<code>branch</code>之前，有必要先对<code>git commit</code>命令做一个简单的介绍</p>
+<ul>
+<li>当使用<code>git commit</code>进行提交操作时，<code>Git</code>便会创建一个提交对象，这个对象会包含一个指向本次提交的指针，指针指向本次<code>commit</code>的快照。指针也就是我们通常所说的<code>commit id(长度为 40 的 SHA-1 值字符串)</code>。如此一来，<code>Git</code>就可以在需要的时候根据<code>commit id</code>来回退版本</li>
+</ul>
+<p><code>Branch</code>的本质其实仅仅是指向提交对象的<strong>某一个可变指针</strong>。所以根据这个概念，我们可以知道<code>master</code>并不是一个特殊的分支，他跟我们众多自定义的分支没有任何不同，唯一区别是它是<code>Git</code>的默认分支(初始化的时候总得有一个默认分支)</p>
+<p>下面的图是单个<code>master</code>分支时的结构，这里<code>master</code>仅仅是一个指向<code>f30ab</code>提交对象的指针</p>
+<p><img src="http://img.souche.com/f2e/037ab2a225f8b9457af9a40324313f84.jpg" alt></p>
+<p>执行 <code>$ git branch testing</code>创建一个 <code>testing</code>分支，会在当前所在的提交对象上创建一个名为<code>testing</code>的指针，也就是<code>testing</code>分支<br><img src="http://img.souche.com/f2e/0efbc0ed98b12c7aadfe4a97d82d2315.jpg" alt></p>
+<p>注意：此时两个指针指向了相同的提交<br>那么<code>Git</code>是如何来知道当前处于哪个分支的呢？<br>这就引出了<code>Git</code>中的另一个特殊的指针<code>HEAD</code>，<code>HEAD</code>用来指向当前所在的分支，也就是一个用来指向分支指针的指针（有点拗口），就像下图这样，当前是在<code>master</code>分支，因为<code>git branch</code>并不会移动<code>HEAD</code>指针切换分支</p>
+<p><img src="http://img.souche.com/f2e/bc84a1c0611edbcf64756ad321f0d84c.jpg" alt></p>
+<p>执行 <code>$ git checkout testing</code>命令才会将<code>HEAD</code>指针指向<code>testing</code>分支<br><img src="http://img.souche.com/f2e/d09338fd78877491ec49f7fcb191a491.jpg" alt></p>
+<p>当我们在<code>testing</code>分支上继续提交几个commit之后，<code>testing</code>指针和<code>HEAD</code>指针都会跟着向前移动，但是<code>master</code>指针并不会移动，依旧指向<code>f30ab</code>这个提交<br><img src="http://img.souche.com/f2e/8b8a8539aa7dc810a9a9f371f8751bc3.jpg" alt></p>
+<p>现在执行<code>git checkout master</code>切回<code>master</code>分支，<code>HEAD</code>指针会重新指向<code>master</code>，也就是说现在又回到了一个旧的版本，这也是<code>Git</code>的神奇之处<br><img src="http://img.souche.com/f2e/a172111db3abe0d8c6f82c7b3a99607f.jpg" alt></p>
+<p>接下来我们在<code>master</code>分支上做一些修改，提交一个commit，<code>HEAD</code>和<code>master</code>指针会继续向前移动，并且这个项目的提交（快照版本）已经产生了分叉<br><img src="http://img.souche.com/f2e/237c20e005bac4135577ffd143eeb033.jpg" alt></p>
+<blockquote>
+<p>保存分支信息的目录在<code>.git/refs/heads</code>下，也可以在这个目录下查看或修改分支指针</p>
+</blockquote>
+<h2 id="merge-命令"><a href="#merge-命令" class="headerlink" title="merge 命令"></a>merge 命令</h2><p>在上文的例子中，项目有两个分支，且已经产生了分叉，这时候需要把<code>testing</code>分支上的内容合并至<code>master</code>时需要用到<code>merge</code>命令<br>在<code>master</code>执行<code>git merge testing</code>，会生成一个新的提交<code>9c67a</code>，并且<code>HEAD</code>和<code>master</code>指针继续向前移动</p>
+<p><img src="http://img.souche.com/f2e/0c40f40917743bcc75b4871ad7a76bf8.jpg" alt></p>
+<h2 id="reset-命令"><a href="#reset-命令" class="headerlink" title="reset 命令"></a>reset 命令</h2><p>假如上面的<code>merge</code>操作有问题，需要撤销，可以使用<code>reset</code>命令，但首先需要明确回退的版本是哪一个，例如要回退的版本是<code>c2b9e</code>，执行<code>git reset --hard c2b9e</code>后，<code>HEAD</code>和<code>master</code>指针会回退到版本<code>c2b9e</code></p>
+<p><img src="http://img.souche.com/f2e/cfd70efa478ee439cc8db564681b22c2.jpg" alt></p>
+<h2 id="…"><a href="#…" class="headerlink" title="…"></a>…</h2>
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/06/21/git-你真的会用吗/" target="_blank" title="git 你真的会用吗">http://wangjunnan.github.io/2019/06/21/git-你真的会用吗/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/07/10/分布式事务在积分商城里的应用/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          分布式事务在积分商城里的应用
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/06/19/JAVA-泛型-你真的理解了吗？/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">JAVA 泛型 你真的理解了吗？</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#记录原由"><span class="nav-number">1.</span> <span class="nav-text">记录原由</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#几个重要概念"><span class="nav-number">2.</span> <span class="nav-text">几个重要概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#三种状态"><span class="nav-number">2.1.</span> <span class="nav-text">三种状态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Branch指针和HEAD指针"><span class="nav-number">2.2.</span> <span class="nav-text">Branch指针和HEAD指针</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#merge-命令"><span class="nav-number">3.</span> <span class="nav-text">merge 命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#reset-命令"><span class="nav-number">4.</span> <span class="nav-text">reset 命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#…"><span class="nav-number">5.</span> <span class="nav-text">…</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>java cas | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="并发">
+  
+  
+  
+  
+  <meta name="description" content="引言在介绍CAS之前，我们有必要先理解线程安全的三大特性  原子性: 对于涉及共享变量访问的操作，该操作从其执行线程以外的任意线程来看是不可分割的，从而可以让各个线程依次串行访问，但是原子性并不保证可见性 可见性: 修改共享变量时，立即将工作内存中的值同步到主存中，并使该修改对其他线程可见 有序性: 禁止读取共享变量后的代码、修改共享变量前的代码重排序  CAS即compare and swap的">
+<meta name="keywords" content="并发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java CAS">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/03/02/Java-CAS/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言在介绍CAS之前，我们有必要先理解线程安全的三大特性  原子性: 对于涉及共享变量访问的操作，该操作从其执行线程以外的任意线程来看是不可分割的，从而可以让各个线程依次串行访问，但是原子性并不保证可见性 可见性: 修改共享变量时，立即将工作内存中的值同步到主存中，并使该修改对其他线程可见 有序性: 禁止读取共享变量后的代码、修改共享变量前的代码重排序  CAS即compare and swap的">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.195Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java CAS">
+<meta name="twitter:description" content="引言在介绍CAS之前，我们有必要先理解线程安全的三大特性  原子性: 对于涉及共享变量访问的操作，该操作从其执行线程以外的任意线程来看是不可分割的，从而可以让各个线程依次串行访问，但是原子性并不保证可见性 可见性: 修改共享变量时，立即将工作内存中的值同步到主存中，并使该修改对其他线程可见 有序性: 禁止读取共享变量后的代码、修改共享变量前的代码重排序  CAS即compare and swap的">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Java-CAS" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Java CAS
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/03/02/Java-CAS/" class="article-date">
+	  <time datetime="2019-03-02T08:15:23.000Z" itemprop="datePublished">2019-03-02</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在介绍<code>CAS</code>之前，我们有必要先理解线程安全的三大特性</p>
+<ul>
+<li>原子性: 对于涉及共享变量访问的操作，该操作从其执行线程以外的任意线程来看是不可分割的，从而可以让各个线程依次串行访问，但是原子性并不保证可见性</li>
+<li>可见性: 修改共享变量时，立即将工作内存中的值同步到主存中，并使该修改对其他线程可见</li>
+<li>有序性: 禁止读取共享变量后的代码、修改共享变量前的代码重排序</li>
+</ul>
+<p><code>CAS</code>即<code>compare and swap</code>的缩写，中文翻译成比较并交换。是一种用于在多线程环境下实现同步功能的机制。调用<code>Java CAS</code>需要三个操作数</p>
+<ol>
+<li>内存中值的内存位置</li>
+<li>预期值</li>
+<li>新值</li>
+</ol>
+<p>具体实现是通过值的内存位置取到内存中的值并与预期值比较，若相等，则将内存位置处的值替换为新值，若不相等，则不做任何操作返回false。如果大家有了解过悲观锁和乐观锁，可以发现<code>CAS</code>其实是一种乐观锁的实现。</p>
+<h2 id="使用CAS的目的"><a href="#使用CAS的目的" class="headerlink" title="使用CAS的目的"></a>使用CAS的目的</h2><p>对于实现线程安全，我们用的比较多的应该是<code>synchronized</code>关键字，<code>synchronized</code>其实是一种悲观锁，锁被占用的情况会导致其它所有需要锁的线程挂起，等待持有锁的线程释放锁。<code>CAS</code>是一种乐观锁，每次取数据都不会加锁，更新的时候会进行数据比对，有冲突的话则会自旋重试。可以看到在读操作频繁，更新频率低，冲突概率低的情况下，用<code>CAS</code>的话会更加合理。当然JDK1.6之后，Java对<code>synchronized</code>关键字来了一大波优化（自旋锁，锁消除，锁粗化，偏向锁，轻量级锁），一般情况下使用<code>synchronized</code>是非常稳定的。</p>
+<h2 id="CAS的底层实现"><a href="#CAS的底层实现" class="headerlink" title="CAS的底层实现"></a>CAS的底层实现</h2><p>现在的CPU都是多核心的，多个核心通过总线来操作内存。那么这里就存在一个问题，就是如果多个核心同时操作一块内存区域，会发生什么问题呢？是的，这里数据就会出现混乱。不过这里我们可以从<code>intel</code>的使用手册中找到答案，对指令加<code>lock</code>前缀可以保证操作的原子性，可见性以及有序性。好了，底层的就不多说了，我们直接去看一下<code>java.util.concurrent.atomic</code>包下的原子类 <code>AtomicInteger</code>的源码实现</p>
+<h2 id="AtomicInteger源码"><a href="#AtomicInteger源码" class="headerlink" title="AtomicInteger源码"></a>AtomicInteger源码</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">public class AtomicInteger extends Number implements java.io.Serializable &#123;</span><br><span class="line">    private static final long serialVersionUID = 6214790243416807050L;</span><br><span class="line"></span><br><span class="line">    // setup to use Unsafe.compareAndSwapInt for updates</span><br><span class="line">    private static final Unsafe unsafe = Unsafe.getUnsafe();</span><br><span class="line">    // value值的内存位置</span><br><span class="line">    private static final long valueOffset;</span><br><span class="line"></span><br><span class="line">    static &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            // 获取value的内存位置</span><br><span class="line">            valueOffset = unsafe.objectFieldOffset</span><br><span class="line">                (AtomicInteger.class.getDeclaredField(&quot;value&quot;));</span><br><span class="line">        &#125; catch (Exception ex) &#123; throw new Error(ex); &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	  </span><br><span class="line">	  // value值 volatile 修饰 保证可见性</span><br><span class="line">    private volatile int value;</span><br><span class="line"></span><br><span class="line">    public AtomicInteger(int initialValue) &#123;</span><br><span class="line">        value = initialValue;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public AtomicInteger() &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 获取value在内存中当前的值</span><br><span class="line">     *</span><br><span class="line">     * @return the current value</span><br><span class="line">     */</span><br><span class="line">    public final int get() &#123;</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /**</span><br><span class="line">     * 比较并替换 实现在unsafe.compareAndSwapInt中</span><br><span class="line">     * @param expect 期望值</span><br><span class="line">     * @param update 新值</span><br><span class="line">     */</span><br><span class="line">    public final boolean compareAndSet(int expect, int update) &#123;</span><br><span class="line">        return unsafe.compareAndSwapInt(this, valueOffset, expect, update);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /**</span><br><span class="line">     * 自增 实现在unsafe.getAndAddInt中</span><br><span class="line">     */</span><br><span class="line">    public final int incrementAndGet() &#123;</span><br><span class="line">     		return unsafe.getAndAddInt(this, valueOffset, 1) + 1;</span><br><span class="line">	 &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Unsafe.class</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public final native boolean compareAndSwapInt(Object o, long valueOffset, int expected, int value);</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 获取当前值 并加1，返回的是加1前的值</span><br><span class="line"> */</span><br><span class="line">public final int getAndAddInt(Object o, long valueOffset, int addValue) &#123;</span><br><span class="line">    int currentValue;</span><br><span class="line">    do &#123;</span><br><span class="line">        currentValue = this.getIntVolatile(o, valueOffset);</span><br><span class="line">        // 比较当前内存的值和预期值currentValue是否一致，一致的话则设置新值。但是因为当前内存中的值有可能被其他线程修改，会有和预期值不一致的情况，所以这里会循环直到 compareAndSwapInt 返回成功为止，这里的操作也称为CAS自旋</span><br><span class="line">    &#125; while(!this.compareAndSwapInt(o, valueOffset, currentValue, value + addValue));</span><br><span class="line">    return value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>AtomicInteger</code>是<code>Java</code>对<code>Integer</code>类型原子性操作的实现，可以看到底层都是调用了CAS <code>compareAndSwapInt</code>native方法。<br>这里主要看一下<code>compareAndSwapInt(Object o, long valueOffset, int expect, int update)</code>的四个参数</p>
+<ul>
+<li>o 当前操作的对象</li>
+<li>valueOffset 操作值所在的内存位置 </li>
+<li>expect 期望值</li>
+<li>update 新值</li>
+</ul>
+<p>具体实现是将内存位置处的数值与预期数值相比较，若相等，则将内存位置处的值替换为新值。若不相等，则不做任何操作。<br><code>CAS自旋</code>指的是替换新值失败时会进入循环，重新获取期望值，直到期望值和内存位置处的数值相等。</p>
+<h2 id="CAS的问题"><a href="#CAS的问题" class="headerlink" title="CAS的问题"></a>CAS的问题</h2><h3 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h3><p>提到<code>CAS</code>存在的问题，就不得不提<code>ABA</code>问题，什么是<code>ABA</code>问题呢？<br>举个例子，A是个共享变量，原值是<code>10</code>，线程1从内存中拿到了A，此时值为<code>10</code>，当线程1要对变量A进行<code>CAS</code>操作前，因为其他线程的操作，A从<code>10</code>变为了<code>11</code>，又从<code>11</code>变回了<code>10</code>。此时线程1对变量A执行<code>CAS</code>操作照道理应该是要失败的，但实际却是成功的。这是因为经过了上面的流程，在线程1看来，变量A没有发生任何变化，所以它执行<code>CAS</code>操作是会成功的。</p>
+<p>要解决<code>ABA</code>问题，通常的解决方案给对象加上版本号，每经过一次<code>CAS</code>操作就更新一次版本号</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文的目的主要是让自己对java并发包的基础<code>CAS</code>有个简单的了解，以便进行后续的源码分析</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/03/02/Java-CAS/" target="_blank" title="Java CAS">http://wangjunnan.github.io/2019/03/02/Java-CAS/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/03/12/Java-AQS-源码解析/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Java AQS 源码解析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/02/13/Tomcat源码解析三-Connector连接器/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Tomcat源码解析三 Connector连接器</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用CAS的目的"><span class="nav-number">2.</span> <span class="nav-text">使用CAS的目的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CAS的底层实现"><span class="nav-number">3.</span> <span class="nav-text">CAS的底层实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AtomicInteger源码"><span class="nav-number">4.</span> <span class="nav-text">AtomicInteger源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CAS的问题"><span class="nav-number">5.</span> <span class="nav-text">CAS的问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ABA问题"><span class="nav-number">5.1.</span> <span class="nav-text">ABA问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

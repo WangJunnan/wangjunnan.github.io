@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>java 使用补码运算的前世今生 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="编码补码">
+  
+  
+  
+  
+  <meta name="description" content="前世今生众所周知，java是使用补码来表示数字的（不包括字符型），数字的运算也是以补码形式进行的，那么为什么要用补码表示呢？要了解补码，我们首先要知道计算机可以用原码 反码 补码这三种编码方式表示一个数先来看看我们是如何定义这三种编码的  正数的原码 反码 补码都是一样的 负数的反码是除了符号位其他取反，补码是在反码上加1  所以对于正数三码合一没啥可说的，这里主要来聊一下负数，因为计算机在进行计">
+<meta name="keywords" content="编码,补码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="java 使用补码运算的前世今生">
+<meta property="og:url" content="http://wangjunnan.github.io/2016/10/20/java-使用补码运算的前世今生/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="前世今生众所周知，java是使用补码来表示数字的（不包括字符型），数字的运算也是以补码形式进行的，那么为什么要用补码表示呢？要了解补码，我们首先要知道计算机可以用原码 反码 补码这三种编码方式表示一个数先来看看我们是如何定义这三种编码的  正数的原码 反码 补码都是一样的 负数的反码是除了符号位其他取反，补码是在反码上加1  所以对于正数三码合一没啥可说的，这里主要来聊一下负数，因为计算机在进行计">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.212Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="java 使用补码运算的前世今生">
+<meta name="twitter:description" content="前世今生众所周知，java是使用补码来表示数字的（不包括字符型），数字的运算也是以补码形式进行的，那么为什么要用补码表示呢？要了解补码，我们首先要知道计算机可以用原码 反码 补码这三种编码方式表示一个数先来看看我们是如何定义这三种编码的  正数的原码 反码 补码都是一样的 负数的反码是除了符号位其他取反，补码是在反码上加1  所以对于正数三码合一没啥可说的，这里主要来聊一下负数，因为计算机在进行计">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-java-使用补码运算的前世今生" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      java 使用补码运算的前世今生
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2016/10/20/java-使用补码运算的前世今生/" class="article-date">
+	  <time datetime="2016-10-20T08:14:23.000Z" itemprop="datePublished">2016-10-20</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/编码/">编码</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h3 id="前世今生"><a href="#前世今生" class="headerlink" title="前世今生"></a>前世今生</h3><p>众所周知，java是使用补码来表示数字的（不包括字符型），数字的运算也是以补码形式进行的，那么为什么要用补码表示呢？<br>要了解补码，我们首先要知道计算机可以用原码 反码 补码这三种编码方式表示一个数<br>先来看看我们是如何定义这三种编码的</p>
+<ul>
+<li>正数的<code>原码 反码 补码</code>都是一样的</li>
+<li>负数的<code>反码</code>是除了符号位其他取反，<code>补码</code>是在<code>反码</code>上加1</li>
+</ul>
+<p>所以对于正数<strong>三码合一</strong>没啥可说的，这里主要来聊一下负数，因为计算机在进行计算的时候，并不会像人脑一样识别原码的第一位为符号位，进而会去根据符号位对真值进行加或减。所以我们要让计算机的运算变的尽可能的简单，比如两个数相减我们可以看成是加上一个负数，并且让符号位也参与运算</p>
+<ul>
+<li>原码的减法</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">10 + (-9) = 0000 1010(原) + 1000 1001(原) = 1001 0011(原) = -19</span><br><span class="line">// 正解应该是 1， -19显然是错误的</span><br></pre></td></tr></table></figure>
+<p>例子中正解应该是 <code>1</code>， <code>-19</code>显然是错误的。这就引申出了反码，负数的反码是除了符号位，其他位取反</p>
+<ul>
+<li>反码的减法</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">10 + (-9) = 0000 1010(原) + 1000 1001(原) = 0000 1010(反) + 1111 0110(反) = 0000 0001(反) = 0000 0001(原)</span><br><span class="line"></span><br><span class="line">// 结果是正确的 = 1</span><br></pre></td></tr></table></figure>
+<p>看似反码貌似解决了符号位参与运算的问题，其实不然，让我们再看一个特殊的例子</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1 + (-1) = 0000 0001(原) + 1000 0001(原) = 0000 0001(反) + 1111 1110(反) = 1111 1111(反) = 1000 0000(原) = -0</span><br><span class="line">// ps: 反码相加符号位参与运算，且若最高位相加后产生进位，最后得到的结果要加1</span><br><span class="line">// 结果看似是正确的，但是显然不符合我们的预期，0 和 -0 应该是一个数字</span><br></pre></td></tr></table></figure>
+<p>于是补码就这样出现了</p>
+<ul>
+<li>补码的减法</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">1 + (-1) = 0000 0001(原) + 1000 0001(原) = 0000 0001(反) + 1111 1110(反) = 0000 0001(补) + 1111 1111(补) = 0000 0000(原) = 0</span><br><span class="line">// ps: 补码运算最高位进位会舍去</span><br><span class="line">// 结果完全正确 且 -0 不存在了</span><br></pre></td></tr></table></figure>
+<p>还有一点需要注意的是 <code>1000 0000(补)</code> 并没有相应的原码和反码，仅用来表示 <code>-128</code></p>
+<hr>
+<h3 id="最后再附张幼儿班常用数字进制表-lt-￣▽￣"><a href="#最后再附张幼儿班常用数字进制表-lt-￣▽￣" class="headerlink" title="最后再附张幼儿班常用数字进制表 &lt;(￣▽￣)/"></a>最后再附张幼儿班常用数字进制表 &lt;(<em>￣▽￣</em>)/</h3><table>
+<thead>
+<tr>
+<th>2进制</th>
+<th>10 进制</th>
+<th>16 进制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0000 0001</td>
+<td>1</td>
+<td>0x1</td>
+</tr>
+<tr>
+<td>0000 0010</td>
+<td>2</td>
+<td>0x2</td>
+</tr>
+<tr>
+<td>0000 0011</td>
+<td>3</td>
+<td>0x3</td>
+</tr>
+<tr>
+<td>0000 0100</td>
+<td>4</td>
+<td>0x4</td>
+</tr>
+<tr>
+<td>0000 0101</td>
+<td>5</td>
+<td>0x5</td>
+</tr>
+<tr>
+<td>0000 0110</td>
+<td>6</td>
+<td>0x6</td>
+</tr>
+<tr>
+<td>0000 0111</td>
+<td>7</td>
+<td>0x7</td>
+</tr>
+<tr>
+<td>0000 1000</td>
+<td>8</td>
+<td>0x8</td>
+</tr>
+<tr>
+<td>0000 1001</td>
+<td>9</td>
+<td>0x9</td>
+</tr>
+<tr>
+<td>0000 1010</td>
+<td>10</td>
+<td>0xa</td>
+</tr>
+<tr>
+<td>0000 1011</td>
+<td>11</td>
+<td>0xb</td>
+</tr>
+<tr>
+<td>0000 1100</td>
+<td>12</td>
+<td>0xc</td>
+</tr>
+<tr>
+<td>0000 1101</td>
+<td>13</td>
+<td>0xd</td>
+</tr>
+<tr>
+<td>0000 1110</td>
+<td>14</td>
+<td>0xe</td>
+</tr>
+<tr>
+<td>0000 1111</td>
+<td>15</td>
+<td>0xf</td>
+</tr>
+<tr>
+<td>0001 0000</td>
+<td>16</td>
+<td>0x10</td>
+</tr>
+<tr>
+<td>0001 0100</td>
+<td>20</td>
+<td>0x14</td>
+</tr>
+<tr>
+<td>0001 1110</td>
+<td>20</td>
+<td>0x1e</td>
+</tr>
+<tr>
+<td>0100 0000</td>
+<td>64</td>
+<td>0x40</td>
+</tr>
+<tr>
+<td>0111 1111</td>
+<td>127</td>
+<td>0x7f</td>
+</tr>
+<tr>
+<td>1111 1111</td>
+<td>255</td>
+<td>0xff</td>
+</tr>
+</tbody>
+</table>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2016/10/20/java-使用补码运算的前世今生/" target="_blank" title="java 使用补码运算的前世今生">http://wangjunnan.github.io/2016/10/20/java-使用补码运算的前世今生/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/12/20/Maven-学习总结/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Maven 学习总结
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/09/21/CSS-绝对定位-浮动-清除浮动/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">CSS 绝对定位 ,浮动,清除浮动</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前世今生"><span class="nav-number">1.</span> <span class="nav-text">前世今生</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#最后再附张幼儿班常用数字进制表-lt-￣▽￣"><span class="nav-number">2.</span> <span class="nav-text">最后再附张幼儿班常用数字进制表 &lt;(￣▽￣)/</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

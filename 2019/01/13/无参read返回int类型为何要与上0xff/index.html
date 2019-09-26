@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>无参read返回int类型为何要与上0xff | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="IOJDK源码">
+  
+  
+  
+  
+  <meta name="description" content="引言使用java io 包时，InputStream 类中的有好几个read()方法，并且返回值也都是int类型，这样就使得初学者很容易搞混，其实虽然返回值都是int类型，但所表示的意义确是不一样的 有参 read(byte b[], int off, int len)先看有参的read方法。有参的read比较好理解，将读取到的数据写入字节数组(从字节数组的指定位置开始写入)  三个入参 b[]">
+<meta name="keywords" content="IO,JDK源码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="无参read返回int类型为何要与上0xff">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/01/13/无参read返回int类型为何要与上0xff/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言使用java io 包时，InputStream 类中的有好几个read()方法，并且返回值也都是int类型，这样就使得初学者很容易搞混，其实虽然返回值都是int类型，但所表示的意义确是不一样的 有参 read(byte b[], int off, int len)先看有参的read方法。有参的read比较好理解，将读取到的数据写入字节数组(从字节数组的指定位置开始写入)  三个入参 b[]">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.213Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="无参read返回int类型为何要与上0xff">
+<meta name="twitter:description" content="引言使用java io 包时，InputStream 类中的有好几个read()方法，并且返回值也都是int类型，这样就使得初学者很容易搞混，其实虽然返回值都是int类型，但所表示的意义确是不一样的 有参 read(byte b[], int off, int len)先看有参的read方法。有参的read比较好理解，将读取到的数据写入字节数组(从字节数组的指定位置开始写入)  三个入参 b[]">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-无参read返回int类型为何要与上0xff" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      无参read返回int类型为何要与上0xff
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/01/13/无参read返回int类型为何要与上0xff/" class="article-date">
+	  <time datetime="2019-01-13T08:08:37.000Z" itemprop="datePublished">2019-01-13</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JDK源码/">JDK源码</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>使用<code>java io</code> 包时，<code>InputStream</code> 类中的有好几个<code>read()</code>方法，并且返回值也都是int类型，这样就使得初学者很容易搞混，其实虽然返回值都是<code>int类型</code>，但所表示的意义确是不一样的</p>
+<h2 id="有参-read-byte-b-int-off-int-len"><a href="#有参-read-byte-b-int-off-int-len" class="headerlink" title="有参 read(byte b[], int off, int len)"></a>有参 read(byte b[], int off, int len)</h2><p>先看有参的<code>read</code>方法。<br>有参的<code>read</code>比较好理解，将读取到的数据写入字节数组(从字节数组的指定位置开始写入)</p>
+<ul>
+<li>三个入参<ul>
+<li><code>b[]</code>  存储读取到的数据的字节数组</li>
+<li><code>off</code>  从目标数组<code>b[]</code>的<code>off</code>位开始写入，一般都是从0开始</li>
+<li><code>len</code>  要读取的字节码长度，一般会是存储数组<code>b[]</code>的长度</li>
+</ul>
+</li>
+</ul>
+<p>这里的<code>int</code>类型的返回值是实际读取的字节数，如果检测到无数据可读时会返回 -1</p>
+<h2 id="无参-read"><a href="#无参-read" class="headerlink" title="无参 read()"></a>无参 read()</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 从输入流读取下一个字节的数据。返回值为`int类型`，值范围在`0-255`之间。如果由于到达流</span><br><span class="line"> * 的末尾而没有可用的字节，则返回`-1`。此方法将一直阻塞，直到输入数据可用、检测到流的结</span><br><span class="line"> * 尾或引发异常为止</span><br><span class="line"> */</span><br><span class="line">public abstract int read() throws IOException;</span><br></pre></td></tr></table></figure>
+<p><strong>从输入流读取下一个字节的数据。返回值为<code>int类型</code>，值范围在<code>0-255</code>之间。如果由于到达流的末尾而没有可用的字节，则返回<code>-1</code>。此方法将一直阻塞，直到输入数据可用、检测到流的结尾或引发异常为止</strong></p>
+<p>我们再来看一下这个方法的具体实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public int read() throws IOException &#123;</span><br><span class="line">    if (eof) &#123;</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line">    temp = new byte[1];</span><br><span class="line">    int n = read(temp, 0, 1);</span><br><span class="line">    if (n &lt;= 0) &#123;</span><br><span class="line">        return -1;</span><br><span class="line">    &#125;</span><br><span class="line">    return temp[0] &amp; 0xff;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到这里就很奇怪了，这个方法是返回下一个字节的数据，可是为什么要返回一个<code>int类型</code>，而不直接返回 <code>byte</code> 类型？并且返回<code>int</code>类型时还有一个<code>&amp; 0xff</code>操作，为什么还要执行这个与操作呢？下面就让我们好好分析一下，为何要返回<code>int</code>类型，而不直接返回<code>byte</code>类型，以及为何会先执行一个<code>&amp; 0xff</code>操作</p>
+<h3 id="为何要返回int类型"><a href="#为何要返回int类型" class="headerlink" title="为何要返回int类型"></a>为何要返回int类型</h3><p>在读取字节时，我们肯定需要一个标识来表示已经读到了字节流末尾，一般会返回<code>-1</code>来标识，但是如果是返回<code>byte</code>类型，就无法标识是否到了文件末尾。所以单凭这点，这里就不能返回<code>byte</code>类型</p>
+<h3 id="为何要执行与操作-amp-0xff再返回int类型"><a href="#为何要执行与操作-amp-0xff再返回int类型" class="headerlink" title="为何要执行与操作&amp; 0xff再返回int类型"></a>为何要执行与操作<code>&amp; 0xff</code>再返回int类型</h3><p>上面解释了为何要返回<code>int</code>类型，可是貌似返回<code>int</code>类型也并没有解决问题..</p>
+<p>看这么一个情况，万一返回的单个字节以二进制表示是<code>1111 1111</code>，转换成<code>int</code>类型会高位补符号位1，也就是<code>1111 1111 1111 1111 1111 1111 1111 1111</code>，刚好是<code>-1</code>(Java中数字是以补码形式存储的)，所以这里就会产生混乱，我们无法区分返回<code>-1</code>是不是到了字节流的末尾</p>
+<p>那么这个问题该怎么解决呢？<br>这里要解决的问题其实就是当还没有读到字节流末尾时不能返回<code>-1</code>，并且二进制字节流也不能改变<br>所以这里就加入了<code>&amp; 0xff</code>操作，我们再来看前面返回<code>-1</code>的例子<br><code>1111 1111</code>高位自动补1后与上<code>0xff</code>(0000 0000 0000 0000 0000 0000 1111 1111)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1111 1111 1111 1111 1111 1111 1111 1111 &amp; 0000 0000 0000 0000 0000 0000 1111 1111 = 0000 0000 0000 0000 0000 0000 1111 1111</span><br></pre></td></tr></table></figure>
+<p>可知执行了<code>&amp; 0xff</code>操作后，相当于永远不会返回负数了，也就不会存在返回-1和到字节流末尾返回-1冲突的情况，并且实际的二进制结构也没有改变，可以说是完美的解决了这个问题。</p>
+<blockquote>
+<p>上面的<code>1111 1111</code>会自动高位补符号位的原因是，当Java检测到<code>byte</code>要转化或将要转换成高位类型时，会自动补高位符号位</p>
+</blockquote>
+<h4 id="补符号位"><a href="#补符号位" class="headerlink" title="补符号位"></a>补符号位</h4><p>这里再解释一下补符号位<br>我们知道<code>byte</code>占一个字节8位，而<code>int</code>类型占4个字节32位，所以<code>byte</code>类型向上转换成<code>int</code>类型时需要补符号位，正数补0，负数补1。我们补符号位的目的是为了类型转换后大小和符号位都保持不变。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本篇文章虽然是从<code>IO</code>的<code>read</code>方法接入，其实还是跟Java内部的编码格式有关，如数字在Java内存中是以补码存储的，数字类型转换会高位补符号位等等，要彻底搞懂还是要花些时间的。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/01/13/无参read返回int类型为何要与上0xff/" target="_blank" title="无参read返回int类型为何要与上0xff">http://wangjunnan.github.io/2019/01/13/无参read返回int类型为何要与上0xff/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Java NIO Selector 多路复用选择器
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2019/01/10/Java-NIO-Channel-通道/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Java NIO Channel 通道</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#有参-read-byte-b-int-off-int-len"><span class="nav-number">2.</span> <span class="nav-text">有参 read(byte b[], int off, int len)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#无参-read"><span class="nav-number">3.</span> <span class="nav-text">无参 read()</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#为何要返回int类型"><span class="nav-number">3.1.</span> <span class="nav-text">为何要返回int类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#为何要执行与操作-amp-0xff再返回int类型"><span class="nav-number">3.2.</span> <span class="nav-text">为何要执行与操作&amp; 0xff再返回int类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#补符号位"><span class="nav-number">3.2.1.</span> <span class="nav-text">补符号位</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

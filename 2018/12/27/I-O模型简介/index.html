@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>i/o模型简介 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="IO">
+  
+  
+  
+  
+  <meta name="description" content="引言在深入学习netty之前，还是有必要先回顾下I/O模型，I/O模型理解起来会比较抽象，第一次理解需要借助图片以及实际例子去让自己加深印象 模型分类在开始介绍之前，我们先列举一下Unix下可用的5种I/O模型  阻塞式I/O 非阻塞式I/O I/O复用 信号驱动I/O 异步I/O  接下来的模型介绍都是以UDP做为例子，原因是UDP是以数据报的方式进行数据传输，概念比较简单（整个数据要么收到要么">
+<meta name="keywords" content="IO">
+<meta property="og:type" content="article">
+<meta property="og:title" content="I&#x2F;O模型简介">
+<meta property="og:url" content="http://wangjunnan.github.io/2018/12/27/I-O模型简介/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言在深入学习netty之前，还是有必要先回顾下I/O模型，I/O模型理解起来会比较抽象，第一次理解需要借助图片以及实际例子去让自己加深印象 模型分类在开始介绍之前，我们先列举一下Unix下可用的5种I/O模型  阻塞式I/O 非阻塞式I/O I/O复用 信号驱动I/O 异步I/O  接下来的模型介绍都是以UDP做为例子，原因是UDP是以数据报的方式进行数据传输，概念比较简单（整个数据要么收到要么">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-d6ae0b9e0e239803.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-e027a460cb85cb20.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-e87b3c24ec91d9fe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-775e3b5afed414fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2717496-7a531bfa0c353081.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:updated_time" content="2019-09-26T07:56:09.188Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="I&#x2F;O模型简介">
+<meta name="twitter:description" content="引言在深入学习netty之前，还是有必要先回顾下I/O模型，I/O模型理解起来会比较抽象，第一次理解需要借助图片以及实际例子去让自己加深印象 模型分类在开始介绍之前，我们先列举一下Unix下可用的5种I/O模型  阻塞式I/O 非阻塞式I/O I/O复用 信号驱动I/O 异步I/O  接下来的模型介绍都是以UDP做为例子，原因是UDP是以数据报的方式进行数据传输，概念比较简单（整个数据要么收到要么">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2717496-d6ae0b9e0e239803.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-I-O模型简介" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      I/O模型简介
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/27/I-O模型简介/" class="article-date">
+	  <time datetime="2018-12-27T08:01:31.000Z" itemprop="datePublished">2018-12-27</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/基础/">基础</a><a class="article-category-link" href="/categories/基础/IO/">IO</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在深入学习<code>netty</code>之前，还是有必要先回顾下<code>I/O模型</code>，<code>I/O模型</code>理解起来会比较抽象，第一次理解需要借助图片以及实际例子去让自己加深印象</p>
+<h2 id="模型分类"><a href="#模型分类" class="headerlink" title="模型分类"></a>模型分类</h2><p>在开始介绍之前，我们先列举一下Unix下可用的5种I/O模型</p>
+<ul>
+<li>阻塞式I/O</li>
+<li>非阻塞式I/O</li>
+<li>I/O复用</li>
+<li>信号驱动I/O</li>
+<li>异步I/O</li>
+</ul>
+<p>接下来的模型介绍都是以<code>UDP</code>做为例子，原因是<code>UDP</code>是以数据报的方式进行数据传输，概念比较简单（整个数据要么收到要么没有收到），便于我们去理解<code>I/O模型</code>的核心概念</p>
+<h2 id="阻塞式I-O"><a href="#阻塞式I-O" class="headerlink" title="阻塞式I/O"></a>阻塞式I/O</h2><p><img src="http://upload-images.jianshu.io/upload_images/2717496-d6ae0b9e0e239803.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="阻塞IO.png"></p>
+<p>我们最熟悉的<code>I/O模型</code>就是阻塞式I/O模型，在上图中，应用进程系统调用<code>recvfrom</code>接收数据，但是此时<code>内核缓冲区</code>中数据报还未准备好，所以应用进程会一直阻塞直到<code>内核缓冲区</code>有数据报到达且被复制到<code>应用进程缓冲区</code></p>
+<p>这里我们提一下这里的<code>内核缓冲区</code>和<code>应用进程缓冲区</code>所处的阶段<br>一个输入操作通常包括两个不同的阶段:</p>
+<ol>
+<li>等待数据报准备好 (通常是等待数据从网络上到达，当所等待的分组数据到达后，会被复制到内核的某个缓冲区中)</li>
+<li>从内核向进程复制数据 (把数据从内核缓冲区复制到应用进程缓冲区中)</li>
+</ol>
+<p><strong>例子</strong><br>商场排队吃饭，只能老老实实排队，并且排队的时候不能做其他事情</p>
+<h2 id="非阻塞式I-O"><a href="#非阻塞式I-O" class="headerlink" title="非阻塞式I/O"></a>非阻塞式I/O</h2><p>如果不想进程一直阻塞在那里的话，我们可以设置本次套接字连接为非阻塞的</p>
+<p><img src="http://upload-images.jianshu.io/upload_images/2717496-e027a460cb85cb20.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="非阻塞IO.png"></p>
+<p>查看上图可知，在设置连接为非阻塞时，当应用进程系统调用<code>recvfrom</code>没有数据返回时，内核会立即返回一个<code>EWOULDBLOCK</code>错误，而不会一直阻塞到数据准备好。如上图在第四次调用时有一个数据报准备好了，所以这时数据会被复制到<code>应用进程缓冲区</code>，于是<code>recvfrom</code>成功返回数据</p>
+<p>当一个应用进程这样循环调用<code>recvfrom</code>时，我们称之为轮询<code>polling</code>。这么做往往会耗费大量CPU时间，实际使用很少</p>
+<p><strong>例子</strong><br>还是商场吃饭，只是现在可以取号了。不过仍然需要时不时的去看一下有没有叫到号</p>
+<h2 id="I-O-复用"><a href="#I-O-复用" class="headerlink" title="I/O 复用"></a>I/O 复用</h2><p><img src="http://upload-images.jianshu.io/upload_images/2717496-e87b3c24ec91d9fe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="IO多路复用.png"></p>
+<p>Linux I/O复用模型提供了<code>select poll epoll</code>三组系统调用可做选择，进程通过将一个或多个<code>文件描述符(fd)</code>传递给<code>select</code>或<code>poll</code>或<code>epoll</code>系统调用，通过它们来监测多个<code>fd</code>是否处于就绪状态。<code>select</code>或<code>poll</code>是顺序扫描<code>fd</code>是否就绪，而且支持的<code>fd</code>数量有限，因此使用上有制约。<code>epoll</code>调用基于事件驱动，因此性能更高，当<code>fd</code>就绪时会立即回调<code>rollback</code></p>
+<p><strong>解释一下文件描述符</strong></p>
+<blockquote>
+<p>Linux 内核将所有外部设备都看做一个文件来操作，对一个文件的读写操作会调用内核提供的系统命令，返回一个<code>file descriptor(fd 文件描述符)</code>。而对一个<code>socket</code>的读写也会有相应的描述符，称为<code>socket fd</code>。</p>
+</blockquote>
+<p>现在再来看一下上图，上图以<code>select</code>为例。不难发现进程会阻塞于<code>select</code>调用，直到所关注的某一个文件描述符(套接字)变为可读状态</p>
+<p><strong>例子</strong><br>还是商场吃饭，但是现在你可以在手机APP上同时叫多个号了，只要多个号里面有一个号好了就会通知你了</p>
+<h2 id="信号驱动I-O"><a href="#信号驱动I-O" class="headerlink" title="信号驱动I/O"></a>信号驱动I/O</h2><p><img src="http://upload-images.jianshu.io/upload_images/2717496-775e3b5afed414fa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="信号驱动I/O.png"></p>
+<p>信号驱动I/O的意思就是我们现在不用傻等着了，也不用去轮询。而是让内核在数据就绪时，发送信号通知我们。<br>调用的步骤是，我们通过系统调用<code>sigaction</code>，并注册一个信号处理的回调函数，该调用会立即返回，但是当内核数据就绪时，内核会为该进程产生一个<code>SIGIO</code>信号，并回调我们注册的信号回调函数，这样我们就可以在信号回调函数中系统调用<code>recvfrom</code>获取数据</p>
+<p><strong>例子</strong><br>商场吃饭，只要取了号，你也不用去一直看看大屏幕有没有好了，要是叫到号了，会主动发消息告诉你了</p>
+<h2 id="异步I-O"><a href="#异步I-O" class="headerlink" title="异步I/O"></a>异步I/O</h2><p><img src="http://upload-images.jianshu.io/upload_images/2717496-7a531bfa0c353081.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="异步IO.png"></p>
+<p><code>异步I/O</code> 与 <code>信号驱动I/O</code>最大区别在于，<code>信号驱动</code>是内核通知我们何时开始一个<code>I/O操作</code>，而<code>异步I/O</code>是由内核通知我们<code>I/O</code>操作何时完成，两者有本质区别</p>
+<p><strong>例子</strong><br>都不用去商场吃饭了，直接点个外卖，把等待上菜的时间也给省了</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本篇文章主要介绍了5种I/O模型，例子也是参考了网上个人觉得比较合理的解释，希望能对此有疑惑的同学有所帮助。另外文章主要参考了<code>Unix 网络编程</code>这本书，有兴趣的同学也可以深入了解</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2018/12/27/I-O模型简介/" target="_blank" title="I/O模型简介">http://wangjunnan.github.io/2018/12/27/I-O模型简介/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/12/28/Java-NIO-Buffer-分析/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Java NIO Buffer 分析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Spring IOC 源码解析 （循环依赖的解决）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模型分类"><span class="nav-number">2.</span> <span class="nav-text">模型分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#阻塞式I-O"><span class="nav-number">3.</span> <span class="nav-text">阻塞式I/O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#非阻塞式I-O"><span class="nav-number">4.</span> <span class="nav-text">非阻塞式I/O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#I-O-复用"><span class="nav-number">5.</span> <span class="nav-text">I/O 复用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#信号驱动I-O"><span class="nav-number">6.</span> <span class="nav-text">信号驱动I/O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#异步I-O"><span class="nav-number">7.</span> <span class="nav-text">异步I/O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>
