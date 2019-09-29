@@ -11,18 +11,18 @@
   
   
   
-  <meta name="description" content="前文也说过，springboot最大的优势在于自动配置，我么只需要引入一个个第三方提供的starter就可以快速集成第三方功能，既然starter这么方便，我们自己应该也可以写一个。 快速写一个starter 新建一个maven项目  123456789101112&amp;lt;groupId&amp;gt;com.walm&amp;lt;/groupId&amp;gt;    &amp;lt;artifactId&amp;gt;boot-t">
+  <meta name="description" content="引言前文说过，Spring Boot最大的优势在于自动配置，我么只需要引入一个个第三方提供的starter就可以快速集成第三方功能，既然starter这么方便，我们自己应该也可以写一个。 快速写一个starter 新建一个maven项目  123456789101112&amp;lt;groupId&amp;gt;com.walm&amp;lt;/groupId&amp;gt;    &amp;lt;artifactId&amp;gt;boot">
 <meta name="keywords" content="Spring,SpringBoot">
 <meta property="og:type" content="article">
 <meta property="og:title" content="手写一个starter">
 <meta property="og:url" content="http://wangjunnan.github.io/2019/08/28/手写一个starter/index.html">
 <meta property="og:site_name" content="王俊男的技术杂谈">
-<meta property="og:description" content="前文也说过，springboot最大的优势在于自动配置，我么只需要引入一个个第三方提供的starter就可以快速集成第三方功能，既然starter这么方便，我们自己应该也可以写一个。 快速写一个starter 新建一个maven项目  123456789101112&amp;lt;groupId&amp;gt;com.walm&amp;lt;/groupId&amp;gt;    &amp;lt;artifactId&amp;gt;boot-t">
+<meta property="og:description" content="引言前文说过，Spring Boot最大的优势在于自动配置，我么只需要引入一个个第三方提供的starter就可以快速集成第三方功能，既然starter这么方便，我们自己应该也可以写一个。 快速写一个starter 新建一个maven项目  123456789101112&amp;lt;groupId&amp;gt;com.walm&amp;lt;/groupId&amp;gt;    &amp;lt;artifactId&amp;gt;boot">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-09-27T05:52:47.720Z">
+<meta property="og:updated_time" content="2019-09-29T09:27:51.237Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="手写一个starter">
-<meta name="twitter:description" content="前文也说过，springboot最大的优势在于自动配置，我么只需要引入一个个第三方提供的starter就可以快速集成第三方功能，既然starter这么方便，我们自己应该也可以写一个。 快速写一个starter 新建一个maven项目  123456789101112&amp;lt;groupId&amp;gt;com.walm&amp;lt;/groupId&amp;gt;    &amp;lt;artifactId&amp;gt;boot-t">
+<meta name="twitter:description" content="引言前文说过，Spring Boot最大的优势在于自动配置，我么只需要引入一个个第三方提供的starter就可以快速集成第三方功能，既然starter这么方便，我们自己应该也可以写一个。 快速写一个starter 新建一个maven项目  123456789101112&amp;lt;groupId&amp;gt;com.walm&amp;lt;/groupId&amp;gt;    &amp;lt;artifactId&amp;gt;boot">
   
     <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
   
@@ -197,7 +197,7 @@
     </div>
     <div class="article-entry" itemprop="articleBody">
       
-        <p>前文也说过，springboot最大的优势在于自动配置，我么只需要引入一个个第三方提供的starter就可以快速集成第三方功能，既然starter这么方便，我们自己应该也可以写一个。</p>
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>前文说过，<code>Spring Boot</code>最大的优势在于自动配置，我么只需要引入一个个第三方提供的<code>starter</code>就可以快速集成第三方功能，既然<code>starter</code>这么方便，我们自己应该也可以写一个。</p>
 <h2 id="快速写一个starter"><a href="#快速写一个starter" class="headerlink" title="快速写一个starter"></a>快速写一个starter</h2><ul>
 <li>新建一个maven项目</li>
 </ul>
@@ -344,7 +344,7 @@ var a = new Donate({
     <div id="toc" class="toc-article">
     <strong class="toc-title">文章目录</strong>
     
-        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#快速写一个starter"><span class="nav-number">1.</span> <span class="nav-text">快速写一个starter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#starter-自动配置原理"><span class="nav-number">2.</span> <span class="nav-text">starter 自动配置原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol>
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#快速写一个starter"><span class="nav-number">2.</span> <span class="nav-text">快速写一个starter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#starter-自动配置原理"><span class="nav-number">3.</span> <span class="nav-text">starter 自动配置原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol>
     
     </div>
   </aside>
