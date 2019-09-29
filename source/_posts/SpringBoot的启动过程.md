@@ -8,7 +8,12 @@ categories:
   - SpringBoot
 date: 2019-08-27 16:44:29
 ---
-之前文章中有分析过Spring的启动过程，因为Spring boot用的更多了现在，简单看下Springboot的启动过程。其实毕竟核心还是 Spring Framework 那一套。个人觉得 Spring boot没啥特别核心的东西
+## 引言
+在我之前写的文章中有详细分析过`Spring`的启动过程，如何大家有深入阅读过`Spring Framework`的核心源码，那么阅读`Spring Boot`的源码会比较轻松。个人觉得`Spring Boot`核心的东西比较少，其核心还是`Spring Framework`。
+
+## 启动入口
+
+还是一步到位，直接看源码
 
 ```java
 public ConfigurableApplicationContext run(String... args) {
