@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>浅谈常用的限流算法 | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="并发算法">
+  
+  
+  
+  
+  <meta name="description" content="引言在开发高并发系统时有三把利器用来保护系统：缓存、降级和限流。今天我们要聊的就是限流（Rate Limit），限流的目的很简单，就是为了保护系统不被瞬时大流量冲垮，限流这个概念我其实很早之前就有去了解过，不过无奈之前工作所接触业务的并发量实在是谈不上限流。目前公司大促峰值QPS在2w往上，自然而然需要用到限流，特别是类似秒杀这种瞬时流量非常大但实际成单率低的业务场景。 目前比较常用的限流算法有三">
+<meta name="keywords" content="并发,算法">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅谈常用的限流算法">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/10/09/浅谈常用的限流算法/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言在开发高并发系统时有三把利器用来保护系统：缓存、降级和限流。今天我们要聊的就是限流（Rate Limit），限流的目的很简单，就是为了保护系统不被瞬时大流量冲垮，限流这个概念我其实很早之前就有去了解过，不过无奈之前工作所接触业务的并发量实在是谈不上限流。目前公司大促峰值QPS在2w往上，自然而然需要用到限流，特别是类似秒杀这种瞬时流量非常大但实际成单率低的业务场景。 目前比较常用的限流算法有三">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://img.souche.com/f2e/c9acdd415f157334407d233927474513.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/0186f84da43e3286f3d79e3a2f2d538e.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/d6decf371f1085a63bcf925bfcedeeae.jpg">
+<meta property="og:updated_time" content="2019-10-09T02:18:05.016Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="浅谈常用的限流算法">
+<meta name="twitter:description" content="引言在开发高并发系统时有三把利器用来保护系统：缓存、降级和限流。今天我们要聊的就是限流（Rate Limit），限流的目的很简单，就是为了保护系统不被瞬时大流量冲垮，限流这个概念我其实很早之前就有去了解过，不过无奈之前工作所接触业务的并发量实在是谈不上限流。目前公司大促峰值QPS在2w往上，自然而然需要用到限流，特别是类似秒杀这种瞬时流量非常大但实际成单率低的业务场景。 目前比较常用的限流算法有三">
+<meta name="twitter:image" content="http://img.souche.com/f2e/c9acdd415f157334407d233927474513.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-浅谈常用的限流算法" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      浅谈常用的限流算法
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/10/09/浅谈常用的限流算法/" class="article-date">
+	  <time datetime="2019-10-09T02:15:47.000Z" itemprop="datePublished">2019-10-09</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/算法/">算法</a><a class="article-category-link" href="/categories/算法/分布式/">分布式</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在开发高并发系统时有三把利器用来保护系统：缓存、降级和限流。今天我们要聊的就是限流（Rate Limit），限流的目的很简单，就是为了保护系统不被瞬时大流量冲垮，<br>限流这个概念我其实很早之前就有去了解过，不过无奈之前工作所接触业务的并发量实在是谈不上限流。目前公司大促峰值QPS在2w往上，自然而然需要用到限流，特别是类似秒杀这种瞬时流量非常大但实际成单率低的业务场景。</p>
+<p>目前比较常用的限流算法有三种</p>
+<ul>
+<li>计数器固定窗口算法</li>
+<li>计数器滑动窗口算法</li>
+<li>漏桶算法</li>
+<li>令牌桶算法</li>
+</ul>
+<h2 id="计数器固定窗口算法"><a href="#计数器固定窗口算法" class="headerlink" title="计数器固定窗口算法"></a>计数器固定窗口算法</h2><p>计数器固定窗口算法是最简单的限流算法，实现方式也比较简单。就是通过维护一个单位时间内的计数值，每当一个请求通过时，就将计数值加1，当计数值超过预先设定的阈值时，就拒绝单位时间内的其他请求。如果单位时间已经结束，则将计数器清零，开启下一轮的计数。</p>
+<p>但是这种实现会有一个问题，举个例子: </p>
+<p>假设我们设定1秒内允许通过的请求阈值是200，如果有用户在时间窗口的最后几毫秒发送了200个请求，紧接着又在下一个时间窗口开始时发送了200个请求，那么这个用户其实在一秒内成功请求了400次，显然超过了阈值但并不会被限流。其实这就是临界值问题，那么临界值问题要怎么解决呢？</p>
+<ul>
+<li>代码实现 – <a href="https://github.com/WangJunnan/learn/blob/master/algorithm/src/main/java/com/walm/learn/algorithm/ratelimit/CounterRateLimit.java" target="_blank" rel="noopener">CounterRateLimit.java</a></li>
+</ul>
+<h2 id="计数器滑动窗口算法"><a href="#计数器滑动窗口算法" class="headerlink" title="计数器滑动窗口算法"></a>计数器滑动窗口算法</h2><p>计数器滑动窗口法就是为了解决上述固定窗口计数存在的问题而诞生，学过TCP协议的同学应该对滑动窗口不陌生，其实还是不太一样的，下文我们要说的滑动窗口是基于时间来划分窗口的。而TCP的滑动窗口指的是能够接受的字节数，并且大小是可变的（拥塞控制）</p>
+<p>滑动窗口是怎么做的？</p>
+<p>前面说了固定窗口存在临界值问题，要解决这种临界值问题，显然只用一个窗口是解决不了问题的。假设我们仍然设定1秒内允许通过的请求是200个，但是在这里我们需要把1秒的时间分成多格，假设分成5格（格数越多，流量过渡越平滑），每格窗口的时间大小是200毫秒，每过200毫秒，就将窗口向前移动一格。为了便于理解，可以看下图<br><img src="http://img.souche.com/f2e/c9acdd415f157334407d233927474513.jpg" alt></p>
+<p>图中将窗口划为5份，每个小窗口中的数字表示在这个窗口中请求数，所以通过观察上图，可知在当前时间快（200毫秒）允许通过的请求数应该是20而不是200（只要超过20就会被限流），因为我们最终统计请求数时是需要把当前窗口的值进行累加，进而得到当前请求数来判断是不是需要进行限流。</p>
+<p>那么滑动窗口限流法是完美的吗？<br>细心观察的我们应该能马上发现问题，<strong>滑动窗口限流法其实就是计数器固定窗口算法的一个变种</strong>。流量的过渡是否平滑依赖于我们设置的<strong>窗口格数也就是统计时间间隔</strong>，格数越多，统计越精确，但是具体要分多少格我们也说不上来呀… </p>
+<ul>
+<li>代码实现 – <a href="https://github.com/WangJunnan/learn/blob/master/algorithm/src/main/java/com/walm/learn/algorithm/ratelimit/SlidingWindowRateLimit.java" target="_blank" rel="noopener">SlidingWindowRateLimit.java</a></li>
+</ul>
+<h2 id="漏桶算法"><a href="#漏桶算法" class="headerlink" title="漏桶算法"></a>漏桶算法</h2><p>上面所介绍的两种算法都不能非常平滑的过渡，下面就是漏桶算法登场了<br>什么是漏桶算法？<br>漏桶算法以一个常量限制了出口流量速率，因此漏桶算法可以平滑突发的流量。其中漏桶作为流量容器我们可以看做一个FIFO的队列，当入口流量速率大于出口流量速率时，因为流量容器是有限的，当超出流量容器大小时，超出的流量会被丢弃。<br>下图比较形象的说明了漏桶算法的原理，其中水龙头是入口流量，漏桶是流量容器，匀速流出的水是出口流量。<br><img src="http://img.souche.com/f2e/0186f84da43e3286f3d79e3a2f2d538e.jpg" alt></p>
+<p>漏桶算法的特点</p>
+<ul>
+<li>漏桶具有固定容量，出口流量速率是固定常量（流出请求）</li>
+<li>入口流量可以以任意速率流入到漏桶中（流入请求）</li>
+<li><p>如果入口流量超出了桶的容量，则流入流量会溢出（新请求被拒绝）</p>
+</li>
+<li><p>代码实现 – <a href="https://github.com/WangJunnan/learn/blob/master/algorithm/src/main/java/com/walm/learn/algorithm/ratelimit/LeakyBucketRateLimit.java" target="_blank" rel="noopener">LeakyBucketRateLimit.java</a></p>
+</li>
+</ul>
+<p><strong>不过因为漏桶算法限制了流出速率是一个固定常量值，所以漏桶算法不支持出现突发流出流量。但是在实际情况下，流量往往是突发的。</strong></p>
+<h2 id="令牌桶算法"><a href="#令牌桶算法" class="headerlink" title="令牌桶算法"></a>令牌桶算法</h2><p>令牌桶算法是漏桶算法的改进版，可以支持突发流量。不过与漏桶算法不同的是，令牌桶算法的漏桶中存放的是令牌而不是流量。<br>那么令牌桶算法是怎么突发流量的呢？<br>最开始，令牌桶是空的，我们以恒定速率往令牌桶里加入令牌，令牌桶被装满时，多余的令牌会被丢弃。当请求到来时，会先尝试从令牌桶获取令牌（相当于从令牌桶移除一个令牌），获取成功则请求被放行，获取失败则阻塞活拒绝请求。</p>
+<p><img src="http://img.souche.com/f2e/d6decf371f1085a63bcf925bfcedeeae.jpg" alt></p>
+<p>令牌桶算法的特点</p>
+<ul>
+<li>最多可以存发b个令牌。如果令牌到达时令牌桶已经满了，那么这个令牌会被丢弃</li>
+<li>请求到来时，如果令牌桶中少于n个令牌，那么不会删除令牌。该请求会被限流（阻塞活拒绝）</li>
+<li>算法允许最大b(令牌桶大小)个请求的突发</li>
+</ul>
+<p><strong>令牌桶算法限制的是平均流量，因此其允许突发流量（只要令牌桶中有令牌，就不会被限流）</strong></p>
+<ul>
+<li>代码实现 – <a href="https://github.com/WangJunnan/learn/blob/master/algorithm/src/main/java/com/walm/learn/algorithm/ratelimit/TokenBucketRateLimit.java" target="_blank" rel="noopener">TokenBucketRateLimit.java</a></li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，基本把以上4种限流算法的原理都解释清楚了。每种限流算法都有其固定特点，及各自适用的场景，其中计数器算法是其中最简单的，相当于滑动窗口算法的简化版，令牌桶算法相比漏桶算法对资源的利用率更高（允许突发流量）</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/10/09/浅谈常用的限流算法/" target="_blank" title="浅谈常用的限流算法">http://wangjunnan.github.io/2019/10/09/浅谈常用的限流算法/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/09/26/JAVA中时间的表现形式/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">JAVA中时间的表现形式</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计数器固定窗口算法"><span class="nav-number">2.</span> <span class="nav-text">计数器固定窗口算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计数器滑动窗口算法"><span class="nav-number">3.</span> <span class="nav-text">计数器滑动窗口算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏桶算法"><span class="nav-number">4.</span> <span class="nav-text">漏桶算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#令牌桶算法"><span class="nav-number">5.</span> <span class="nav-text">令牌桶算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

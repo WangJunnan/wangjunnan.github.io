@@ -219,6 +219,60 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-JAVA-泛型-你真的理解了吗？"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/06/19/JAVA-泛型-你真的理解了吗？/">JAVA 泛型 你真的理解了吗？</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/06/19/JAVA-泛型-你真的理解了吗？/" class="article-date">
+	  <time datetime="2019-06-19T08:16:53.000Z" itemprop="datePublished">2019-06-19</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          记录原由之前虽然泛型一直在使用，但使用的过程中总是没有那么得心应手，有些细节还是过于模糊。究其原因其实是一直都没有系统深入的去理解过，最近花了一点时间去深入的理解了一下java的泛型机制，也希望借这次记录能够彻底的理解java的泛型
+为什么要有泛型泛型的本质是把 类型参数化，什么是类型参数化？举个例子，我们常用的集合类，要是没有类型参数化的话，我们就得实现装不同类型的集合类，会大大降低代码的可重用性！
+例如我们要设计一个装苹果的盘子和一个装香蕉的盘子，要怎么设计呢？非常简单，最简单的方式就...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/06/19/JAVA-泛型-你真的理解了吗？/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java字节码方法表"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -744,61 +798,6 @@ org.apache.catalina.connector.Connector我们先来看下org.apa...
         </p>
         <p class="article-more-link">
           <a href="/2019/02/13/Tomcat源码解析三-Connector连接器/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Tomcat源码解析二-启动过程"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/02/12/Tomcat源码解析二-启动过程/">Tomcat源码解析二 启动过程</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/02/12/Tomcat源码解析二-启动过程/" class="article-date">
-	  <time datetime="2019-02-12T08:40:29.000Z" itemprop="datePublished">2019-02-12</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/web容器/">web容器</a><a class="article-category-link" href="/categories/web容器/Tomcat/">Tomcat</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言上文介绍了Tomcat设计的整体架构，对于接下来的源码分析非常重要。接下来我们将从Tomcat的入口启动开始分析Tomcat的源码
-Tomcat的启动入口我们可以从其启动脚本catalina.sh中发现，是由org.apache.catalina.startup.Bootstrap.java的main方法启动的。现在我们就从Bootstrap.java开始分析tomcat的源码
-Bootstrap在看Main函数之前，我们先看下静态块中的代码
-123456789101112131415...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/02/12/Tomcat源码解析二-启动过程/#more">阅读全文</a>
         </p>
       
     </div>
