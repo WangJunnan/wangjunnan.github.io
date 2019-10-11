@@ -219,6 +219,66 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Tomcat源码解析三-Connector连接器"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/02/13/Tomcat源码解析三-Connector连接器/">Tomcat源码解析三 Connector连接器</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/02/13/Tomcat源码解析三-Connector连接器/" class="article-date">
+	  <time datetime="2019-02-13T08:41:26.000Z" itemprop="datePublished">2019-02-13</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/web容器/">web容器</a><a class="article-category-link" href="/categories/web容器/Tomcat/">Tomcat</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言上文分析了Tomcat的启动流程，我们已经大致理清了Tomcat启动的整个流程，本文将会对Connector连接器的创建进行分析
+整体架构
+上图完整了概括了整个Connector的架构体系，先简单的介绍一下各个组件的功能
+
+Endpoint 用来处理底层Socket的网络连接
+Processor 用来实现HTTP协议的
+Adapter 将请求适配到Servlet容器进行具体的处理
+
+org.apache.catalina.connector.Connector我们先来看下org.apa...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/02/13/Tomcat源码解析三-Connector连接器/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Tomcat源码解析二-启动过程"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -716,64 +776,6 @@ I/O复用
         </p>
         <p class="article-more-link">
           <a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Java线程池分析"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/12/20/Java线程池分析/">Java线程池分析</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/12/20/Java线程池分析/" class="article-date">
-	  <time datetime="2018-12-20T08:37:46.000Z" itemprop="datePublished">2018-12-20</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言在并发编程中，我们经常会使用到线程池，当然我们也可以手动一个一个创建线程，那么为何我们还是推崇大家使用线程池进行并发编程呢？借用《Java并发编程的艺术》提到的来说一下使用线程池的优点有3个
-
-降低资源消耗。通过重复利用已创建的线程降低线程创建和销毁造成的消耗。
-提高响应速度。当任务到达时，任务可以不需要的等到线程创建就能立即执行。
-提高线程的可管理性。线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配，调优和监控。
-
-Thread...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/12/20/Java线程池分析/#more">阅读全文</a>
         </p>
       
     </div>

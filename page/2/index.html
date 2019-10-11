@@ -219,6 +219,69 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-git-你真的会用吗"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/06/21/git-你真的会用吗/">git 你真的会用吗</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/06/21/git-你真的会用吗/" class="article-date">
+	  <time datetime="2019-06-21T02:26:10.000Z" itemprop="datePublished">2019-06-21</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/git/">git</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          记录原由最近因为公司新来的同事，在使用Git时犯了一些非常低级的错误，导致团队为了解决这些问题浪费了很多时间。究其原因其实还是对于Git内部实现不清晰，仅仅知道敲几个git命令，但是却不知道敲了这个命令Git会发生什么！这里根据git官方文档节选了一些重要概念分享出来。
+几个重要概念三种状态
+工作区状态
+就是修改了文件还没有做 git add的文件状态
+
+
+暂存区状态
+已经git add但还未git commit的文件状态
+
+
+已提交状态
+已经git commit的文件状态，也就是真正存储...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/06/21/git-你真的会用吗/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-JAVA-泛型-你真的理解了吗？"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -738,66 +801,6 @@ CAS即compare and swap的缩写，中文翻译成比较并交换。是一种用�
         </p>
         <p class="article-more-link">
           <a href="/2019/03/02/Java-CAS/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Tomcat源码解析三-Connector连接器"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/02/13/Tomcat源码解析三-Connector连接器/">Tomcat源码解析三 Connector连接器</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/02/13/Tomcat源码解析三-Connector连接器/" class="article-date">
-	  <time datetime="2019-02-13T08:41:26.000Z" itemprop="datePublished">2019-02-13</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/web容器/">web容器</a><a class="article-category-link" href="/categories/web容器/Tomcat/">Tomcat</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言上文分析了Tomcat的启动流程，我们已经大致理清了Tomcat启动的整个流程，本文将会对Connector连接器的创建进行分析
-整体架构
-上图完整了概括了整个Connector的架构体系，先简单的介绍一下各个组件的功能
-
-Endpoint 用来处理底层Socket的网络连接
-Processor 用来实现HTTP协议的
-Adapter 将请求适配到Servlet容器进行具体的处理
-
-org.apache.catalina.connector.Connector我们先来看下org.apa...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/02/13/Tomcat源码解析三-Connector连接器/#more">阅读全文</a>
         </p>
       
     </div>
