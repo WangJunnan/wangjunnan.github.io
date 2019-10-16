@@ -219,6 +219,60 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Sentinel源码解析二（slot总览）"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/10/16/Sentinel源码解析二（slot总览）/">Sentinel源码解析二（slot总览）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/10/16/Sentinel源码解析二（slot总览）/" class="article-date">
+	  <time datetime="2019-10-16T01:57:32.000Z" itemprop="datePublished">2019-10-16</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Sentinel/">Sentinel</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          写在前面本文继续来分析Sentinel的源码，上篇文章对Sentinel的调用过程做了深入分析，主要涉及到了两个概念：插槽链和Node节点。那么接下来我们就根据插槽链的调用关系来依次分析每个插槽（slot）的源码。
+默认插槽链的调用顺序，以及每种类型Node节点的关系都在上面文章开头分析过 
+NodeSelectorSlot123456789101112131415161718192021222324252627282930/** * 相同的资源但是Context不同，分别新建 Defau...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/10/16/Sentinel源码解析二（slot总览）/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Sentinel源码解析一"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -713,67 +767,11 @@ Spring mvc提供了多种HanderMapping类型，比较常用的有 RequestMapping
 
 
   
-    <article id="post-分布式事务在积分商城里的应用"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/07/10/分布式事务在积分商城里的应用/">分布式事务在积分商城里的应用</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/07/10/分布式事务在积分商城里的应用/" class="article-date">
-	  <time datetime="2019-07-10T08:56:22.000Z" itemprop="datePublished">2019-07-10</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/分布式/">分布式</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言最近在做会员体系的时候，涉及到了积分商城订单体系，既然设计到订单体系，因为现在的项目架构体系基本都是微服务分布式的，所以必然会涉及到分布式事务。事务问题在早些时候都是单机部署的时代依靠数据库本身提供的事务机制非常容易解决，但是一旦设计到分布式，各个独立的服务是无法感知其他事务执行状态的，所以我们需要借助一些其他手段来保证分布式事务
-分布式理论
-CAP
-
-C（一致性）一致性是指数据的原子性，在经典的数据库中通过事务来保障，事务完成时，无论成功或回滚，数据都会处于一致的状态，在分布式环境下...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/07/10/分布式事务在积分商城里的应用/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
 
 
   <nav id="page-nav">
     
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/">下一页 &raquo;</a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/2/">下一页 &raquo;</a>
   </nav>
 
 </section>

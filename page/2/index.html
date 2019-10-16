@@ -219,6 +219,62 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-分布式事务在积分商城里的应用"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/07/10/分布式事务在积分商城里的应用/">分布式事务在积分商城里的应用</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/07/10/分布式事务在积分商城里的应用/" class="article-date">
+	  <time datetime="2019-07-10T08:56:22.000Z" itemprop="datePublished">2019-07-10</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/分布式/">分布式</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言最近在做会员体系的时候，涉及到了积分商城订单体系，既然设计到订单体系，因为现在的项目架构体系基本都是微服务分布式的，所以必然会涉及到分布式事务。事务问题在早些时候都是单机部署的时代依靠数据库本身提供的事务机制非常容易解决，但是一旦设计到分布式，各个独立的服务是无法感知其他事务执行状态的，所以我们需要借助一些其他手段来保证分布式事务
+分布式理论
+CAP
+
+C（一致性）一致性是指数据的原子性，在经典的数据库中通过事务来保障，事务完成时，无论成功或回滚，数据都会处于一致的状态，在分布式环境下...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/07/10/分布式事务在积分商城里的应用/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-git-你真的会用吗"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -761,69 +817,11 @@ Class文件以8位字节为基本单位的二进制文件，各个数据项目�
 
 
   
-    <article id="post-Java-CAS"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/03/02/Java-CAS/">Java CAS</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/03/02/Java-CAS/" class="article-date">
-	  <time datetime="2019-03-02T08:15:23.000Z" itemprop="datePublished">2019-03-02</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言在介绍CAS之前，我们有必要先理解线程安全的三大特性
-
-原子性: 对于涉及共享变量访问的操作，该操作从其执行线程以外的任意线程来看是不可分割的，从而可以让各个线程依次串行访问，但是原子性并不保证可见性
-可见性: 修改共享变量时，立即将工作内存中的值同步到主存中，并使该修改对其他线程可见
-有序性: 禁止读取共享变量后的代码、修改共享变量前的代码重排序
-
-CAS即compare and swap的缩写，中文翻译成比较并交换。是一种用于在多线程环境下实现同步功能的机制。调用Java CAS需...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/03/02/Java-CAS/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
 
 
   <nav id="page-nav">
     
-    <a class="extend prev" rel="prev" href="/">&laquo; 上一页</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/">下一页 &raquo;</a>
+    <a class="extend prev" rel="prev" href="/">&laquo; 上一页</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/3/">下一页 &raquo;</a>
   </nav>
 
 </section>

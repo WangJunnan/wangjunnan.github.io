@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>sentinel源码解析二（slot总览） | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="并发Sentinel">
+  
+  
+  
+  
+  <meta name="description" content="写在前面本文继续来分析Sentinel的源码，上篇文章对Sentinel的调用过程做了深入分析，主要涉及到了两个概念：插槽链和Node节点。那么接下来我们就根据插槽链的调用关系来依次分析每个插槽（slot）的源码。 默认插槽链的调用顺序，以及每种类型Node节点的关系都在上面文章开头分析过  NodeSelectorSlot1234567891011121314151617181920212223">
+<meta name="keywords" content="并发,Sentinel">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sentinel源码解析二（slot总览）">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/10/16/Sentinel源码解析二（slot总览）/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="写在前面本文继续来分析Sentinel的源码，上篇文章对Sentinel的调用过程做了深入分析，主要涉及到了两个概念：插槽链和Node节点。那么接下来我们就根据插槽链的调用关系来依次分析每个插槽（slot）的源码。 默认插槽链的调用顺序，以及每种类型Node节点的关系都在上面文章开头分析过  NodeSelectorSlot1234567891011121314151617181920212223">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-10-16T01:59:45.009Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Sentinel源码解析二（slot总览）">
+<meta name="twitter:description" content="写在前面本文继续来分析Sentinel的源码，上篇文章对Sentinel的调用过程做了深入分析，主要涉及到了两个概念：插槽链和Node节点。那么接下来我们就根据插槽链的调用关系来依次分析每个插槽（slot）的源码。 默认插槽链的调用顺序，以及每种类型Node节点的关系都在上面文章开头分析过  NodeSelectorSlot1234567891011121314151617181920212223">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Sentinel源码解析二（slot总览）" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Sentinel源码解析二（slot总览）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/10/16/Sentinel源码解析二（slot总览）/" class="article-date">
+	  <time datetime="2019-10-16T01:57:32.000Z" itemprop="datePublished">2019-10-16</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Sentinel/">Sentinel</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>本文继续来分析Sentinel的源码，上篇文章对Sentinel的调用过程做了深入分析，主要涉及到了两个概念：插槽链和Node节点。那么接下来我们就根据插槽链的调用关系来依次分析每个插槽（slot）的源码。</p>
+<p>默认插槽链的调用顺序，以及每种类型Node节点的关系都在上面文章开头分析过 <a href></a></p>
+<h2 id="NodeSelectorSlot"><a href="#NodeSelectorSlot" class="headerlink" title="NodeSelectorSlot"></a>NodeSelectorSlot</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 相同的资源但是Context不同，分别新建 DefaultNode，并以ContextName为key</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> Map&lt;String, DefaultNode&gt; map = <span class="keyword">new</span> HashMap&lt;String, DefaultNode&gt;(<span class="number">10</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">entry</span><span class="params">(Context context, ResourceWrapper resourceWrapper, Object obj, <span class="keyword">int</span> count, <span class="keyword">boolean</span> prioritized, Object... args)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 根据ContextName尝试获取DefaultNode</span></span><br><span class="line">    DefaultNode node = map.get(context.getName());</span><br><span class="line">    <span class="keyword">if</span> (node == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            node = map.get(context.getName());</span><br><span class="line">            <span class="keyword">if</span> (node == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// 初始化DefaultNode，每个Context对应一个</span></span><br><span class="line">                node = <span class="keyword">new</span> DefaultNode(resourceWrapper, <span class="keyword">null</span>);</span><br><span class="line">                HashMap&lt;String, DefaultNode&gt; cacheMap = <span class="keyword">new</span> HashMap&lt;String, DefaultNode&gt;(map.size());</span><br><span class="line">                cacheMap.putAll(map);</span><br><span class="line">                cacheMap.put(context.getName(), node);</span><br><span class="line">                map = cacheMap;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 构建 Node tree</span></span><br><span class="line">            ((DefaultNode)context.getLastNode()).addChild(node);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    context.setCurNode(node);</span><br><span class="line">    <span class="comment">// 唤醒执行下一个插槽</span></span><br><span class="line">    fireEntry(context, resourceWrapper, node, count, prioritized, args);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>NodeSelectorSlot</code>顾名思义是用来构建<code>Node</code>的。<br>我们可以看到<code>NodeSelectorSlot</code>对于不同的上下文都会生成一个<code>DefaultNode</code>。这里还有一个要注意的点：<strong>相同的资源({@link ResourceWrapper#equals(Object)})将全局共享相同的{@link ProcessorSlotChain}，无论在哪个上下文中</strong>，因此不同的上下文可以进入到同一个对象的<code>NodeSelectorSlot.entry</code>方法中，那么这里要怎么区分不同的上下文所创建的资源Node呢？显然可以使用上下文名称作为映射键以区分相同的资源Node。</p>
+<p>然后这里要考虑另一个问题。一个资源有可能创建多个<code>DefaultNode</code>（有多个上下文时），那么我们应该如何快速的获取总的统计数据呢？</p>
+<p>答案就在下一个Slot(<code>ClusterBuilderSlot</code>)中被解决了。</p>
+<h2 id="ClusterBuilderSlot"><a href="#ClusterBuilderSlot" class="headerlink" title="ClusterBuilderSlot"></a>ClusterBuilderSlot</h2><p>上面有提到一个问题，我们要如何统计不同上下文相同资源的总量数据。<code>ClusterBuilderSlot</code>给了很好的解决方案：具有相同资源名称的共享一个<code>ClusterNode</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 相同的资源共享一个 ClusterNode</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">volatile</span> Map&lt;ResourceWrapper, ClusterNode&gt; clusterNodeMap = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Object lock = <span class="keyword">new</span> Object();</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> ClusterNode clusterNode = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">entry</span><span class="params">(Context context, ResourceWrapper resourceWrapper, DefaultNode node, <span class="keyword">int</span> count,</span></span></span><br><span class="line"><span class="function"><span class="params">                  <span class="keyword">boolean</span> prioritized, Object... args)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    <span class="comment">// 判断本资源是否已经初始化过clusterNode</span></span><br><span class="line">    <span class="keyword">if</span> (clusterNode == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (lock) &#123;</span><br><span class="line">            <span class="keyword">if</span> (clusterNode == <span class="keyword">null</span>) &#123;</span><br><span class="line">                <span class="comment">// 没有初始化则初始化clusterNode</span></span><br><span class="line">                clusterNode = <span class="keyword">new</span> ClusterNode(resourceWrapper.getName(), resourceWrapper.getResourceType());</span><br><span class="line">                HashMap&lt;ResourceWrapper, ClusterNode&gt; newMap = <span class="keyword">new</span> HashMap&lt;&gt;(Math.max(clusterNodeMap.size(), <span class="number">16</span>));</span><br><span class="line">                newMap.putAll(clusterNodeMap);</span><br><span class="line">                newMap.put(node.getId(), clusterNode);</span><br><span class="line"></span><br><span class="line">                clusterNodeMap = newMap;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 给相同资源的DefaultNode设置一样的ClusterNode</span></span><br><span class="line">    node.setClusterNode(clusterNode);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * 如果有来源则新建一个来源Node</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">if</span> (!<span class="string">""</span>.equals(context.getOrigin())) &#123;</span><br><span class="line">        Node originNode = node.getClusterNode().getOrCreateOriginNode(context.getOrigin());</span><br><span class="line">        context.getCurEntry().setOriginNode(originNode);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fireEntry(context, resourceWrapper, node, count, prioritized, args);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码其实就是做了一件事情，为资源创建<code>CluserNode</code>。这里我又要提一嘴 <strong>相同的资源({@link ResourceWrapper#equals(Object)})将全局共享相同的{@link ProcessorSlotChain}，无论在哪个上下文中</strong>。也就是说，能进入到同一个<code>ClusterBuilderSlot</code>对象的<code>entry</code>方法的请求都是来自同一个资源的，所以这些相同资源需要初始化一个统一的<code>CluserNode</code>用来做流量的汇总统计。</p>
+<h2 id="LogSlot"><a href="#LogSlot" class="headerlink" title="LogSlot"></a>LogSlot</h2><p>代码比较简单，逻辑就是打印异常日志，就不分析了</p>
+<h2 id="StatisticSlot"><a href="#StatisticSlot" class="headerlink" title="StatisticSlot"></a>StatisticSlot</h2><p><code>StatisticSlot</code> 是 <code>Sentinel</code> 的核心功能插槽之一，用于统计实时的调用数据。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">entry</span><span class="params">(Context context, ResourceWrapper resourceWrapper, DefaultNode node, <span class="keyword">int</span> count,</span></span></span><br><span class="line"><span class="function"><span class="params">                  <span class="keyword">boolean</span> prioritized, Object... args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 先进行后续的check，包括规则的check，黑白名单check</span></span><br><span class="line">        fireEntry(context, resourceWrapper, node, count, prioritized, args);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 统计默认qps 线程数</span></span><br><span class="line">        node.increaseThreadNum();</span><br><span class="line">        node.addPassRequest(count);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (context.getCurEntry().getOriginNode() != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// 根据来源统计qps 线程数</span></span><br><span class="line">            context.getCurEntry().getOriginNode().increaseThreadNum();</span><br><span class="line">            context.getCurEntry().getOriginNode().addPassRequest(count);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (resourceWrapper.getEntryType() == EntryType.IN) &#123;</span><br><span class="line">            <span class="comment">// 统计入口 qps 线程数</span></span><br><span class="line">            Constants.ENTRY_NODE.increaseThreadNum();</span><br><span class="line">            Constants.ENTRY_NODE.addPassRequest(count);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        .... 省略其他代码</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="StatisticSlot主要做了4种不同维度的流量统计"><a href="#StatisticSlot主要做了4种不同维度的流量统计" class="headerlink" title="StatisticSlot主要做了4种不同维度的流量统计"></a>StatisticSlot主要做了4种不同维度的流量统计</h2><ol>
+<li>资源在上下文维度（DefaultNode）的统计</li>
+<li>clusterNode 维度的统计</li>
+<li>Origin 来源维度的统计</li>
+<li>入口全局流量的统计</li>
+</ol>
+<p>关于流量的统计原理的本文就不深入分析了，接下来的文章中会单独分析</p>
+<h2 id="SystemSlot"><a href="#SystemSlot" class="headerlink" title="SystemSlot"></a>SystemSlot</h2><p><code>SystemSlot</code>比较简单，其实就是根据<code>StatisticSlot</code>所统计的全局入口流量进行限流。</p>
+<h2 id="AuthoritySlot"><a href="#AuthoritySlot" class="headerlink" title="AuthoritySlot"></a>AuthoritySlot</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">entry</span><span class="params">(Context context, ResourceWrapper resourceWrapper, DefaultNode node, <span class="keyword">int</span> count, <span class="keyword">boolean</span> prioritized, Object... args)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    checkBlackWhiteAuthority(resourceWrapper, context);</span><br><span class="line">    fireEntry(context, resourceWrapper, node, count, prioritized, args);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">checkBlackWhiteAuthority</span><span class="params">(ResourceWrapper resource, Context context)</span> <span class="keyword">throws</span> AuthorityException </span>&#123;</span><br><span class="line">    Map&lt;String, Set&lt;AuthorityRule&gt;&gt; authorityRules = AuthorityRuleManager.getAuthorityRules();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (authorityRules == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">	  <span class="comment">// 根据资源获取黑白名单规则</span></span><br><span class="line">    Set&lt;AuthorityRule&gt; rules = authorityRules.get(resource.getName());</span><br><span class="line">    <span class="keyword">if</span> (rules == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 对规则进行校验，只要有一条不通过 就抛异常</span></span><br><span class="line">    <span class="keyword">for</span> (AuthorityRule rule : rules) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!AuthorityRuleChecker.passCheck(rule, context)) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> AuthorityException(context.getOrigin(), rule);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>AuthoritySlot</code>会对资源的黑白名单做检查，并且只要有一条不通过就抛异常。</p>
+<h2 id="FlowSlot"><a href="#FlowSlot" class="headerlink" title="FlowSlot"></a>FlowSlot</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">entry</span><span class="params">(Context context, ResourceWrapper resourceWrapper, DefaultNode node, <span class="keyword">int</span> count,</span></span></span><br><span class="line"><span class="function"><span class="params">                  <span class="keyword">boolean</span> prioritized, Object... args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line">    checkFlow(resourceWrapper, context, node, count, prioritized);</span><br><span class="line"></span><br><span class="line">    fireEntry(context, resourceWrapper, node, count, prioritized, args);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">checkFlow</span><span class="params">(ResourceWrapper resource, Context context, DefaultNode node, <span class="keyword">int</span> count, <span class="keyword">boolean</span> prioritized)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">throws</span> BlockException </span>&#123;</span><br><span class="line">    <span class="comment">// 检查限流规则</span></span><br><span class="line">    checker.checkFlow(ruleProvider, resource, context, node, count, prioritized);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个<code>slot</code>主要根据预设的资源的统计信息，按照固定的次序，依次生效。如果一个资源对应两条或者多条流控规则，则会根据如下次序依次检验，直到全部通过或者有一个规则生效为止:<br>并且同样也会根据三种不同的维度来进行限流：</p>
+<ol>
+<li>资源在上下文维度（DefaultNode）的统计</li>
+<li>clusterNode 维度的统计</li>
+<li>Origin 来源维度的统计</li>
+</ol>
+<p>关于流控规则源码的深入分析就不在本篇文章赘述了</p>
+<h2 id="DegradeSlot"><a href="#DegradeSlot" class="headerlink" title="DegradeSlot"></a>DegradeSlot</h2><p>这个<code>slot</code>主要针对资源的平均响应时间（RT）以及异常比率，来决定资源是否在接下来的时间被自动熔断掉。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li>相同的资源({@link ResourceWrapper#equals(Object)})将全局共享相同的{@link ProcessorSlotChain}，无论在哪个上下文中</li>
+<li>流控有多个维度，分别包括：1.不同上下文中的资源 2.相同资源 3.入口流量 3.相同的来源</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/10/16/Sentinel源码解析二（slot总览）/" target="_blank" title="Sentinel源码解析二（slot总览）">http://wangjunnan.github.io/2019/10/16/Sentinel源码解析二（slot总览）/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/10/11/Sentinel源码解析一/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Sentinel源码解析一</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#写在前面"><span class="nav-number">1.</span> <span class="nav-text">写在前面</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NodeSelectorSlot"><span class="nav-number">2.</span> <span class="nav-text">NodeSelectorSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ClusterBuilderSlot"><span class="nav-number">3.</span> <span class="nav-text">ClusterBuilderSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LogSlot"><span class="nav-number">4.</span> <span class="nav-text">LogSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#StatisticSlot"><span class="nav-number">5.</span> <span class="nav-text">StatisticSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#StatisticSlot主要做了4种不同维度的流量统计"><span class="nav-number">6.</span> <span class="nav-text">StatisticSlot主要做了4种不同维度的流量统计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SystemSlot"><span class="nav-number">7.</span> <span class="nav-text">SystemSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AuthoritySlot"><span class="nav-number">8.</span> <span class="nav-text">AuthoritySlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#FlowSlot"><span class="nav-number">9.</span> <span class="nav-text">FlowSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DegradeSlot"><span class="nav-number">10.</span> <span class="nav-text">DegradeSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">11.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

@@ -219,6 +219,60 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Spring-IOC-源码解析-（循环依赖的解决）"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/">Spring IOC 源码解析 （循环依赖的解决）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/" class="article-date">
+	  <time datetime="2018-12-21T07:59:42.000Z" itemprop="datePublished">2018-12-21</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言之前的几篇对Spring IOC源码分析的文章，大体上把IOC容器内部实现做了分析，但在有些细节上并没有很深入的去分析。本篇文章主要是分析Spring IOC容器对Bean之间的循环依赖是如何解决的
+什么是循环依赖那么什么是循环依赖呢？简单的理解一下，A依赖B，B又依赖A，这就构成了一个最简单的循环依赖，为了帮助大家理解，新建两个互相依赖的类（儿子和爸爸互相依赖没有错吧 ..）
+123456789public class Father &#123;    private String ...
+        </p>
+        <p class="article-more-link">
+          <a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java线程池分析"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -736,70 +790,11 @@ XmlReaderContext 解析过程的上下文对象，实际持有Bea...
 
 
   
-    <article id="post-Spring-IOC-源码解析二（BeanFactory的创建）"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/03/09/Spring-IOC-源码解析二（BeanFactory的创建）/">Spring 源码解析二（BeanFactory的创建）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/03/09/Spring-IOC-源码解析二（BeanFactory的创建）/" class="article-date">
-	  <time datetime="2018-03-09T06:12:20.000Z" itemprop="datePublished">2018-03-09</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言
-在第二期介绍容器的refresh方法开始之前，首先大家应该对Spring容器的整个继承体系有个大概的了解，不然就会有雾里看花的感觉
-
-
-为了帮助大家理清整个继承体系，我将接下来所要涉及到的几个重要类及接口的继承关系贴上来，在阅读中如有疑惑的话，可以回过头来看看这几张图
-
-XmlWebApplicationContext由web容器启动的Spring容器类，注意与DefaultListableBeanFactory的区别
-DefaultListableBeanFactory实际实现的b...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/03/09/Spring-IOC-源码解析二（BeanFactory的创建）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
 
 
   <nav id="page-nav">
     
-    <a class="extend prev" rel="prev" href="/page/3/">&laquo; 上一页</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/5/">下一页 &raquo;</a>
+    <a class="extend prev" rel="prev" href="/page/3/">&laquo; 上一页</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/5/">下一页 &raquo;</a>
   </nav>
 
 </section>

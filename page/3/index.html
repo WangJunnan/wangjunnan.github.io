@@ -219,6 +219,64 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java-CAS"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/03/02/Java-CAS/">Java CAS</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/03/02/Java-CAS/" class="article-date">
+	  <time datetime="2019-03-02T08:15:23.000Z" itemprop="datePublished">2019-03-02</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言在介绍CAS之前，我们有必要先理解线程安全的三大特性
+
+原子性: 对于涉及共享变量访问的操作，该操作从其执行线程以外的任意线程来看是不可分割的，从而可以让各个线程依次串行访问，但是原子性并不保证可见性
+可见性: 修改共享变量时，立即将工作内存中的值同步到主存中，并使该修改对其他线程可见
+有序性: 禁止读取共享变量后的代码、修改共享变量前的代码重排序
+
+CAS即compare and swap的缩写，中文翻译成比较并交换。是一种用于在多线程环境下实现同步功能的机制。调用Java CAS需...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/03/02/Java-CAS/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Tomcat源码解析三-Connector连接器"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -740,65 +798,11 @@ I/O复用
 
 
   
-    <article id="post-Spring-IOC-源码解析-（循环依赖的解决）"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/">Spring IOC 源码解析 （循环依赖的解决）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/" class="article-date">
-	  <time datetime="2018-12-21T07:59:42.000Z" itemprop="datePublished">2018-12-21</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言之前的几篇对Spring IOC源码分析的文章，大体上把IOC容器内部实现做了分析，但在有些细节上并没有很深入的去分析。本篇文章主要是分析Spring IOC容器对Bean之间的循环依赖是如何解决的
-什么是循环依赖那么什么是循环依赖呢？简单的理解一下，A依赖B，B又依赖A，这就构成了一个最简单的循环依赖，为了帮助大家理解，新建两个互相依赖的类（儿子和爸爸互相依赖没有错吧 ..）
-123456789public class Father &#123;    private String ...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/12/21/Spring-IOC-源码解析-（循环依赖的解决）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
 
 
   <nav id="page-nav">
     
-    <a class="extend prev" rel="prev" href="/page/2/">&laquo; 上一页</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/4/">下一页 &raquo;</a>
+    <a class="extend prev" rel="prev" href="/page/2/">&laquo; 上一页</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/4/">下一页 &raquo;</a>
   </nav>
 
 </section>
