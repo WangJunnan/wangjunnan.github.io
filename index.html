@@ -219,6 +219,60 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Sentinel源码解析三（滑动窗口流量统计）"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/">Sentinel源码解析三（滑动窗口流量统计）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/" class="article-date">
+	  <time datetime="2019-10-25T08:55:44.000Z" itemprop="datePublished">2019-10-25</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Sentinel/">Sentinel</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          前言Sentinel的核心功能之一是流量统计，例如我们常用的指标QPS，当前线程数等。上一篇文章中我们已经大致提到了提供数据统计功能的Slot（StatisticSlot），StatisticSlot在Sentinel的整个体系中扮演了一个非常重要的角色，后续的一系列操作（限流，熔断）等都依赖于StatisticSlot所统计出的数据。
+本文所要讨论的重点就是StatisticSlot是如何做的流量统计？
+其实在之前介绍常用限流算法常用限流算法的时候已经有提到过一个算法滑动窗口限流，该算法...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Sentinel源码解析二（slot总览）"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -695,60 +749,6 @@ Tomcat defaultServelt 激活tomcat自带的defaultServelt 用来处理静态资�
         </p>
         <p class="article-more-link">
           <a href="/2019/08/25/MVC源码解析-HandlerAdapter/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-MVC源码解析-HandlerMapping"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/08/20/MVC源码解析-HandlerMapping/">MVC源码解析-HandlerMapping</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/08/20/MVC源码解析-HandlerMapping/" class="article-date">
-	  <time datetime="2019-08-20T08:07:09.000Z" itemprop="datePublished">2019-08-20</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言什么是Spring mvc 的 HanderMapping? **我们知道当一个http请求到服务器时，我们需要根据请求的上下文url来匹配到对应的处理类，而HanderMapping做的就是这个事情，它定义了我们的请求和对应的处理类的映射关系。
-Spring mvc提供了多种HanderMapping类型，比较常用的有 RequestMappingHandlerMapping,BeanNameUrlHandlerMapping,SimpleUrlHandlerMapping
-以下是这...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/08/20/MVC源码解析-HandlerMapping/#more">阅读全文</a>
         </p>
       
     </div>

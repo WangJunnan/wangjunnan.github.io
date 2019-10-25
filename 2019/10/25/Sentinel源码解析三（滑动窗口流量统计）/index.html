@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>sentinel源码解析三（滑动窗口流量统计） | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="并发">
+  
+  
+  
+  
+  <meta name="description" content="前言Sentinel的核心功能之一是流量统计，例如我们常用的指标QPS，当前线程数等。上一篇文章中我们已经大致提到了提供数据统计功能的Slot（StatisticSlot），StatisticSlot在Sentinel的整个体系中扮演了一个非常重要的角色，后续的一系列操作（限流，熔断）等都依赖于StatisticSlot所统计出的数据。 本文所要讨论的重点就是StatisticSlot是如何做的流">
+<meta name="keywords" content="并发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sentinel源码解析三（滑动窗口流量统计）">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="前言Sentinel的核心功能之一是流量统计，例如我们常用的指标QPS，当前线程数等。上一篇文章中我们已经大致提到了提供数据统计功能的Slot（StatisticSlot），StatisticSlot在Sentinel的整个体系中扮演了一个非常重要的角色，后续的一系列操作（限流，熔断）等都依赖于StatisticSlot所统计出的数据。 本文所要讨论的重点就是StatisticSlot是如何做的流">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://wangjunnan.github.io/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/media/15719902097112.jpg">
+<meta property="og:updated_time" content="2019-10-25T09:02:41.667Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Sentinel源码解析三（滑动窗口流量统计）">
+<meta name="twitter:description" content="前言Sentinel的核心功能之一是流量统计，例如我们常用的指标QPS，当前线程数等。上一篇文章中我们已经大致提到了提供数据统计功能的Slot（StatisticSlot），StatisticSlot在Sentinel的整个体系中扮演了一个非常重要的角色，后续的一系列操作（限流，熔断）等都依赖于StatisticSlot所统计出的数据。 本文所要讨论的重点就是StatisticSlot是如何做的流">
+<meta name="twitter:image" content="http://wangjunnan.github.io/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/media/15719902097112.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Sentinel源码解析三（滑动窗口流量统计）" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Sentinel源码解析三（滑动窗口流量统计）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/" class="article-date">
+	  <time datetime="2019-10-25T08:55:44.000Z" itemprop="datePublished">2019-10-25</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Sentinel/">Sentinel</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><code>Sentinel</code>的核心功能之一是流量统计，例如我们常用的指标QPS，当前线程数等。上一篇文章中我们已经大致提到了提供数据统计功能的<code>Slot（StatisticSlot）</code>，<code>StatisticSlot</code>在<code>Sentinel</code>的整个体系中扮演了一个非常重要的角色，后续的一系列操作（限流，熔断）等都依赖于<code>StatisticSlot</code>所统计出的数据。</p>
+<p>本文所要讨论的重点就是<code>StatisticSlot</code>是如何做的流量统计？</p>
+<p>其实在之前介绍常用限流算法<a href="http://wangjunnan.club/2019/10/09/%E6%B5%85%E8%B0%88%E5%B8%B8%E7%94%A8%E7%9A%84%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95/" target="_blank" rel="noopener">常用限流算法</a>的时候已经有提到过一个算法<code>滑动窗口限流</code>，该算法的滑动窗口原理其实跟<code>Sentinel</code>所提供的流量统计原理是一样的，都是基于时间窗口的滑动统计</p>
+<h2 id="回到StatisticSlot"><a href="#回到StatisticSlot" class="headerlink" title="回到StatisticSlot"></a>回到StatisticSlot</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">entry</span><span class="params">(Context context, ResourceWrapper resourceWrapper, DefaultNode node, <span class="keyword">int</span> count,</span></span></span><br><span class="line"><span class="function"><span class="params">                  <span class="keyword">boolean</span> prioritized, Object... args)</span> <span class="keyword">throws</span> Throwable </span>&#123;</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line">	<span class="comment">// 当前请求线程数加一</span></span><br><span class="line">	node.increaseThreadNum();</span><br><span class="line">	<span class="comment">// 新增请求数</span></span><br><span class="line">	node.addPassRequest(count);</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到<code>StatisticSlot</code>主要统计了两种类型的数据</p>
+<ol>
+<li>线程数</li>
+<li>请求数（QPS）</li>
+</ol>
+<p>对于线程数的统计比较简单，通过内部维护一个<code>LongAdder</code>来进行当前线程数的统计，每进入一个请求加1，每释放一个请求减1，从而得到当前的线程数</p>
+<p>对于请求数QPS的统计则相对比较复杂，其中有用到滑动窗口原理（也是本文的重点），下面根据源码来深入的分析</p>
+<h2 id="DefaultNode-和-StatisticNode"><a href="#DefaultNode-和-StatisticNode" class="headerlink" title="DefaultNode 和 StatisticNode"></a>DefaultNode 和 StatisticNode</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addPassRequest</span><span class="params">(<span class="keyword">int</span> count)</span> </span>&#123;</span><br><span class="line">	  <span class="comment">// 调用父类（StatisticNode）来进行统计</span></span><br><span class="line">    <span class="keyword">super</span>.addPassRequest(count);</span><br><span class="line">    <span class="comment">// 根据clusterNode 汇总统计（背后也是调用父类StatisticNode）</span></span><br><span class="line">    <span class="keyword">this</span>.clusterNode.addPassRequest(count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最终都是调用了父类<code>StatisticNode</code>的<code>addPassRequest</code>方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 按秒统计，分成两个窗口，每个窗口500ms，用来统计QPS</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> Metric rollingCounterInSecond = <span class="keyword">new</span> ArrayMetric(SampleCountProperty.SAMPLE_COUNT,</span><br><span class="line">    IntervalProperty.INTERVAL);</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 按分钟统计，分成60个窗口，每个窗口 1000ms</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> Metric rollingCounterInMinute = <span class="keyword">new</span> ArrayMetric(<span class="number">60</span>, <span class="number">60</span> * <span class="number">1000</span>, <span class="keyword">false</span>);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addPassRequest</span><span class="params">(<span class="keyword">int</span> count)</span> </span>&#123;</span><br><span class="line">    rollingCounterInSecond.addPass(count);</span><br><span class="line">    rollingCounterInMinute.addPass(count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>代码比较简单，可以知道内部是调用了<code>ArrayMetric</code>的<code>addPass</code>方法来统计的，并且统计了两种不同时间维度的数据(秒级和分钟级)</p>
+<h2 id="ArrayMetric"><a href="#ArrayMetric" class="headerlink" title="ArrayMetric"></a>ArrayMetric</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> LeapArray&lt;MetricBucket&gt; data;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ArrayMetric</span><span class="params">(<span class="keyword">int</span> sampleCount, <span class="keyword">int</span> intervalInMs)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.data = <span class="keyword">new</span> OccupiableBucketLeapArray(sampleCount, intervalInMs);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ArrayMetric</span><span class="params">(<span class="keyword">int</span> sampleCount, <span class="keyword">int</span> intervalInMs, <span class="keyword">boolean</span> enableOccupy)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (enableOccupy) &#123;</span><br><span class="line">        <span class="keyword">this</span>.data = <span class="keyword">new</span> OccupiableBucketLeapArray(sampleCount, intervalInMs);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.data = <span class="keyword">new</span> BucketLeapArray(sampleCount, intervalInMs);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addPass</span><span class="params">(<span class="keyword">int</span> count)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 获取当前窗口</span></span><br><span class="line">    WindowWrap&lt;MetricBucket&gt; wrap = data.currentWindow();</span><br><span class="line">    <span class="comment">// 2. 当前窗口加1</span></span><br><span class="line">    wrap.value().addPass(count);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ArrayMetric</code>其实也是一个包装类，内部通过实例化<code>LeapArray</code>的对应实现类，来实现具体的统计逻辑，<code>LeapArray</code>是一个抽象类，<code>OccupiableBucketLeapArray</code>和<code>BucketLeapArray</code>都是其具体的实现类<br><code>OccupiableBucketLeapArray</code>在1.5版本之后才被引入，<strong>主要是为了解决一些高优先级的请求在限流触发的时候也能通过(通过占用未来时间窗口的名额来实现)</strong> 也是默认使用的LeapArray实现类</p>
+<p>而统计的逻辑也比较清楚，分成了两步：</p>
+<ol>
+<li>定位到当前窗口</li>
+<li>获取到当前窗口<code>WindowWrap</code>的<code>MetricBucket</code>并执行<code>addPass</code>逻辑</li>
+</ol>
+<p>这里我们先看下第二步中的<code>MetricBucket</code>类，看看它做了哪些事情</p>
+<h3 id="MetricBucket"><a href="#MetricBucket" class="headerlink" title="MetricBucket"></a>MetricBucket</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 存放当前窗口各种类型的统计值(类型包括 PASS BLOCK EXCEPTION 等)</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> LongAdder[] counters;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">MetricBucket</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    MetricEvent[] events = MetricEvent.values();</span><br><span class="line">    <span class="keyword">this</span>.counters = <span class="keyword">new</span> LongAdder[events.length];</span><br><span class="line">    <span class="keyword">for</span> (MetricEvent event : events) &#123;</span><br><span class="line">        counters[event.ordinal()] = <span class="keyword">new</span> LongAdder();</span><br><span class="line">    &#125;</span><br><span class="line">    initMinRt();</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 统计pass数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addPass</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">    add(MetricEvent.PASS, n);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 统计可占用的pass数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addOccupiedPass</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">    add(MetricEvent.OCCUPIED_PASS, n);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 统计异常数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addException</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">    add(MetricEvent.EXCEPTION, n);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 统计block数</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addBlock</span><span class="params">(<span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">    add(MetricEvent.BLOCK, n);</span><br><span class="line">&#125;</span><br><span class="line">....</span><br></pre></td></tr></table></figure>
+<p>MetricBucket通过定义了一个<code>LongAdder</code>数组来存储不同类型的流量统计值，具体的类型则都定义在<code>MetricEvent</code>枚举中。<br>执行<code>addPass</code>方法对应<code>LongAdder</code>数组索引下表为0的值递增</p>
+<p>下面再来看下<code>data.currentWindow()</code>的内部逻辑</p>
+<h3 id="OccupiableBucketLeapArray"><a href="#OccupiableBucketLeapArray" class="headerlink" title="OccupiableBucketLeapArray"></a>OccupiableBucketLeapArray</h3><p><code>OccupiableBucketLeapArray</code>继承了抽象类<code>LeapArray</code>，核心逻辑也是在<code>LeapArray</code>中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 时间窗口大小 单位ms</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">int</span> windowLengthInMs;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 切分的窗口数</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">int</span> sampleCount;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 统计的时间间隔 intervalInMs = windowLengthInMs * sampleCount</span></span><br><span class="line"><span class="comment"> */</span> </span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">int</span> intervalInMs;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 窗口数组 数组大小 = sampleCount</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">final</span> AtomicReferenceArray&lt;WindowWrap&lt;T&gt;&gt; array;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * update lock 更新窗口时需要上锁</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> ReentrantLock updateLock = <span class="keyword">new</span> ReentrantLock();</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> sampleCount  需要划分的窗口数</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> intervalInMs 间隔的统计时间</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">LeapArray</span><span class="params">(<span class="keyword">int</span> sampleCount, <span class="keyword">int</span> intervalInMs)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.windowLengthInMs = intervalInMs / sampleCount;</span><br><span class="line">    <span class="keyword">this</span>.intervalInMs = intervalInMs;</span><br><span class="line">    <span class="keyword">this</span>.sampleCount = sampleCount;</span><br><span class="line">    <span class="keyword">this</span>.array = <span class="keyword">new</span> AtomicReferenceArray&lt;&gt;(sampleCount);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 获取当前窗口</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> WindowWrap&lt;T&gt; <span class="title">currentWindow</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> currentWindow(TimeUtil.currentTimeMillis());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上需要着重理解的是几个参数的含义：</p>
+<ol>
+<li>sampleCount 定义的窗口的数</li>
+<li>intervalInMs 统计的时间间隔</li>
+<li>windowLengthInMs 每个窗口的时间大小 = intervalInMs / sampleCount</li>
+</ol>
+<p><code>sampleCount</code> 比较好理解，就是需要定义几个窗口（默认秒级统计维度的话是两个窗口），<code>intervalInMs</code> 指的就是我们需要统计的时间间隔，例如我们统计QPS的话那就是1000ms，<code>windowLengthInMs</code> 指的每个窗口的大小，是由<code>intervalInMs</code>除以<code>sampleCount</code>得来</p>
+<p>类似下图<br><img src="media/15719902097112.jpg" alt>￼</p>
+<p>理解了上诉几个参数的含义后，我们直接进入到<code>LeapArray</code>的<code>currentWindow(long time)</code>方法中去看看具体的实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> WindowWrap&lt;T&gt; <span class="title">currentWindow</span><span class="params">(<span class="keyword">long</span> timeMillis)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (timeMillis &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 根据当前时间戳计算当前所属的窗口数组索引下标</span></span><br><span class="line">    <span class="keyword">int</span> idx = calculateTimeIdx(timeMillis);</span><br><span class="line">    <span class="comment">// 计算当前窗口的开始时间戳</span></span><br><span class="line">    <span class="keyword">long</span> windowStart = calculateWindowStart(timeMillis);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * 从窗口数组中获取当前窗口项，分为三种情况</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * (1) 当前窗口为空还未创建，则初始化一个</span></span><br><span class="line"><span class="comment">     * (2) 当前窗口的开始时间和上面计算出的窗口开始时间一致，表明当前窗口还未过期，直接返回当前窗口</span></span><br><span class="line"><span class="comment">     * (3) 当前窗口的开始时间 小于 上面计算出的窗口开始时间，表明当前窗口已过期，需要替换当前窗口</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        WindowWrap&lt;T&gt; old = array.get(idx);</span><br><span class="line">        <span class="keyword">if</span> (old == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * 第一种情况，新建一个窗口项</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            WindowWrap&lt;T&gt; window = <span class="keyword">new</span> WindowWrap&lt;T&gt;(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));</span><br><span class="line">            <span class="keyword">if</span> (array.compareAndSet(idx, <span class="keyword">null</span>, window)) &#123;</span><br><span class="line">                <span class="comment">// Successfully updated, return the created bucket.</span></span><br><span class="line">                <span class="keyword">return</span> window;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// Contention failed, the thread will yield its time slice to wait for bucket available.</span></span><br><span class="line">                Thread.yield();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (windowStart == old.windowStart()) &#123;</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * 第二种情况 直接返回</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            <span class="keyword">return</span> old;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (windowStart &gt; old.windowStart()) &#123;</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * 第三种情况 替换窗口</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            <span class="keyword">if</span> (updateLock.tryLock()) &#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">// Successfully get the update lock, now we reset the bucket.</span></span><br><span class="line">                    <span class="keyword">return</span> resetWindowTo(old, windowStart);</span><br><span class="line">                &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                    updateLock.unlock();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// Contention failed, the thread will yield its time slice to wait for bucket available.</span></span><br><span class="line">                Thread.yield();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (windowStart &lt; old.windowStart()) &#123;</span><br><span class="line">            <span class="comment">// 第四种情况，讲道理不会走到这里</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> WindowWrap&lt;T&gt;(windowLengthInMs, windowStart, newEmptyBucket(timeMillis));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 根据当前时间戳计算当前所属的窗口数组索引下标</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">calculateTimeIdx</span><span class="params">(<span class="comment">/*@Valid*/</span> <span class="keyword">long</span> timeMillis)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> timeId = timeMillis / windowLengthInMs;</span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">int</span>)(timeId % array.length());</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 计算当前窗口的开始时间戳</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">long</span> <span class="title">calculateWindowStart</span><span class="params">(<span class="comment">/*@Valid*/</span> <span class="keyword">long</span> timeMillis)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> timeMillis - timeMillis % windowLengthInMs;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的方法就是整个滑动窗口逻辑的核心代码，注释其实也写的比较清晰了，简单概括下可以分为以下几步：</p>
+<ol>
+<li>根据当前时间戳 和 窗口数组大小 获取到当前的窗口数组索引下标<code>idx</code>，如果窗口数是2，那其实<code>idx</code>只有两种值(0 或 1)</li>
+<li>根据当前时间戳（<code>windowStart</code>） 计算得到当前窗口的开始时间戳值。通过<code>calculateWindowStart</code>计算来得到，这个方法还蛮有意思的，通过当前时间戳和窗口时间大小取余来得到 与当前窗口开始时间的 偏移量。比我用定时任务实现高级多了 … 😆 可以去对比一下我之前文章中的蠢实现 <a href="https://github.com/WangJunnan/learn/blob/master/algorithm/src/main/java/com/walm/learn/algorithm/ratelimit/SlidingWindowRateLimit.java" target="_blank" rel="noopener">滑动窗口算法定时任务实现</a></li>
+<li>然后就是根据上面得到的两个值 来获取当前时间窗口，这里其实又分为三种情况<ul>
+<li>当前窗口为空还未创建，则初始化一个</li>
+<li>当前窗口的开始时间和上面计算出的窗口开始时间(<code>windowStart</code>)一致，表明当前窗口还未过期，直接返回当前窗口</li>
+<li>当前窗口的开始时间 小于 上面计算出的窗口(<code>windowStart</code>)开始时间，表明当前窗口已过期，需要替换当前窗口</li>
+</ul>
+</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总的来说，<code>currentWindow</code>方法的实现还是非常巧妙的，因为我在看<code>Sentinel</code>的源码前也写过一篇限流算法的文章，恰好其中也实现过一个滑动窗口限流算法，不过相比于<code>Sentinel</code>的实现，我用了定时任务去做窗口的切换更新，显然性能上更差，实现的也不优雅，大家也可以去对比一下。<a href="http://wangjunnan.club/2019/10/09/%E6%B5%85%E8%B0%88%E5%B8%B8%E7%94%A8%E7%9A%84%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95/" target="_blank" rel="noopener">常用限流算法</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/" target="_blank" title="Sentinel源码解析三（滑动窗口流量统计）">http://wangjunnan.github.io/2019/10/25/Sentinel源码解析三（滑动窗口流量统计）/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/10/16/Sentinel源码解析二（slot总览）/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Sentinel源码解析二（slot总览）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#回到StatisticSlot"><span class="nav-number">2.</span> <span class="nav-text">回到StatisticSlot</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DefaultNode-和-StatisticNode"><span class="nav-number">3.</span> <span class="nav-text">DefaultNode 和 StatisticNode</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ArrayMetric"><span class="nav-number">4.</span> <span class="nav-text">ArrayMetric</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MetricBucket"><span class="nav-number">4.1.</span> <span class="nav-text">MetricBucket</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OccupiableBucketLeapArray"><span class="nav-number">4.2.</span> <span class="nav-text">OccupiableBucketLeapArray</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

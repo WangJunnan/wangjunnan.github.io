@@ -219,6 +219,60 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-MVC源码解析-HandlerMapping"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/08/20/MVC源码解析-HandlerMapping/">MVC源码解析-HandlerMapping</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/08/20/MVC源码解析-HandlerMapping/" class="article-date">
+	  <time datetime="2019-08-20T08:07:09.000Z" itemprop="datePublished">2019-08-20</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/Spring/">Spring</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言什么是Spring mvc 的 HanderMapping? **我们知道当一个http请求到服务器时，我们需要根据请求的上下文url来匹配到对应的处理类，而HanderMapping做的就是这个事情，它定义了我们的请求和对应的处理类的映射关系。
+Spring mvc提供了多种HanderMapping类型，比较常用的有 RequestMappingHandlerMapping,BeanNameUrlHandlerMapping,SimpleUrlHandlerMapping
+以下是这...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/08/20/MVC源码解析-HandlerMapping/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-分布式事务在积分商城里的应用"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -746,59 +800,6 @@ Class文件以8位字节为基本单位的二进制文件，各个数据项目�
         </p>
         <p class="article-more-link">
           <a href="/2019/03/25/ReentrantLock可重入锁源码分析/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Java-AQS-源码解析"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/03/12/Java-AQS-源码解析/">Java AQS 源码解析</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/03/12/Java-AQS-源码解析/" class="article-date">
-	  <time datetime="2019-03-12T08:21:26.000Z" itemprop="datePublished">2019-03-12</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言AQS全称java.util.concurrent.locks.AbstractQueuedSynchronizer，是Java 并发包中的一个抽象类，我们一般把它叫做抽象队列同步器，如我们常用的可重入锁ReentrantLock的内部实现就是基于AQS，理解AQS的内部源码实现对于我们深入理解使用java并发包中的各个功能非常重要。
-实现原理AQS内部维护了一个双向链表队列来管理多个线程。简单介绍一下就是，当有一个新的线程去尝试获取锁，这是如果获取失败，AQS则会将此线程封装成一个N...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/03/12/Java-AQS-源码解析/#more">阅读全文</a>
         </p>
       
     </div>

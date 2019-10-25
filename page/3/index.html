@@ -219,6 +219,59 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java-AQS-源码解析"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/03/12/Java-AQS-源码解析/">Java AQS 源码解析</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/03/12/Java-AQS-源码解析/" class="article-date">
+	  <time datetime="2019-03-12T08:21:26.000Z" itemprop="datePublished">2019-03-12</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言AQS全称java.util.concurrent.locks.AbstractQueuedSynchronizer，是Java 并发包中的一个抽象类，我们一般把它叫做抽象队列同步器，如我们常用的可重入锁ReentrantLock的内部实现就是基于AQS，理解AQS的内部源码实现对于我们深入理解使用java并发包中的各个功能非常重要。
+实现原理AQS内部维护了一个双向链表队列来管理多个线程。简单介绍一下就是，当有一个新的线程去尝试获取锁，这是如果获取失败，AQS则会将此线程封装成一个N...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/03/12/Java-AQS-源码解析/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java-CAS"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -717,69 +770,6 @@ Selector 选择器
         </p>
         <p class="article-more-link">
           <a href="/2018/12/28/Java-NIO-Buffer-分析/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-I-O模型简介"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/12/27/I-O模型简介/">I/O模型简介</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/12/27/I-O模型简介/" class="article-date">
-	  <time datetime="2018-12-27T08:01:31.000Z" itemprop="datePublished">2018-12-27</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/基础/">基础</a><a class="article-category-link" href="/categories/基础/IO/">IO</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言在深入学习netty之前，还是有必要先回顾下I/O模型，I/O模型理解起来会比较抽象，第一次理解需要借助图片以及实际例子去让自己加深印象
-模型分类在开始介绍之前，我们先列举一下Unix下可用的5种I/O模型
-
-阻塞式I/O
-非阻塞式I/O
-I/O复用
-信号驱动I/O
-异步I/O
-
-接下来的模型介绍都是以UDP做为例子，原因是UDP是以数据报的方式进行数据传输，概念比较简单（整个数据要么收到要么没有收到），便于我们去理解I/O模型的核心概念
-阻塞式I/O
-我们最熟悉的I/O模型就是阻塞式...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/12/27/I-O模型简介/#more">阅读全文</a>
         </p>
       
     </div>

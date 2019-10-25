@@ -219,6 +219,69 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-I-O模型简介"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2018/12/27/I-O模型简介/">I/O模型简介</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/27/I-O模型简介/" class="article-date">
+	  <time datetime="2018-12-27T08:01:31.000Z" itemprop="datePublished">2018-12-27</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/基础/">基础</a><a class="article-category-link" href="/categories/基础/IO/">IO</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言在深入学习netty之前，还是有必要先回顾下I/O模型，I/O模型理解起来会比较抽象，第一次理解需要借助图片以及实际例子去让自己加深印象
+模型分类在开始介绍之前，我们先列举一下Unix下可用的5种I/O模型
+
+阻塞式I/O
+非阻塞式I/O
+I/O复用
+信号驱动I/O
+异步I/O
+
+接下来的模型介绍都是以UDP做为例子，原因是UDP是以数据报的方式进行数据传输，概念比较简单（整个数据要么收到要么没有收到），便于我们去理解I/O模型的核心概念
+阻塞式I/O
+我们最熟悉的I/O模型就是阻塞式...
+        </p>
+        <p class="article-more-link">
+          <a href="/2018/12/27/I-O模型简介/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Spring-IOC-源码解析-（循环依赖的解决）"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -715,63 +778,6 @@ XmlReaderContext 解析过程的上下文对象，实际持有Bea...
         </p>
         <p class="article-more-link">
           <a href="/2018/08/17/数据库设计要注意的几个点/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-AVL树"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/07/25/AVL树/">AVL树</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/07/25/AVL树/" class="article-date">
-	  <time datetime="2018-07-25T03:28:33.000Z" itemprop="datePublished">2018-07-25</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/数据结构/">数据结构</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言在介绍二叉平衡树之前，有必要先了解下二叉树，下面是基于维基百科对二叉树的解释
-
-二叉树（英语：Binary tree）是每个节点最多只有两个分支（即不存在分支度大于2的节点）的树结构。通常分支被称作“左子树”或“右子树”。二叉树的分支具有左右次序，不能随意颠倒
-
-二叉树的第i层至多拥有2^(i-1)个节点。深度为k的二叉树至多总共有2^(k+1) - 1个节点（定义根节点所在深度k0 = 0），而总计拥有节点数匹配的，称为满二叉树
-深度为k有n个节点的二叉树，当且仅当其中的每一节点，都...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/07/25/AVL树/#more">阅读全文</a>
         </p>
       
     </div>

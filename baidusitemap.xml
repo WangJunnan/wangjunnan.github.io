@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>http://wangjunnan.github.io/2019/10/25/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E7%BB%9F%E8%AE%A1%EF%BC%89/</loc>
+    <lastmod>2019-10-25</lastmod>
+  </url>  <url>
     <loc>http://wangjunnan.github.io/2019/10/16/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%8C%EF%BC%88slot%E6%80%BB%E8%A7%88%EF%BC%89/</loc>
     <lastmod>2019-10-16</lastmod>
   </url>  <url>
@@ -28,19 +31,19 @@
     <loc>http://wangjunnan.github.io/2017/09/14/%E6%B5%85%E6%9E%90%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%AD%97%E7%AC%A6%E9%9B%86%E5%92%8C%E7%BC%96%E7%A0%81/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2019/07/10/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%9C%A8%E7%A7%AF%E5%88%86%E5%95%86%E5%9F%8E%E9%87%8C%E7%9A%84%E5%BA%94%E7%94%A8/</loc>
+    <loc>http://wangjunnan.github.io/2017/05/09/%E5%85%B3%E4%BA%8Exml%E6%96%87%E4%BB%B6-xsi-schemaLocation/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2017/05/09/%E5%85%B3%E4%BA%8Exml%E6%96%87%E4%BB%B6-xsi-schemaLocation/</loc>
+    <loc>http://wangjunnan.github.io/2019/07/10/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E5%9C%A8%E7%A7%AF%E5%88%86%E5%95%86%E5%9F%8E%E9%87%8C%E7%9A%84%E5%BA%94%E7%94%A8/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2016/10/20/java-%E4%BD%BF%E7%94%A8%E8%A1%A5%E7%A0%81%E8%BF%90%E7%AE%97%E7%9A%84%E5%89%8D%E4%B8%96%E4%BB%8A%E7%94%9F/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2017/05/04/%E5%85%A8%E9%9D%A2%E8%A7%A3%E6%9E%90JS%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1-%E5%8E%9F%E5%9E%8B%E9%93%BE/</loc>
+    <loc>http://wangjunnan.github.io/2019/04/19/%E4%BD%BF%E7%94%A8Java-NIO%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAHTTP%E6%9C%8D%E5%8A%A1%E5%99%A8/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2019/04/19/%E4%BD%BF%E7%94%A8Java-NIO%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AAHTTP%E6%9C%8D%E5%8A%A1%E5%99%A8/</loc>
+    <loc>http://wangjunnan.github.io/2017/05/04/%E5%85%A8%E9%9D%A2%E8%A7%A3%E6%9E%90JS%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1-%E5%8E%9F%E5%9E%8B%E9%93%BE/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2019/02/13/Tomcat%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89-Connector%E8%BF%9E%E6%8E%A5%E5%99%A8/</loc>
@@ -52,19 +55,19 @@
     <loc>http://wangjunnan.github.io/2019/06/21/git-%E4%BD%A0%E7%9C%9F%E7%9A%84%E4%BC%9A%E7%94%A8%E5%90%97/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2019/01/20/Tomcat%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%80-%E6%9E%B6%E6%9E%84%E5%88%9D%E7%AA%A5/</loc>
+    <loc>http://wangjunnan.github.io/2019/09/03/Spring%E7%9A%84-Configuration-Bean%E6%B3%A8%E8%A7%A3/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2019/09/03/Spring%E7%9A%84-Configuration-Bean%E6%B3%A8%E8%A7%A3/</loc>
+    <loc>http://wangjunnan.github.io/2019/01/20/Tomcat%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%80-%E6%9E%B6%E6%9E%84%E5%88%9D%E7%AA%A5/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2018/11/20/Spring-IOC-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E5%9B%9B%EF%BC%88%E5%8A%A0%E8%BD%BD%E9%9D%9E%E5%BB%B6%E8%BF%9F%E5%8D%95%E4%BE%8B%E5%89%8D%E7%9A%84%E6%93%8D%E4%BD%9C%EF%BC%89/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2018/10/20/Spring-IOC-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88BeanDefinitions%E7%9A%84%E8%BD%BD%E5%85%A5%E6%B3%A8%E5%86%8C%EF%BC%89/</loc>
+    <loc>http://wangjunnan.github.io/2018/03/09/Spring-IOC-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%8C%EF%BC%88BeanFactory%E7%9A%84%E5%88%9B%E5%BB%BA%EF%BC%89/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2018/03/09/Spring-IOC-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%8C%EF%BC%88BeanFactory%E7%9A%84%E5%88%9B%E5%BB%BA%EF%BC%89/</loc>
+    <loc>http://wangjunnan.github.io/2018/10/20/Spring-IOC-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88BeanDefinitions%E7%9A%84%E8%BD%BD%E5%85%A5%E6%B3%A8%E5%86%8C%EF%BC%89/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2018/11/23/Spring-IOC-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%94%EF%BC%88%E9%9D%9E%E5%BB%B6%E8%BF%9F%E5%8A%A0%E8%BD%BDbean%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%EF%BC%89/</loc>
@@ -91,10 +94,10 @@
     <loc>http://wangjunnan.github.io/2018/12/15/Spring-AOP-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88%E4%BB%A3%E7%90%86%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9B%E5%BB%BA%EF%BC%89/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2016/12/21/Maven%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%8F%8A%E6%8F%92%E4%BB%B6%E7%BB%91%E5%AE%9A/</loc>
+    <loc>http://wangjunnan.github.io/2016/12/20/Maven-%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2016/12/20/Maven-%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/</loc>
+    <loc>http://wangjunnan.github.io/2016/12/21/Maven%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%8F%8A%E6%8F%92%E4%BB%B6%E7%BB%91%E5%AE%9A/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2019/08/20/MVC%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-HandlerMapping/</loc>
@@ -109,16 +112,19 @@
     <loc>http://wangjunnan.github.io/2019/08/25/MVC%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-HandlerAdapter/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
+    <loc>http://wangjunnan.github.io/2018/12/30/Java%E4%B8%AD%E7%9A%84%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98/</loc>
+    <lastmod>2019-09-27</lastmod>
+  </url>  <url>
     <loc>http://wangjunnan.github.io/2019/04/17/Java%E5%AD%97%E8%8A%82%E7%A0%81%E5%B8%B8%E9%87%8F%E6%B1%A0/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2018/12/30/Java%E4%B8%AD%E7%9A%84%E4%B9%B1%E7%A0%81%E9%97%AE%E9%A2%98/</loc>
+    <loc>http://wangjunnan.github.io/2019/04/25/Java%E5%AD%97%E8%8A%82%E7%A0%81%E6%96%B9%E6%B3%95%E8%A1%A8/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2019/04/02/Java%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2019/04/25/Java%E5%AD%97%E8%8A%82%E7%A0%81%E6%96%B9%E6%B3%95%E8%A1%A8/</loc>
+    <loc>http://wangjunnan.github.io/2018/12/28/Java-NIO-Buffer-%E5%88%86%E6%9E%90/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2019/04/04/Java-Class%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84/</loc>
@@ -130,9 +136,6 @@
     <loc>http://wangjunnan.github.io/2019/01/20/Java-NIO-Selector-%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8%E9%80%89%E6%8B%A9%E5%99%A8/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2018/12/28/Java-NIO-Buffer-%E5%88%86%E6%9E%90/</loc>
-    <lastmod>2019-09-27</lastmod>
-  </url>  <url>
     <loc>http://wangjunnan.github.io/2019/03/12/Java-AQS-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
@@ -142,10 +145,10 @@
     <loc>http://wangjunnan.github.io/2019/06/19/JAVA-%E6%B3%9B%E5%9E%8B-%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%E4%BA%86%E5%90%97%EF%BC%9F/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2017/05/19/CAS-%E5%8D%95%E7%82%B9%E7%99%BB%E5%BD%95%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/</loc>
+    <loc>http://wangjunnan.github.io/2018/07/25/AVL%E6%A0%91/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
-    <loc>http://wangjunnan.github.io/2018/07/25/AVL%E6%A0%91/</loc>
+    <loc>http://wangjunnan.github.io/2017/05/19/CAS-%E5%8D%95%E7%82%B9%E7%99%BB%E5%BD%95%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/</loc>
     <lastmod>2019-09-27</lastmod>
   </url>  <url>
     <loc>http://wangjunnan.github.io/2016/09/21/CSS-%E7%BB%9D%E5%AF%B9%E5%AE%9A%E4%BD%8D-%E6%B5%AE%E5%8A%A8-%E6%B8%85%E9%99%A4%E6%B5%AE%E5%8A%A8/</loc>
