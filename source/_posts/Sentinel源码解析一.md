@@ -299,5 +299,11 @@ private static void resolveSlotChainBuilder() {
 
 文章开头的提到的两个点(插槽链和Node)，这是Sentinel的重点，理解这两点对于阅读源码来说事半功倍
 
+Sentinel系列
 
+* [Sentinel源码解析一](http://wangjunnan.club/2019/10/11/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%80/)
+
+* [Sentinel源码解析二（slot总览）](http://wangjunnan.club/2019/10/16/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%8C%EF%BC%88slot%E6%80%BB%E8%A7%88%EF%BC%89/)
+
+* [Sentinel源码解析二（滑动窗口流量统计）](http://wangjunnan.club/2019/10/25/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E7%BB%9F%E8%AE%A1%EF%BC%89/)
 

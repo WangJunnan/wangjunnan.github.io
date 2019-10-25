@@ -290,4 +290,10 @@ protected long calculateWindowStart(/*@Valid*/ long timeMillis) {
 
 总的来说，`currentWindow`方法的实现还是非常巧妙的，因为我在看`Sentinel`的源码前也写过一篇限流算法的文章，恰好其中也实现过一个滑动窗口限流算法，不过相比于`Sentinel`的实现，我用了定时任务去做窗口的切换更新，显然性能上更差，实现的也不优雅，大家也可以去对比一下。[常用限流算法](http://wangjunnan.club/2019/10/09/%E6%B5%85%E8%B0%88%E5%B8%B8%E7%94%A8%E7%9A%84%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95/)
 
+Sentinel系列
 
+* [Sentinel源码解析一](http://wangjunnan.club/2019/10/11/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%80/)
+
+* [Sentinel源码解析二（slot总览）](http://wangjunnan.club/2019/10/16/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%8C%EF%BC%88slot%E6%80%BB%E8%A7%88%EF%BC%89/)
+
+* [Sentinel源码解析二（滑动窗口流量统计）](http://wangjunnan.club/2019/10/25/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E7%BB%9F%E8%AE%A1%EF%BC%89/)
