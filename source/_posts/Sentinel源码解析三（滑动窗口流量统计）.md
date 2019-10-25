@@ -200,7 +200,7 @@ public WindowWrap<T> currentWindow() {
 `sampleCount` 比较好理解，就是需要定义几个窗口（默认秒级统计维度的话是两个窗口），`intervalInMs` 指的就是我们需要统计的时间间隔，例如我们统计QPS的话那就是1000ms，`windowLengthInMs` 指的每个窗口的大小，是由`intervalInMs`除以`sampleCount`得来
 
 类似下图
-![](media/15719902097112.jpg)￼
+![](http://img.souche.com/f2e/35184370429c595e41100e9e70018761.jpg)￼
 
 
 理解了上诉几个参数的含义后，我们直接进入到`LeapArray`的`currentWindow(long time)`方法中去看看具体的实现
