@@ -20,7 +20,7 @@
 <meta property="og:description" content="引言Sentinel作为ali开源的一款轻量级流控框架，主要以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度来帮助用户保护服务的稳定性。相比于Hystrix，Sentinel的设计更加简单，在 Sentinel中资源定义和规则配置是分离的，也就是说用户可以先通过Sentinel API给对应的业务逻辑定义资源（埋点），然后在需要的时候再配置规则，通过这种组合方式，极大的增加了Senti">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://img.souche.com/f2e/f88669970def3f8da53f6488b3a31366.jpg">
-<meta property="og:updated_time" content="2019-10-11T11:44:26.388Z">
+<meta property="og:updated_time" content="2019-10-25T09:12:11.083Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sentinel源码解析一">
 <meta name="twitter:description" content="引言Sentinel作为ali开源的一款轻量级流控框架，主要以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度来帮助用户保护服务的稳定性。相比于Hystrix，Sentinel的设计更加简单，在 Sentinel中资源定义和规则配置是分离的，也就是说用户可以先通过Sentinel API给对应的业务逻辑定义资源（埋点），然后在需要的时候再配置规则，通过这种组合方式，极大的增加了Senti">
@@ -271,6 +271,15 @@
 <li>如果未配置自定义的<code>SlotChainBuilder</code>，则会使用默认的<code>DefaultSlotChainBuilder</code>来构建插槽链，<code>DefaultSlotChainBuilder</code>所构建的插槽就是文章开头我们提到的7种<code>Slot</code>。每个插槽都有其对应的职责，各司其职，后面我们会详细分析这几个插槽的源码，及所承担的职责。</li>
 </ol>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>文章开头的提到的两个点(插槽链和Node)，这是Sentinel的重点，理解这两点对于阅读源码来说事半功倍</p>
+<p>Sentinel系列</p>
+<ul>
+<li><p><a href="http://wangjunnan.club/2019/10/11/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%80/" target="_blank" rel="noopener">Sentinel源码解析一</a></p>
+</li>
+<li><p><a href="http://wangjunnan.club/2019/10/16/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%8C%EF%BC%88slot%E6%80%BB%E8%A7%88%EF%BC%89/" target="_blank" rel="noopener">Sentinel源码解析二（slot总览）</a></p>
+</li>
+<li><p><a href="http://wangjunnan.club/2019/10/25/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E7%BB%9F%E8%AE%A1%EF%BC%89/" target="_blank" rel="noopener">Sentinel源码解析二（滑动窗口流量统计）</a></p>
+</li>
+</ul>
 
       
     </div>

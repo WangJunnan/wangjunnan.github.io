@@ -20,7 +20,7 @@
 <meta property="og:description" content="前言Sentinel的核心功能之一是流量统计，例如我们常用的指标QPS，当前线程数等。上一篇文章中我们已经大致提到了提供数据统计功能的Slot（StatisticSlot），StatisticSlot在Sentinel的整个体系中扮演了一个非常重要的角色，后续的一系列操作（限流，熔断）等都依赖于StatisticSlot所统计出的数据。 本文所要讨论的重点就是StatisticSlot是如何做的流">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://img.souche.com/f2e/35184370429c595e41100e9e70018761.jpg">
-<meta property="og:updated_time" content="2019-10-25T09:05:42.859Z">
+<meta property="og:updated_time" content="2019-10-25T09:12:38.938Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sentinel源码解析三（滑动窗口流量统计）">
 <meta name="twitter:description" content="前言Sentinel的核心功能之一是流量统计，例如我们常用的指标QPS，当前线程数等。上一篇文章中我们已经大致提到了提供数据统计功能的Slot（StatisticSlot），StatisticSlot在Sentinel的整个体系中扮演了一个非常重要的角色，后续的一系列操作（限流，熔断）等都依赖于StatisticSlot所统计出的数据。 本文所要讨论的重点就是StatisticSlot是如何做的流">
@@ -249,6 +249,15 @@
 </li>
 </ol>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总的来说，<code>currentWindow</code>方法的实现还是非常巧妙的，因为我在看<code>Sentinel</code>的源码前也写过一篇限流算法的文章，恰好其中也实现过一个滑动窗口限流算法，不过相比于<code>Sentinel</code>的实现，我用了定时任务去做窗口的切换更新，显然性能上更差，实现的也不优雅，大家也可以去对比一下。<a href="http://wangjunnan.club/2019/10/09/%E6%B5%85%E8%B0%88%E5%B8%B8%E7%94%A8%E7%9A%84%E9%99%90%E6%B5%81%E7%AE%97%E6%B3%95/" target="_blank" rel="noopener">常用限流算法</a></p>
+<p>Sentinel系列</p>
+<ul>
+<li><p><a href="http://wangjunnan.club/2019/10/11/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%80/" target="_blank" rel="noopener">Sentinel源码解析一</a></p>
+</li>
+<li><p><a href="http://wangjunnan.club/2019/10/16/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%BA%8C%EF%BC%88slot%E6%80%BB%E8%A7%88%EF%BC%89/" target="_blank" rel="noopener">Sentinel源码解析二（slot总览）</a></p>
+</li>
+<li><p><a href="http://wangjunnan.club/2019/10/25/Sentinel%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E4%B8%89%EF%BC%88%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E7%BB%9F%E8%AE%A1%EF%BC%89/" target="_blank" rel="noopener">Sentinel源码解析二（滑动窗口流量统计）</a></p>
+</li>
+</ul>
 
       
     </div>
