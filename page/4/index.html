@@ -219,6 +219,69 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java-NIO-Buffer-分析"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2018/12/28/Java-NIO-Buffer-分析/">Java NIO Buffer 分析</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/28/Java-NIO-Buffer-分析/" class="article-date">
+	  <time datetime="2018-12-28T08:03:33.000Z" itemprop="datePublished">2018-12-28</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/基础/">基础</a><a class="article-category-link" href="/categories/基础/NIO/">NIO</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言JDK 1.4 之后引入了NIO（New IO或 Non Blocking IO），我觉的可以称其为New IO，因为NIO基本重写所有标准IO的API，完全可以替代标准的Java IO API。并且NIO支持面向缓冲区(Buffer)的、基于通道(Channel)的IO操作，可以以更加高效的方式进行文件的读写操作。
+NIO的核心主要包括3部分
+
+Buffer 缓冲区
+Channel 通道
+文件通道
+Socket通道
+
+
+Selector 选择器
+
+本篇文章会对NIOBuffer缓冲区...
+        </p>
+        <p class="article-more-link">
+          <a href="/2018/12/28/Java-NIO-Buffer-分析/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-I-O模型简介"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -720,64 +783,6 @@ XmlReaderContext 解析过程的上下文对象，实际持有Bea...
         </p>
         <p class="article-more-link">
           <a href="/2018/10/20/Spring-IOC-源码解析三（BeanDefinitions的载入注册）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-数据库设计要注意的几个点"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/08/17/数据库设计要注意的几个点/">数据库设计要注意的几个点</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/08/17/数据库设计要注意的几个点/" class="article-date">
-	  <time datetime="2018-08-17T07:47:37.000Z" itemprop="datePublished">2018-08-17</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/数据库/">数据库</a><a class="article-category-link" href="/categories/数据库/mysql/">mysql</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          数据库设计字符集
-统一使用utf8mb4，MySQL在5.5.3之后增加了utf8mb4字符编码，简单的说utf8mb4才是真正的utf-8，因为它可以支持4个字节每个字符，ps：当我们要存储emoji表情就必须使用utf8mb4，性能上不会有损失
-
-建表规范
-字段名必须使用小写字母
-小数类型为decimal，禁止使用float和double（会有精度损失）
-如果存储的字符串长度几乎相等，使用char定长字符串类型（与varchar的区别，例如，存储字符串&#39;abc&#39;，对于c...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/08/17/数据库设计要注意的几个点/#more">阅读全文</a>
         </p>
       
     </div>

@@ -219,6 +219,59 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-MVC源码解析-HandlerAdapter"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/08/25/MVC源码解析-HandlerAdapter/">MVC源码解析-HandlerAdapter</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/08/25/MVC源码解析-HandlerAdapter/" class="article-date">
+	  <time datetime="2019-08-25T08:08:54.000Z" itemprop="datePublished">2019-08-25</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/Spring/">Spring</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言上篇文章分析了handerMapping的实现。本篇文章会继续分析和handerMapping相辅相成的handerAdapter。
+什么是handerAdapter？在理解了handerMapping的基础上，我们应该发现了一个问题。就是每个handerMapping所匹配的到的hander实现是不一样的。比如RequestMappingHandlerMapping的hander的实现是一个HandlerMethod实现，而BeanNameUrlHandlerMapping的hand...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/08/25/MVC源码解析-HandlerAdapter/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-MVC源码解析-HandlerMapping"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -747,59 +800,6 @@ Class文件以8位字节为基本单位的二进制文件，各个数据项目�
         </p>
         <p class="article-more-link">
           <a href="/2019/04/02/Java类加载机制/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-ReentrantLock可重入锁源码分析"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/03/25/ReentrantLock可重入锁源码分析/">ReentrantLock可重入锁源码分析</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/03/25/ReentrantLock可重入锁源码分析/" class="article-date">
-	  <time datetime="2019-03-25T08:19:02.000Z" itemprop="datePublished">2019-03-25</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言ReentrantLock可重入锁，也是日常使用除了synchronized关键字最多的锁。从字面上理解可重入的意思就是同一个线程可以重复加锁，当然synchronized关键字也是支持可重入的，其实它们的主要功能也是类似的，但是相比较来说，ReentrantLock功能更灵活丰富，例如ReentrantLock支持设置公平锁或非公平锁，支持分组唤醒需要唤醒的线程们，而不是像synchronized要么随机唤醒一个线程要么唤醒全部线程。
-整个ReentrantLock的实现基于AQS独...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/03/25/ReentrantLock可重入锁源码分析/#more">阅读全文</a>
         </p>
       
     </div>

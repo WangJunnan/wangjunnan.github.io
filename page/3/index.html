@@ -219,6 +219,59 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-ReentrantLock可重入锁源码分析"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/03/25/ReentrantLock可重入锁源码分析/">ReentrantLock可重入锁源码分析</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/03/25/ReentrantLock可重入锁源码分析/" class="article-date">
+	  <time datetime="2019-03-25T08:19:02.000Z" itemprop="datePublished">2019-03-25</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/并发编程/">并发编程</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言ReentrantLock可重入锁，也是日常使用除了synchronized关键字最多的锁。从字面上理解可重入的意思就是同一个线程可以重复加锁，当然synchronized关键字也是支持可重入的，其实它们的主要功能也是类似的，但是相比较来说，ReentrantLock功能更灵活丰富，例如ReentrantLock支持设置公平锁或非公平锁，支持分组唤醒需要唤醒的线程们，而不是像synchronized要么随机唤醒一个线程要么唤醒全部线程。
+整个ReentrantLock的实现基于AQS独...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/03/25/ReentrantLock可重入锁源码分析/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java-AQS-源码解析"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -707,69 +760,6 @@ Java如何处理编码问题我们知道Java是使用了Unicode字符集，并�
         </p>
         <p class="article-more-link">
           <a href="/2018/12/30/Java中的乱码问题/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Java-NIO-Buffer-分析"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/12/28/Java-NIO-Buffer-分析/">Java NIO Buffer 分析</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/12/28/Java-NIO-Buffer-分析/" class="article-date">
-	  <time datetime="2018-12-28T08:03:33.000Z" itemprop="datePublished">2018-12-28</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/基础/">基础</a><a class="article-category-link" href="/categories/基础/NIO/">NIO</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言JDK 1.4 之后引入了NIO（New IO或 Non Blocking IO），我觉的可以称其为New IO，因为NIO基本重写所有标准IO的API，完全可以替代标准的Java IO API。并且NIO支持面向缓冲区(Buffer)的、基于通道(Channel)的IO操作，可以以更加高效的方式进行文件的读写操作。
-NIO的核心主要包括3部分
-
-Buffer 缓冲区
-Channel 通道
-文件通道
-Socket通道
-
-
-Selector 选择器
-
-本篇文章会对NIOBuffer缓冲区...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/12/28/Java-NIO-Buffer-分析/#more">阅读全文</a>
         </p>
       
     </div>

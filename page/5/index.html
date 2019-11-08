@@ -219,6 +219,64 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-数据库设计要注意的几个点"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2018/08/17/数据库设计要注意的几个点/">数据库设计要注意的几个点</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/08/17/数据库设计要注意的几个点/" class="article-date">
+	  <time datetime="2018-08-17T07:47:37.000Z" itemprop="datePublished">2018-08-17</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/数据库/">数据库</a><a class="article-category-link" href="/categories/数据库/mysql/">mysql</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          数据库设计字符集
+统一使用utf8mb4，MySQL在5.5.3之后增加了utf8mb4字符编码，简单的说utf8mb4才是真正的utf-8，因为它可以支持4个字节每个字符，ps：当我们要存储emoji表情就必须使用utf8mb4，性能上不会有损失
+
+建表规范
+字段名必须使用小写字母
+小数类型为decimal，禁止使用float和double（会有精度损失）
+如果存储的字符串长度几乎相等，使用char定长字符串类型（与varchar的区别，例如，存储字符串&#39;abc&#39;，对于c...
+        </p>
+        <p class="article-more-link">
+          <a href="/2018/08/17/数据库设计要注意的几个点/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-AVL树"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -712,60 +770,6 @@ Maven定义...
         </p>
         <p class="article-more-link">
           <a href="/2016/12/21/Maven的生命周期及插件绑定/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Maven-学习总结"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2016/12/20/Maven-学习总结/">Maven 学习总结</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2016/12/20/Maven-学习总结/" class="article-date">
-	  <time datetime="2016-12-20T08:16:16.000Z" itemprop="datePublished">2016-12-20</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/构建工具/">构建工具</a><a class="article-category-link" href="/categories/构建工具/maven/">maven</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          #Maven 简介Maven是什么？
-
-Maven 这个词可以翻译为“知识的积累”，也可以翻译为“专家”或“内涵”。本文将介绍maven这一跨平台的项目管理使用工具。做为apache组织中一个颇为成功的开源项目，maven主要服务于基于java平台的项目构建，依赖管理和项目信息管理，无论是小型的开源类库项目，还是大型的企业级应用；无论是传统的瀑布式开发，还是流行的敏捷模式，Maven都能大显身手                                                ...
-        </p>
-        <p class="article-more-link">
-          <a href="/2016/12/20/Maven-学习总结/#more">阅读全文</a>
         </p>
       
     </div>
