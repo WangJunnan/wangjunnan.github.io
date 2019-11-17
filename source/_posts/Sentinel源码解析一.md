@@ -36,7 +36,7 @@ date: 2019-10-11 19:42:31
 
 上面的所介绍的插槽（`slot chain`）是`Sentinel`非常重要的概念。同时还有一个非常重要的概念那就是`Node`，为了帮助理解，尽我所能画了下面这张图，可以看到整个结构非常的像一棵树：
 
-![](http://img.souche.com/f2e/f88669970def3f8da53f6488b3a31366.jpg)
+![](http://img.souche.com/f2e/4dbc7a0b3df647df5c612fe39a86ee97.jpg)
 
 简单解释下上图：
 
