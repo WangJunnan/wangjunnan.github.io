@@ -219,6 +219,67 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java类加载机制"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/04/02/Java类加载机制/">Java类加载机制</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/04/02/Java类加载机制/" class="article-date">
+	  <time datetime="2019-04-02T07:35:40.000Z" itemprop="datePublished">2019-04-02</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JVM/">JVM</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言介绍一下java类加载的过程
+类加载的时机类从被加载到java虚拟机内存中开始，被分为7个阶段，包括加载，验证，准备，解析，初始化，使用，卸载
+
+这里我们暂且主要看加载阶段和初始化阶段，java虚拟机主要是做了三件事情
+加载
+通过类的全限定名获取定义此类的二进制字节流
+将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构
+在内存中生成一个代表这个类的Class对象
+
+注意这里虚拟机并没有规定类的二进制字节流的来源，所以我们其实通过自定义类加载器来实现从其他途径（如网络中获取）中...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/04/02/Java类加载机制/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-ReentrantLock可重入锁源码分析"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -705,61 +766,6 @@ off  从目标数组b[]的off位开始写入，一般都是从0开始
         </p>
         <p class="article-more-link">
           <a href="/2019/01/10/Java-NIO-Channel-通道/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Java中的乱码问题"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/12/30/Java中的乱码问题/">Java中的乱码问题</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/12/30/Java中的乱码问题/" class="article-date">
-	  <time datetime="2018-12-30T08:06:52.000Z" itemprop="datePublished">2018-12-30</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/编码/">编码</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言在写Java代码的时候，大家应该都遇到过各种乱码问题，然后开始查资料，结果原因无非是编码格式不一致所导致的乱码，解决方式也是千篇一律，统一使用UTF-8就OK了。
-是的这么做乱码问题肯定可以解决，可我们似乎还不太清除是哪一步编码转化除了问题呢？
-阅读本篇文章前建议先阅读 浅析计算机字符集和编码，能够对编码有一个大概的了解
-Java如何处理编码问题我们知道Java是使用了Unicode字符集，并且字符在内存中是以UTF-16编码格式来存储的，什么意思呢，就是纵然外部有各种Unicode编...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/12/30/Java中的乱码问题/#more">阅读全文</a>
         </p>
       
     </div>

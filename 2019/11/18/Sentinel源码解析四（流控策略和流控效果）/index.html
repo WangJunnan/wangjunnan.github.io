@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>sentinel源码解析四（流控策略和流控效果） | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Sentinel中间件">
+  
+  
+  
+  
+  <meta name="description" content="引言在分析Sentinel的上一篇文章中，我们知道了它是基于滑动窗口做的流量统计，那么在当我们能够根据流量统计算法拿到流量的实时数据后，下一步要做的事情自然就是基于这些数据做流控。在介绍Sentinel的流控模型之前，我们先来简单看下 Sentinel 后台是如何去定义一个流控规则的  对于上图的配置Sentinel把它抽象成一个FlowRule类，与其属性一一对应  resource 资源名 l">
+<meta name="keywords" content="Sentinel,中间件">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sentinel源码解析四（流控策略和流控效果）">
+<meta property="og:url" content="http://wangjunnan.github.io/2019/11/18/Sentinel源码解析四（流控策略和流控效果）/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言在分析Sentinel的上一篇文章中，我们知道了它是基于滑动窗口做的流量统计，那么在当我们能够根据流量统计算法拿到流量的实时数据后，下一步要做的事情自然就是基于这些数据做流控。在介绍Sentinel的流控模型之前，我们先来简单看下 Sentinel 后台是如何去定义一个流控规则的  对于上图的配置Sentinel把它抽象成一个FlowRule类，与其属性一一对应  resource 资源名 l">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://img.souche.com/f2e/71089fbdf4dc7ab9b2b0afc01b99baf7.jpg">
+<meta property="og:updated_time" content="2019-11-18T02:51:54.313Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Sentinel源码解析四（流控策略和流控效果）">
+<meta name="twitter:description" content="引言在分析Sentinel的上一篇文章中，我们知道了它是基于滑动窗口做的流量统计，那么在当我们能够根据流量统计算法拿到流量的实时数据后，下一步要做的事情自然就是基于这些数据做流控。在介绍Sentinel的流控模型之前，我们先来简单看下 Sentinel 后台是如何去定义一个流控规则的  对于上图的配置Sentinel把它抽象成一个FlowRule类，与其属性一一对应  resource 资源名 l">
+<meta name="twitter:image" content="http://img.souche.com/f2e/71089fbdf4dc7ab9b2b0afc01b99baf7.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Sentinel源码解析四（流控策略和流控效果）" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Sentinel源码解析四（流控策略和流控效果）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/11/18/Sentinel源码解析四（流控策略和流控效果）/" class="article-date">
+	  <time datetime="2019-11-18T02:50:25.000Z" itemprop="datePublished">2019-11-18</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/Sentinel/">Sentinel</a><a class="article-category-link" href="/categories/Sentinel/并发/">并发</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在分析Sentinel的上一篇文章中，我们知道了它是基于滑动窗口做的流量统计，那么在当我们能够根据流量统计算法拿到流量的实时数据后，下一步要做的事情自然就是基于这些数据做流控。在介绍<code>Sentinel</code>的流控模型之前，我们先来简单看下 Sentinel 后台是如何去定义一个流控规则的</p>
+<p><img src="http://img.souche.com/f2e/71089fbdf4dc7ab9b2b0afc01b99baf7.jpg" alt></p>
+<p>对于上图的配置<code>Sentinel</code>把它抽象成一个<code>FlowRule</code>类，与其属性一一对应</p>
+<ul>
+<li>resource 资源名</li>
+<li>limitApp 限流来源，默认为default不区分来源</li>
+<li>grade    限流类型，有QPS和并发线程数两种类型</li>
+<li>count    限流阈值</li>
+<li>strategy 流控策略  1. 直接 2. 关联 3.链路 </li>
+<li>controlBehavior   流控效果 1.快速失败 2.预热启动 3.排队等待 4. 预热启动排队等待</li>
+<li>warmUpPeriodSec   流控效果为预热启动时的预热时长（秒）</li>
+<li>maxQueueingTimeMs 流控效果为排队等待时的等待时长 （毫秒）</li>
+</ul>
+<p>下面我们来看下选择流控策略和流控效果的核心代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">passLocalCheck</span><span class="params">(FlowRule rule, Context context, DefaultNode node, <span class="keyword">int</span> acquireCount,<span class="keyword">boolean</span> prioritized)</span> </span>&#123;</span><br><span class="line"><span class="comment">// 根据流控策略选择需要流控的Node维度节点                              </span></span><br><span class="line">    Node selectedNode = selectNodeByRequesterAndStrategy(rule, context, node);</span><br><span class="line">    <span class="keyword">if</span> (selectedNode == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 获取配置的流控效果 控制器 （1. 直接拒绝 2. 预热启动 3. 排队 4. 预热启动排队等待）</span></span><br><span class="line">    <span class="keyword">return</span> rule.getRater().canPass(selectedNode, acquireCount, prioritized);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码比较简单流程也很清晰，首先根据我们配置的流控策略获取到合适维度的 Node 节点（Node节点是Sentinel做流量统计的基本单位），然后再获取到规则中配置的流控效果控制器（1. 直接拒绝 2. 预热启动 3. 排队等待 4.预热启动排队等待）。</p>
+<h2 id="流控策略"><a href="#流控策略" class="headerlink" title="流控策略"></a>流控策略</h2><p>下面我们来看下选择流控策略的源码分析</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> Node <span class="title">selectNodeByRequesterAndStrategy</span><span class="params">(<span class="comment">/*@NonNull*/</span> FlowRule rule, Context context, DefaultNode node)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 获取限流来源 limitApp</span></span><br><span class="line">    String limitApp = rule.getLimitApp();</span><br><span class="line">    <span class="comment">// 获取限流策略</span></span><br><span class="line">    <span class="keyword">int</span> strategy = rule.getStrategy();</span><br><span class="line">    <span class="comment">// 获取当前 上下文的 来源</span></span><br><span class="line">    String origin = context.getOrigin();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果规则配置的限流来源 limitApp 等于 当前上下文来源</span></span><br><span class="line">    <span class="keyword">if</span> (limitApp.equals(origin) &amp;&amp; filterOrigin(origin)) &#123;</span><br><span class="line">    <span class="comment">// 且配置的流控策略是 直接关联策略</span></span><br><span class="line">        <span class="keyword">if</span> (strategy == RuleConstant.STRATEGY_DIRECT) &#123;</span><br><span class="line">            <span class="comment">// 直接返回当前来源 origin 节点</span></span><br><span class="line">            <span class="keyword">return</span> context.getOriginNode();</span><br><span class="line">        &#125;</span><br><span class="line">		   <span class="comment">// 配置的策略为关联或则链路</span></span><br><span class="line">        <span class="keyword">return</span> selectReferenceNode(rule, context, node);</span><br><span class="line">        </span><br><span class="line">        </span><br><span class="line">    <span class="comment">// 如果规则配置的限流来源 limitApp 等于 default </span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (RuleConstant.LIMIT_APP_DEFAULT.equals(limitApp)) &#123;</span><br><span class="line">    <span class="comment">// 且配置的流控策略是 直接关联策略</span></span><br><span class="line">        <span class="keyword">if</span> (strategy == RuleConstant.STRATEGY_DIRECT) &#123;</span><br><span class="line">            <span class="comment">// 直接返回当前资源的 clusterNode</span></span><br><span class="line">            <span class="keyword">return</span> node.getClusterNode();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 配置的策略为关联或则链路</span></span><br><span class="line">        <span class="keyword">return</span> selectReferenceNode(rule, context, node);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 如果规则配置的限流来源 limitApp 等于 other，且当前上下文origin不在流控规则策略中</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (RuleConstant.LIMIT_APP_OTHER.equals(limitApp)</span><br><span class="line">        &amp;&amp; FlowRuleManager.isOtherOrigin(origin, rule.getResource())) &#123;</span><br><span class="line">        <span class="comment">// 且配置的流控策略是 直接关联策略</span></span><br><span class="line">        <span class="keyword">if</span> (strategy == RuleConstant.STRATEGY_DIRECT) &#123;</span><br><span class="line">            <span class="keyword">return</span> context.getOriginNode();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 配置的策略为关联或则链路</span></span><br><span class="line">        <span class="keyword">return</span> selectReferenceNode(rule, context, node);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> Node <span class="title">selectReferenceNode</span><span class="params">(FlowRule rule, Context context, DefaultNode node)</span> </span>&#123;</span><br><span class="line"><span class="comment">// 关联资源名称 （如果策略是关联 则是关联的资源名称，如果策略是链路 则是上下文名称）</span></span><br><span class="line">    String refResource = rule.getRefResource();</span><br><span class="line">    <span class="keyword">int</span> strategy = rule.getStrategy();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (StringUtil.isEmpty(refResource)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 策略是关联</span></span><br><span class="line">    <span class="keyword">if</span> (strategy == RuleConstant.STRATEGY_RELATE) &#123;</span><br><span class="line">    <span class="comment">// 返回关联的资源ClusterNode</span></span><br><span class="line">        <span class="keyword">return</span> ClusterBuilderSlot.getClusterNode(refResource);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 策略是链路</span></span><br><span class="line">    <span class="keyword">if</span> (strategy == RuleConstant.STRATEGY_CHAIN) &#123;</span><br><span class="line">    <span class="comment">// 当前上下文名称不是规则配置的name 直接返回null</span></span><br><span class="line">        <span class="keyword">if</span> (!refResource.equals(context.getName())) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> node;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// No node.</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的逻辑判断比较多，我们稍微理一下整个过程</p>
+<ul>
+<li><code>LimitApp</code>的作用域只在配置的流控策略为<code>RuleConstant.STRATEGY_DIRECT</code>（直接关联）时起作用。其有三种配置，分别为<code>default</code>，<code>origin_name</code>，<code>other</code><ul>
+<li>default 如果配置为default，表示统计不区分来源，当前资源的任何来源流量都会被统计（其实就是选择 Node 为 clusterNode 维度）</li>
+<li>origin_name 如果配置为指定名称的 origin_name，则只会对当前配置的来源流量做统计</li>
+<li>other 如果配置为other 则会对其他全部来源生效<strong>但不包括第二条配置的来源</strong></li>
+</ul>
+</li>
+<li>当策略配置为 RuleConstant.STRATEGY_RELATE 或 RuleConstant.STRATEGY_CHAIN 时<ul>
+<li>STRATEGY_RELATE 关联其他的指定资源，如资源A想以资源B的流量状况来决定是否需要限流，这时资源A规则配置可以使用 STRATEGY_RELATE 策略</li>
+<li>STRATEGY_CHAIN 对指定入口的流量限流，因为流量可以有多个不同的入口（EntranceNode）</li>
+</ul>
+</li>
+<li>对于上面几个节点之间的关系不清楚的可以去看我这篇文章开头的总览图 <a href="https://www.cnblogs.com/taromilk/p/11750962.html" target="_blank" rel="noopener">Sentinel源码解析一（流程总览）</a></li>
+</ul>
+<h2 id="流控效果"><a href="#流控效果" class="headerlink" title="流控效果"></a>流控效果</h2><p>关于流控效果的配置有四种，我们来看下它们的初始化代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * class com.alibaba.csp.sentinel.slots.block.flow.FlowRuleUtil</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> TrafficShapingController <span class="title">generateRater</span><span class="params">(<span class="comment">/*@Valid*/</span> FlowRule rule)</span> </span>&#123;</span><br><span class="line"><span class="comment">// 只有Grade为统计 QPS时 才可以选择除默认流控效果外的 其他流控效果控制器</span></span><br><span class="line">    <span class="keyword">if</span> (rule.getGrade() == RuleConstant.FLOW_GRADE_QPS) &#123;</span><br><span class="line">        <span class="keyword">switch</span> (rule.getControlBehavior()) &#123;</span><br><span class="line">        <span class="comment">// 预热启动</span></span><br><span class="line">            <span class="keyword">case</span> RuleConstant.CONTROL_BEHAVIOR_WARM_UP:</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> WarmUpController(rule.getCount(), rule.getWarmUpPeriodSec(),</span><br><span class="line">                    ColdFactorProperty.coldFactor);</span><br><span class="line">            <span class="comment">// 超过 阈值 排队等待 控制器</span></span><br><span class="line">            <span class="keyword">case</span> RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER:</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> RateLimiterController(rule.getMaxQueueingTimeMs(), rule.getCount());</span><br><span class="line">            <span class="keyword">case</span> RuleConstant.CONTROL_BEHAVIOR_WARM_UP_RATE_LIMITER:</span><br><span class="line">            <span class="comment">// 上面两个的结合体</span></span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> WarmUpRateLimiterController(rule.getCount(), rule.getWarmUpPeriodSec(),</span><br><span class="line">                    rule.getMaxQueueingTimeMs(), ColdFactorProperty.coldFactor);</span><br><span class="line">            <span class="keyword">case</span> RuleConstant.CONTROL_BEHAVIOR_DEFAULT:</span><br><span class="line">            <span class="keyword">default</span>:</span><br><span class="line">                <span class="comment">// Default mode or unknown mode: default traffic shaping controller (fast-reject).</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 默认控制器 超过 阈值 直接拒绝</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> DefaultController(rule.getCount(), rule.getGrade());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以比较清晰的看到总共对应有四种流控器的初始化</p>
+<h3 id="直接拒绝"><a href="#直接拒绝" class="headerlink" title="直接拒绝"></a>直接拒绝</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">canPass</span><span class="params">(Node node, <span class="keyword">int</span> acquireCount, <span class="keyword">boolean</span> prioritized)</span> </span>&#123;</span><br><span class="line"><span class="comment">// 获取当前qps</span></span><br><span class="line">    <span class="keyword">int</span> curCount = avgUsedTokens(node);</span><br><span class="line">    <span class="comment">// 判断是否已经大于阈值</span></span><br><span class="line">    <span class="keyword">if</span> (curCount + acquireCount &gt; count) &#123;</span><br><span class="line">    <span class="comment">// 如果当前流量具有优先级，则会提前去获取未来的通过资格</span></span><br><span class="line">        <span class="keyword">if</span> (prioritized &amp;&amp; grade == RuleConstant.FLOW_GRADE_QPS) &#123;</span><br><span class="line">            <span class="keyword">long</span> currentTime;</span><br><span class="line">            <span class="keyword">long</span> waitInMs;</span><br><span class="line">            currentTime = TimeUtil.currentTimeMillis();</span><br><span class="line">            waitInMs = node.tryOccupyNext(currentTime, acquireCount, count);</span><br><span class="line">            <span class="keyword">if</span> (waitInMs &lt; OccupyTimeoutProperty.getOccupyTimeout()) &#123;</span><br><span class="line">                node.addWaitingRequest(currentTime + waitInMs, acquireCount);</span><br><span class="line">                node.addOccupiedPass(acquireCount);</span><br><span class="line">                sleep(waitInMs);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// PriorityWaitException indicates that the request will pass after waiting for &#123;@link @waitInMs&#125;.</span></span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> PriorityWaitException(waitInMs);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此种策略比较简单粗暴，超过流量阈值的会直接拒绝。不过这里有一个小细节，如果入口流量prioritized为true，也就是优先级比较高，则会通过占用未来时间窗口的名额来实现。这个在上一篇文章有介绍到 <a href></a></p>
+<h3 id="预热启动"><a href="#预热启动" class="headerlink" title="预热启动"></a>预热启动</h3><p><code>WarmUpController</code> 主要是用来防止流量的突然上升，使系统本在稳定状态下能处理的，但是由于许多资源没有预热，导致处理不了了。<strong>注意这里的预热并不是指系统启动之后的一次性预热，而是指系统在运行的任何时候流量从低峰到突增的预热阶段</strong>。</p>
+<p>下面我们来看下<code>WarmUpController</code>的具体实现类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * WarmUpController 构造方法</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> count 当前qps阈值</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> warmUpPeriodInSec 预热时长 秒</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> coldFactor 冷启动系数 默认为3</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">construct</span><span class="params">(<span class="keyword">double</span> count, <span class="keyword">int</span> warmUpPeriodInSec, <span class="keyword">int</span> coldFactor)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (coldFactor &lt;= <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Cold factor should be larger than 1"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.count = count;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.coldFactor = coldFactor;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 剩余Token的警戒值，小于警戒值系统就进入正常运行期</span></span><br><span class="line">    warningToken = (<span class="keyword">int</span>)(warmUpPeriodInSec * count) / (coldFactor - <span class="number">1</span>);</span><br><span class="line">    <span class="comment">// 系统最冷时候的剩余Token数</span></span><br><span class="line">    maxToken = warningToken + (<span class="keyword">int</span>)(<span class="number">2</span> * warmUpPeriodInSec * count / (<span class="number">1.0</span> + coldFactor));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 系统预热的速率(斜率)</span></span><br><span class="line">    slope = (coldFactor - <span class="number">1.0</span>) / count / (maxToken - warningToken);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">canPass</span><span class="params">(Node node, <span class="keyword">int</span> acquireCount, <span class="keyword">boolean</span> prioritized)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> passQps = (<span class="keyword">long</span>) node.passQps();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> previousQps = (<span class="keyword">long</span>) node.previousPassQps();</span><br><span class="line">    <span class="comment">// 计算当前的 剩余 token 数</span></span><br><span class="line">    syncToken(previousQps);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果进入了警戒线，开始调整他的qps</span></span><br><span class="line">    <span class="keyword">long</span> restToken = storedTokens.get();</span><br><span class="line">    <span class="keyword">if</span> (restToken &gt;= warningToken) &#123;</span><br><span class="line">    <span class="comment">// 计算剩余token超出警戒值的值</span></span><br><span class="line">        <span class="keyword">long</span> aboveToken = restToken - warningToken;</span><br><span class="line">        <span class="comment">// 计算当前允许通过的最大 qps</span></span><br><span class="line">        <span class="keyword">double</span> warningQps = Math.nextUp(<span class="number">1.0</span> / (aboveToken * slope + <span class="number">1.0</span> / count));</span><br><span class="line">        <span class="keyword">if</span> (passQps + acquireCount &lt;= warningQps) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 不在预热阶段，则直接判断当前qps是否大于阈值</span></span><br><span class="line">        <span class="keyword">if</span> (passQps + acquireCount &lt;= count) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先是构造方法，主要关注2个重要参数</p>
+<ol>
+<li>warningToken 剩余token的警戒值</li>
+<li>maxToken  剩余的最大token数，如果剩余token数等于maxToken，则说明系统处于最冷阶段</li>
+</ol>
+<p>要理解这两个参数的含义，可以参考令牌桶算法，每通过一个请求，就会从令牌桶中取走一个令牌。那么试想一下，当令牌桶中的令牌达到最大值是，是不是意味着系统目前处于最冷阶段，因为桶里的令牌始终处于一个非常饱和的状态。这里的令牌最大值对应的就是<code>maxToken</code>，而<code>warningToken</code>，则是对应了一个警戒值，当桶中的令牌数减少到一个指定的值时，说明系统已经度过了预热阶段</p>
+<p>当一个请求进来时，首先需要计算当前桶中剩余的token数，具体逻辑在<code>syncToken</code>方法中<br>当系统剩余Token大于warningToken时，说明系统仍处于预热阶段，故需要调整当前所能通过的最大qps阈值</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">syncToken</span><span class="params">(<span class="keyword">long</span> passQps)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> currentTime = TimeUtil.currentTimeMillis();</span><br><span class="line">    <span class="comment">// 获取秒级别时间（去除毫秒）</span></span><br><span class="line">    currentTime = currentTime - currentTime % <span class="number">1000</span>;</span><br><span class="line">    <span class="keyword">long</span> oldLastFillTime = lastFilledTime.get();</span><br><span class="line">    <span class="keyword">if</span> (currentTime &lt;= oldLastFillTime) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> oldValue = storedTokens.get();</span><br><span class="line">    <span class="comment">// 判断是否需要往桶中添加令牌</span></span><br><span class="line">    <span class="keyword">long</span> newValue = coolDownTokens(currentTime, passQps);</span><br><span class="line">    <span class="comment">// 设置新的token数</span></span><br><span class="line">    <span class="keyword">if</span> (storedTokens.compareAndSet(oldValue, newValue)) &#123;</span><br><span class="line">    <span class="comment">// 如果设置成功的话则减去上次通过的qps数量，就得到当前的实际token数</span></span><br><span class="line">        <span class="keyword">long</span> currentValue = storedTokens.addAndGet(<span class="number">0</span> - passQps);</span><br><span class="line">        <span class="keyword">if</span> (currentValue &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            storedTokens.set(<span class="number">0L</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        lastFilledTime.set(currentTime);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ol>
+<li>获取当前时间</li>
+<li>coolDownTokens 方法会判断是否需要往桶中放 token，并返回最新的token数</li>
+<li>如果返回了最新的token数，则将当前剩余的token数减去已经通过的qps，得到最新的剩余token数</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">long</span> <span class="title">coolDownTokens</span><span class="params">(<span class="keyword">long</span> currentTime, <span class="keyword">long</span> passQps)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> oldValue = storedTokens.get();</span><br><span class="line">    <span class="keyword">long</span> newValue = oldValue;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 添加令牌的几种情况</span></span><br><span class="line">    <span class="comment">// 1. 系统初始启动阶段，oldvalue = 0，lastFilledTime也等于0，此时得到一个非常大的newValue，会取maxToken为当前token数量值</span></span><br><span class="line">    <span class="comment">// 2. 系统处于预热阶段 且 当前qps小于 count / coldFactor</span></span><br><span class="line">    <span class="comment">// 3. 系统处于完成预热阶段</span></span><br><span class="line">    <span class="keyword">if</span> (oldValue &lt; warningToken) &#123;</span><br><span class="line">        newValue = (<span class="keyword">long</span>)(oldValue + (currentTime - lastFilledTime.get()) * count / <span class="number">1000</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (oldValue &gt; warningToken) &#123;</span><br><span class="line">        <span class="keyword">if</span> (passQps &lt; (<span class="keyword">int</span>)count / coldFactor) &#123;</span><br><span class="line">            newValue = (<span class="keyword">long</span>)(oldValue + (currentTime - lastFilledTime.get()) * count / <span class="number">1000</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> Math.min(newValue, maxToken);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里看一下会添加令牌的几种情况</p>
+<ol>
+<li>系统初始启动阶段，oldvalue = 0，lastFilledTime也等于0，此时得到一个非常大的newValue，会取maxToken为当前token数量值</li>
+<li>系统处于完成预热阶段，需要补充 token 使其稳定在一个范围内</li>
+<li>系统处于预热阶段 且 当前qps小于 count / coldFactor</li>
+</ol>
+<p>前2种情况比较好理解，这里主要解释一下第三种情况，为何 当前<code>qps</code>小于<code>count / coldFactor</code>时，需要往桶中添加Token？试想一下如果没有这一步会怎么样，如果没有这一步在比较低的qps情况下补充Token，系统最终也会慢慢度过预热阶段，但实际上这么低的qps(<code>小于 count / coldFactor时</code>)不应该完成预热。所以这里才会在 qps低于<code>count / coldFactor</code>时补充剩余token数，<strong>来让系统在低qps情况下始终处于预热状态下</strong></p>
+<h3 id="排队等待"><a href="#排队等待" class="headerlink" title="排队等待"></a>排队等待</h3><p>排队等待的实现相对预热启动实现比较简单</p>
+<p>首先会通过我们的配置，计算出相邻两个请求允许通过的最小时间，然后会记录最近一个通过的时间。两者相加即是下一次请求允许通过的最小时间。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">canPass</span><span class="params">(Node node, <span class="keyword">int</span> acquireCount, <span class="keyword">boolean</span> prioritized)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (acquireCount &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (count &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> currentTime = TimeUtil.currentTimeMillis();</span><br><span class="line">    <span class="comment">// 计算相隔两个请求 需要相隔多长时间</span></span><br><span class="line">    <span class="keyword">long</span> costTime = Math.round(<span class="number">1.0</span> * (acquireCount) / count * <span class="number">1000</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 本次期望通过的最小时间</span></span><br><span class="line">    <span class="keyword">long</span> expectedTime = costTime + latestPassedTime.get();</span><br><span class="line">    <span class="comment">// 如果当前时间大于期望时间，说明qps还未超过阈值，直接通过</span></span><br><span class="line">    <span class="keyword">if</span> (expectedTime &lt;= currentTime) &#123;</span><br><span class="line">       </span><br><span class="line">        latestPassedTime.set(currentTime);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 当前时间小于于期望时间，请求过快了，需要排队等待指定时间</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 计算等待时间</span></span><br><span class="line">        <span class="keyword">long</span> waitTime = costTime + latestPassedTime.get() - TimeUtil.currentTimeMillis();</span><br><span class="line">        <span class="comment">// 等待时长大于我们设置的最大时长，则不通过</span></span><br><span class="line">        <span class="keyword">if</span> (waitTime &gt; maxQueueingTimeMs) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 否则则排队等待，占用下通过时间</span></span><br><span class="line">            <span class="keyword">long</span> oldTime = latestPassedTime.addAndGet(costTime);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">        </span><br><span class="line">                waitTime = oldTime - TimeUtil.currentTimeMillis();</span><br><span class="line">                <span class="comment">// 判断等待时间是否已经大于最大值</span></span><br><span class="line">                <span class="keyword">if</span> (waitTime &gt; maxQueueingTimeMs) &#123;</span><br><span class="line">                <span class="comment">// 大于则将上一步加的值重新减去</span></span><br><span class="line">                    latestPassedTime.addAndGet(-costTime);</span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// in race condition waitTime may &lt;= 0</span></span><br><span class="line">                <span class="comment">// 占用等待时间成功，直接sleep costTime</span></span><br><span class="line">                <span class="keyword">if</span> (waitTime &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                    Thread.sleep(waitTime);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>排队等待控制器的核心策略其实就是围绕了<code>latestPassedTime</code>进行的，<code>latestPassedTime</code>指的是上一次请求通过的时间，通过<code>latestPassedTime</code> + <code>costTime</code>来与当前时间做比较，来判断当前请求是否可以通过，无法通过的请求则会优先占用<code>latestPassedTime</code>时间，直到sleep到可以通过的时间。当然我们也可以配置排队等待的最大时间，来限制目前排队等待通过的请求数量。</p>
+<h3 id="预热启动排队等待"><a href="#预热启动排队等待" class="headerlink" title="预热启动排队等待"></a>预热启动排队等待</h3><p>预热排队等待，<code>WarmUpRateLimiterController</code>实现类我们发现其继承了<code>WarmUpController</code>，这是Sentinel在1.4版本后新加的一种控制器，其实就是预热启动和排队等待的结合体，具体源码我们就不做分析。</p>
+<h2 id="尾言"><a href="#尾言" class="headerlink" title="尾言"></a>尾言</h2><p><code>Sentinel</code>的流控策略和流控效果的相结合使用还是非常巧妙的，当中的一些设计思想还是非常有借鉴意义的</p>
+<p>Sentinel系列</p>
+<ul>
+<li><p><a href="https://www.cnblogs.com/taromilk/p/11750962.html" target="_blank" rel="noopener">Sentinel源码解析一（流程总览）</a></p>
+</li>
+<li><p><a href="https://www.cnblogs.com/taromilk/p/11751000.html" target="_blank" rel="noopener">Sentinel源码解析二（slot总览）</a></p>
+</li>
+<li><p><a href="https://www.cnblogs.com/taromilk/p/11751009.html" target="_blank" rel="noopener">Sentinel源码解析三（滑动窗口流量统计）</a></p>
+</li>
+<li><a href="https://www.cnblogs.com/taromilk/p/11877242.html" target="_blank" rel="noopener">Sentinel源码解析四（流控策略和流控效果）</a></li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2019/11/18/Sentinel源码解析四（流控策略和流控效果）/" target="_blank" title="Sentinel源码解析四（流控策略和流控效果）">http://wangjunnan.github.io/2019/11/18/Sentinel源码解析四（流控策略和流控效果）/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/11/08/自定义maven脚手架/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">自定义maven脚手架</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流控策略"><span class="nav-number">2.</span> <span class="nav-text">流控策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#流控效果"><span class="nav-number">3.</span> <span class="nav-text">流控效果</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#直接拒绝"><span class="nav-number">3.1.</span> <span class="nav-text">直接拒绝</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#预热启动"><span class="nav-number">3.2.</span> <span class="nav-text">预热启动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#排队等待"><span class="nav-number">3.3.</span> <span class="nav-text">排队等待</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#预热启动排队等待"><span class="nav-number">3.4.</span> <span class="nav-text">预热启动排队等待</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#尾言"><span class="nav-number">4.</span> <span class="nav-text">尾言</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2019 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

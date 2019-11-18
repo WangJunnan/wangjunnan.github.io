@@ -19,12 +19,12 @@
 <meta property="og:site_name" content="王俊男的技术杂谈">
 <meta property="og:description" content="引言Sentinel作为ali开源的一款轻量级流控框架，主要以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度来帮助用户保护服务的稳定性。相比于Hystrix，Sentinel的设计更加简单，在 Sentinel中资源定义和规则配置是分离的，也就是说用户可以先通过Sentinel API给对应的业务逻辑定义资源（埋点），然后在需要的时候再配置规则，通过这种组合方式，极大的增加了Senti">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:image" content="http://img.souche.com/f2e/f88669970def3f8da53f6488b3a31366.jpg">
-<meta property="og:updated_time" content="2019-10-25T09:12:11.083Z">
+<meta property="og:image" content="http://img.souche.com/f2e/4dbc7a0b3df647df5c612fe39a86ee97.jpg">
+<meta property="og:updated_time" content="2019-11-17T09:28:12.322Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sentinel源码解析一">
 <meta name="twitter:description" content="引言Sentinel作为ali开源的一款轻量级流控框架，主要以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度来帮助用户保护服务的稳定性。相比于Hystrix，Sentinel的设计更加简单，在 Sentinel中资源定义和规则配置是分离的，也就是说用户可以先通过Sentinel API给对应的业务逻辑定义资源（埋点），然后在需要的时候再配置规则，通过这种组合方式，极大的增加了Senti">
-<meta name="twitter:image" content="http://img.souche.com/f2e/f88669970def3f8da53f6488b3a31366.jpg">
+<meta name="twitter:image" content="http://img.souche.com/f2e/4dbc7a0b3df647df5c612fe39a86ee97.jpg">
   
     <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
   
@@ -218,7 +218,7 @@
 </ul>
 <p>注意：这里的插槽链都是一一对应资源名称的</p>
 <p>上面的所介绍的插槽（<code>slot chain</code>）是<code>Sentinel</code>非常重要的概念。同时还有一个非常重要的概念那就是<code>Node</code>，为了帮助理解，尽我所能画了下面这张图，可以看到整个结构非常的像一棵树：</p>
-<p><img src="http://img.souche.com/f2e/f88669970def3f8da53f6488b3a31366.jpg" alt></p>
+<p><img src="http://img.souche.com/f2e/4dbc7a0b3df647df5c612fe39a86ee97.jpg" alt></p>
 <p>简单解释下上图：</p>
 <ul>
 <li>顶部蓝色的<code>node</code>节点为根节点，全局唯一</li>

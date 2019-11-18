@@ -219,6 +219,61 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java中的乱码问题"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2018/12/30/Java中的乱码问题/">Java中的乱码问题</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/12/30/Java中的乱码问题/" class="article-date">
+	  <time datetime="2018-12-30T08:06:52.000Z" itemprop="datePublished">2018-12-30</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/编码/">编码</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言在写Java代码的时候，大家应该都遇到过各种乱码问题，然后开始查资料，结果原因无非是编码格式不一致所导致的乱码，解决方式也是千篇一律，统一使用UTF-8就OK了。
+是的这么做乱码问题肯定可以解决，可我们似乎还不太清除是哪一步编码转化除了问题呢？
+阅读本篇文章前建议先阅读 浅析计算机字符集和编码，能够对编码有一个大概的了解
+Java如何处理编码问题我们知道Java是使用了Unicode字符集，并且字符在内存中是以UTF-16编码格式来存储的，什么意思呢，就是纵然外部有各种Unicode编...
+        </p>
+        <p class="article-more-link">
+          <a href="/2018/12/30/Java中的乱码问题/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java-NIO-Buffer-分析"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -722,67 +777,6 @@ finishBeanFactoryInitialization(beanFactory)提前初始化一些非延迟加载
         </p>
         <p class="article-more-link">
           <a href="/2018/11/20/Spring-IOC-源码解析四（加载非延迟单例前的操作）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Spring-IOC-源码解析三（BeanDefinitions的载入注册）"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/10/20/Spring-IOC-源码解析三（BeanDefinitions的载入注册）/">Spring 源码解析三（BeanDefinitions的载入注册）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/10/20/Spring-IOC-源码解析三（BeanDefinitions的载入注册）/" class="article-date">
-	  <time datetime="2018-10-20T06:12:47.000Z" itemprop="datePublished">2018-10-20</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言
-这期主要是解析BeanDefinitions的载入和注册的整个过程，整个过程看似非常复杂，其实我们可以分成几个部分去看: 1.载入 2.注册和解析如果没有看过前面几期的话，建议先过一下前面几期
-
-
-为了帮助大家理清整个调用过程，简单的画了一个图
-
-
-关键类
-XmlBeanDefinitionReader AbstractBeanDefinitionReader xml配置形式的BeanDefinition的读取器
-XmlReaderContext 解析过程的上下文对象，实际持有Bea...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/10/20/Spring-IOC-源码解析三（BeanDefinitions的载入注册）/#more">阅读全文</a>
         </p>
       
     </div>

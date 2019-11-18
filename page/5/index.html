@@ -219,6 +219,67 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Spring-IOC-源码解析三（BeanDefinitions的载入注册）"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2018/10/20/Spring-IOC-源码解析三（BeanDefinitions的载入注册）/">Spring 源码解析三（BeanDefinitions的载入注册）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/10/20/Spring-IOC-源码解析三（BeanDefinitions的载入注册）/" class="article-date">
+	  <time datetime="2018-10-20T06:12:47.000Z" itemprop="datePublished">2018-10-20</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言
+这期主要是解析BeanDefinitions的载入和注册的整个过程，整个过程看似非常复杂，其实我们可以分成几个部分去看: 1.载入 2.注册和解析如果没有看过前面几期的话，建议先过一下前面几期
+
+
+为了帮助大家理清整个调用过程，简单的画了一个图
+
+
+关键类
+XmlBeanDefinitionReader AbstractBeanDefinitionReader xml配置形式的BeanDefinition的读取器
+XmlReaderContext 解析过程的上下文对象，实际持有Bea...
+        </p>
+        <p class="article-more-link">
+          <a href="/2018/10/20/Spring-IOC-源码解析三（BeanDefinitions的载入注册）/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-数据库设计要注意的几个点"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -715,61 +776,6 @@ cnpm install –save-dev babel-core babel-loader ba...
         </p>
         <p class="article-more-link">
           <a href="/2017/02/27/React-ES6-webpack-快速搭建开发环境/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Maven的生命周期及插件绑定"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2016/12/21/Maven的生命周期及插件绑定/">Maven的生命周期及插件绑定</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2016/12/21/Maven的生命周期及插件绑定/" class="article-date">
-	  <time datetime="2016-12-21T08:17:30.000Z" itemprop="datePublished">2016-12-21</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/构建工具/">构建工具</a><a class="article-category-link" href="/categories/构建工具/maven/">maven</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          ######何为生命周期？
-一个完整的项目构建过程通常包括清理、编译、测试、打包、集成测试、验证、部署等步骤，Maven从中抽取了一套完善的、易扩展的生命周期。Maven的生命周期是抽象的，其中的具体任务都交由插件来完成。Maven为大多数构建任务编写并绑定了默认的插件，如针对编译的插件：maven-compiler-plugin。用户也可自行配置或编写插件。
-Maven的生命周期是抽象的，意味着生命周期本身不做任何实际工作，在Maven的设计中，实际的工作都交由插件来完成
-Maven定义...
-        </p>
-        <p class="article-more-link">
-          <a href="/2016/12/21/Maven的生命周期及插件绑定/#more">阅读全文</a>
         </p>
       
     </div>
