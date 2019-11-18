@@ -20,7 +20,7 @@
 <meta property="og:description" content="引言Sentinel作为ali开源的一款轻量级流控框架，主要以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度来帮助用户保护服务的稳定性。相比于Hystrix，Sentinel的设计更加简单，在 Sentinel中资源定义和规则配置是分离的，也就是说用户可以先通过Sentinel API给对应的业务逻辑定义资源（埋点），然后在需要的时候再配置规则，通过这种组合方式，极大的增加了Senti">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://img.souche.com/f2e/4dbc7a0b3df647df5c612fe39a86ee97.jpg">
-<meta property="og:updated_time" content="2019-11-17T09:28:12.322Z">
+<meta property="og:updated_time" content="2019-11-18T02:53:55.430Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Sentinel源码解析一">
 <meta name="twitter:description" content="引言Sentinel作为ali开源的一款轻量级流控框架，主要以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度来帮助用户保护服务的稳定性。相比于Hystrix，Sentinel的设计更加简单，在 Sentinel中资源定义和规则配置是分离的，也就是说用户可以先通过Sentinel API给对应的业务逻辑定义资源（埋点），然后在需要的时候再配置规则，通过这种组合方式，极大的增加了Senti">
@@ -228,6 +228,7 @@
 </li>
 <li>中间绿色框框中的节点都是属于同一个资源的(相同的<code>ResourceName</code>)</li>
 <li>最底下紫色的节点是集群节点，可以理解成绿色框框中Node资源的整合</li>
+<li>最右边的指的是不同的来源（origin）流量，同一个EntranceNode可以有多个来源</li>
 </ul>
 <p>以上2个概念务必要理清楚，之后再一步一步看源码会比较清晰</p>
 <p>下面我们将从入口源码开始一步一步分析整个调用过程：</p>
