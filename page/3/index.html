@@ -219,6 +219,63 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java-Class文件结构"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/04/04/Java-Class文件结构/">Java Class文件结构</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/04/04/Java-Class文件结构/" class="article-date">
+	  <time datetime="2019-04-04T07:47:26.000Z" itemprop="datePublished">2019-04-04</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JVM/">JVM</a><a class="article-category-link" href="/categories/java基础/JVM/java字节码/">java字节码</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言我们都知道java是跨平台的，原因就在于各个平台的java虚拟机可以载入和执行同一种平台无关的字节码文件，也就是说java虚拟机不与包括Java在内的任何语言绑定，只于Class文件这种二进制格式文件所关联。
+基于这样的设计，到目前为止已经出现了很多基于Java虚拟机的语言
+如groovy最终都会编译成class文件
+Class文件结构一个Class文件唯一对应一个类或接口
+现在让我们来看下Class文件的基本结构
+Class文件以8位字节为基本单位的二进制文件，各个数据项目严格的按照...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/04/04/Java-Class文件结构/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java类加载机制"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -727,63 +784,6 @@ off  从目标数组b[]的off位开始写入，一般都是从0开始
 
 
   
-    <article id="post-Java-NIO-Channel-通道"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/01/10/Java-NIO-Channel-通道/">Java NIO Channel 通道</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/01/10/Java-NIO-Channel-通道/" class="article-date">
-	  <time datetime="2019-01-10T08:35:06.000Z" itemprop="datePublished">2019-01-10</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/NIO/">NIO</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言上一篇文章主要介绍了Java NIO Buffer的使用及内部实现原理，本期我们将会认识到Java NIO 另一个非常重要的特性Channel（通道）
-对比传统IO流在认识Java NIO Channel通道之前，我们有必要对比一下NIO Channel与传统I/O流的区别，以及它的优势在哪里:
-
-既可以从通道中读取数据，又可以写数据到通道。但流的读写通常是单向的。
-通道可以异步地读写。（不会阻塞进程）
-通道中的数据总是要先读到一个Buffer，或者总是要从一个Buffer中写入(面向...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/01/10/Java-NIO-Channel-通道/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
 
 
   <nav id="page-nav">
@@ -803,7 +803,7 @@ off  从目标数组b[]的off位开始写入，一般都是从0开始
   <div class="container">
       	<div class="row">
 	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
-	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2020 王俊男的技术杂谈 All Rights Reserved.</p>
 	      
 	      
     		<p class="busuanzi_uv">
@@ -957,7 +957,7 @@ off  从目标数组b[]的off位开始写入，一般都是从0开始
             王俊男的技术杂谈
           </div>
           <div class="panel-body">
-            Copyright © 2019 王俊男 All Rights Reserved.
+            Copyright © 2020 王俊男 All Rights Reserved.
           </div>
         </div>
       </div>

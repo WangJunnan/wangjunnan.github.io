@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="utf-8">
+  
+  <title>netty源码死磕一（netty线程模型及eventloop机制） | 王俊男的技术杂谈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="netty">
+  
+  
+  
+  
+  <meta name="description" content="引言好久没有写博客了，近期准备把Netty源码啃一遍。在这之前本想直接看源码，但是看到后面发现其实效率不高，有些概念还是有必要回头再细啃的，特别是其线程模型以及EventLoop的概念。 当然在开始之前还是有务必要对IO模型要有清晰准确的认识。 传送门   事件循环机制(EventLoop)Netty线程模型中一个非常重要的概念: 事件循环机制(EventLoop)这个概念在JS上体现的也非常淋漓">
+<meta name="keywords" content="netty">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netty源码死磕一（netty线程模型及EventLoop机制）">
+<meta property="og:url" content="http://wangjunnan.github.io/2020/03/08/Netty源码死磕一（netty线程模型及EventLoop机制）/index.html">
+<meta property="og:site_name" content="王俊男的技术杂谈">
+<meta property="og:description" content="引言好久没有写博客了，近期准备把Netty源码啃一遍。在这之前本想直接看源码，但是看到后面发现其实效率不高，有些概念还是有必要回头再细啃的，特别是其线程模型以及EventLoop的概念。 当然在开始之前还是有务必要对IO模型要有清晰准确的认识。 传送门   事件循环机制(EventLoop)Netty线程模型中一个非常重要的概念: 事件循环机制(EventLoop)这个概念在JS上体现的也非常淋漓">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://img.souche.com/f2e/97669ede0e1dd1121c2af90867722d39.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/85e2477417d5c80f7d4831ce70900d87.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/81734cca15c63c5395502fb3a515bee1.jpg">
+<meta property="og:updated_time" content="2020-03-08T08:15:45.311Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Netty源码死磕一（netty线程模型及EventLoop机制）">
+<meta name="twitter:description" content="引言好久没有写博客了，近期准备把Netty源码啃一遍。在这之前本想直接看源码，但是看到后面发现其实效率不高，有些概念还是有必要回头再细啃的，特别是其线程模型以及EventLoop的概念。 当然在开始之前还是有务必要对IO模型要有清晰准确的认识。 传送门   事件循环机制(EventLoop)Netty线程模型中一个非常重要的概念: 事件循环机制(EventLoop)这个概念在JS上体现的也非常淋漓">
+<meta name="twitter:image" content="http://img.souche.com/f2e/97669ede0e1dd1121c2af90867722d39.jpg">
+  
+    <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
+  
+
+  
+
+  <link rel="icon" href="/css/images/mylogo.jpg">
+  <link rel="apple-touch-icon" href="/css/images/mylogo.jpg">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css">
+
+  
+    <link rel="stylesheet" href="/css/dialog.css">
+  
+
+  
+
+  
+    <link rel="stylesheet" href="/css/header-post.css">
+  
+
+  
+  
+  
+    <link rel="stylesheet" href="/css/vdonate.css">
+  
+
+</head>
+</html>
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  <div id="container">
+    <div id="wrap">
+      
+        <header>
+
+    <div id="allheader" class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar-inner">
+          
+          <div class="container"> 
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+
+            
+              <a class="brand" style="
+                 margin-top: 0px;"  
+                href="#" data-toggle="modal" data-target="#myModal" >
+                  <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
+              </a>
+            
+            
+            <div class="navbar-collapse collapse">
+              <ul class="hnav navbar-nav">
+                
+                  <li> <a class="main-nav-link" href="/">首页</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/archives">归档</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/categories">分类</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/tags">标签</a> </li>
+                
+                  <li> <a class="main-nav-link" href="/about">关于</a> </li>
+                
+                  <li><div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="请输入关键词..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(无标题)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div></li>
+            </div>
+          </div>
+                
+      </div>
+    </div>
+
+</header>
+
+
+
+      
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="post-Netty源码死磕一（netty线程模型及EventLoop机制）" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Netty源码死磕一（netty线程模型及EventLoop机制）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2020/03/08/Netty源码死磕一（netty线程模型及EventLoop机制）/" class="article-date">
+	  <time datetime="2020-03-08T08:15:13.000Z" itemprop="datePublished">2020-03-08</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/netty/">netty</a>
+
+      
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
+	</a>
+
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>好久没有写博客了，近期准备把<code>Netty</code>源码啃一遍。在这之前本想直接看源码，但是看到后面发现其实效率不高，有些概念还是有必要回头再细啃的，特别是其线程模型以及<code>EventLoop</code>的概念。</p>
+<p>当然在开始之前还是有务必要对<code>IO模型</code>要有清晰准确的认识。 传送门 <a href></a> </p>
+<h2 id="事件循环机制-EventLoop"><a href="#事件循环机制-EventLoop" class="headerlink" title="事件循环机制(EventLoop)"></a>事件循环机制(EventLoop)</h2><p>Netty线程模型中一个非常重要的概念: <code>事件循环机制(EventLoop)</code><br>这个概念在<code>JS</code>上体现的也非常淋漓尽致，下面在开始介绍netty的线程模型之前，允许我简单的介绍下事件循环机制在<code>JS</code>中的体现</p>
+<p><code>JS</code>的语言性质: 单线程非阻塞，单线程意味着，js代码在执行的任何时候，都只有一个主线程来处理所有的任务。非阻塞则意味着，在进行异步IO任务时不会阻塞主线程，主线程会挂起这个任务，等待异步任务完成再执行对应的回调。</p>
+<p>那么JS是如何实现单线程非阻塞的呢？<code>JS</code>引擎遇到一个异步事件后并不会一直等待其返回结果，而是会将此事件挂起（例如交给浏览器去执行请求），主线程会继续执行方法栈中的其他任务。之后当异步任务返回结果后，（可能是浏览器？）会将回调函数加入到事件队列(<code>Task Queue</code>)中，那么什么时候会从事件队列中取出回调函数执行呢？当前执行栈中的所有任务都执行完毕，主线程处于闲置状态时会去查找事件队列是否有任务待执行，如果有则将回调函数加入到主线程的方法执行栈中执行，如此反复，我们就把这个循环过程称为事件循环机制(<code>EventLoop</code>)。</p>
+<p>不知道介绍了JS的件循环机制，大家有没有对<code>Event Loop</code>有了一个初步的认识，下面我将会着重介绍我们主角Netty的线程模型及其与<code>Event Loop</code>的联系。</p>
+<h2 id="Netty线程模型"><a href="#Netty线程模型" class="headerlink" title="Netty线程模型"></a>Netty线程模型</h2><p>Netty的线程模型基于<code>Reactor</code>，<code>Reactor</code>的核心在于事件分发，它有三种经典的线程模型(单线程模型，多线程模型，主从多线程模型)，下面我们会结合<code>Netty</code>的<code>EventLoop</code>机制一一介绍</p>
+<h3 id="Reactor单线程模型"><a href="#Reactor单线程模型" class="headerlink" title="Reactor单线程模型"></a>Reactor单线程模型</h3><p>单线程模型全局只有一个线程在工作，也就意味着请求的接收，分发，IO读取写入等操作都在一个线程中完成，该模型算得上是最经典的线程模型了，例如redis也是采用的此种单线程模型了。</p>
+<p><img src="http://img.souche.com/f2e/97669ede0e1dd1121c2af90867722d39.jpg" alt></p>
+<p>可以看到上图中，我们把一个<code>Reactor线程</code>可以认为是一个<code>EventLoop IO</code>线程，一个事件循环机制。</p>
+<p>由于其线程中的IO读写都是基于NIO，理论上所有的IO读写操作都不会阻塞<code>EventLoop</code>线程。所以即使是该单线程模型，也是足以应付绝大多数的场景。</p>
+<p>那么为什么又会延伸出<code>Reactor多线程模型</code>呢？<br>当应用并发量非常大时，例如一个<code>Reactor NIO 线程</code>需要同时处理成百上千的连接时，虽然IO读写是非阻塞的，但是消息的编码解码都是需要同步阻塞的，这就导致NIO线程处理速度变慢，最终导致消息积压，出现性能瓶颈。</p>
+<p>基于以上原因也就演进出了第二种模型<code>Reactor多线程模型</code></p>
+<h3 id="Reactor多线程模型"><a href="#Reactor多线程模型" class="headerlink" title="Reactor多线程模型"></a>Reactor多线程模型</h3><p><code>Reactor多线程模型</code>与<code>Reactor单线程模型</code>最大的区别就是，有一组<code>Reactor NIO线程</code>（也就是一组 <code>EventLoop</code>）来处理IO操作</p>
+<p><img src="http://img.souche.com/f2e/85e2477417d5c80f7d4831ce70900d87.jpg" alt></p>
+<p>通过上图，可以比较清晰的看到，IO的读写操作都由一个<code>Reactor NIO线程池</code>(对应到<code>EventLoop</code>也就是<code>EventLoopGroup</code>)来完成的，而请求的监听和<code>Accept</code>则是由另一个单独的<code>Reactor线程</code>来完成。<br><strong>注意<code>Reactor NIO</code>线程池中的每一个线程都是处理N条链路，但是一个链路只能有一个线程来处理</strong><br><code>多线程的Reactor模型</code>可以满足绝大部分的应用场景，通常情况下，我们使用Netty使用这种线程模型就OK（创建两个NioEventLoopGroup，bossGroup大小为1，workGroup大小为CPU*2）。但是有可能会存在某些极少数的情况，一个<code>Reactor线程</code>处理请求的<code>Accept</code>可能会产生性能瓶颈，例如上百万的并发连接请求。这时候我们可能就需要采用第三种模型<code>Reactor主从多线程模型</code></p>
+<h3 id="Reactor主从多线程模型"><a href="#Reactor主从多线程模型" class="headerlink" title="Reactor主从多线程模型"></a>Reactor主从多线程模型</h3><p><code>Reactor主从多线程模型</code>和<code>Reactor多线程模型</code>的区别在于原本是一个<code>Reactor线程</code>处理请求的Accept，变成了<code>一组Reactor线程</code>。</p>
+<p><img src="http://img.souche.com/f2e/81734cca15c63c5395502fb3a515bee1.jpg" alt></p>
+<p>对于<code>Reactor主从多线程模型</code>，其实大多数情况下我们并不需要。即使我们给BossGroup指定了多个线程，最终也只会选择其中的一个作为Accepor的NIO线程，除非在<strong>服务端绑定了多个端口的情况下才会启用BossGroup的多个线程</strong>。</p>
+<h2 id="尾言"><a href="#尾言" class="headerlink" title="尾言"></a>尾言</h2><p>把<code>Netty</code>的线程模型以及<code>EventLoop</code>理解清楚，个人觉得最好的方法还是顺着<code>Netty</code>的源码一步一步看，看多了也就理解了这几种线程模型分别对应了哪几种情况，后面的文章我应该会根据源码来进一步理解netty</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2020/03/08/Netty源码死磕一（netty线程模型及EventLoop机制）/" target="_blank" title="Netty源码死磕一（netty线程模型及EventLoop机制）">http://wangjunnan.github.io/2020/03/08/Netty源码死磕一（netty线程模型及EventLoop机制）/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2019/11/18/Sentinel源码解析四（流控策略和流控效果）/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Sentinel源码解析四（流控策略和流控效果）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事件循环机制-EventLoop"><span class="nav-number">2.</span> <span class="nav-text">事件循环机制(EventLoop)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Netty线程模型"><span class="nav-number">3.</span> <span class="nav-text">Netty线程模型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Reactor单线程模型"><span class="nav-number">3.1.</span> <span class="nav-text">Reactor单线程模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reactor多线程模型"><span class="nav-number">3.2.</span> <span class="nav-text">Reactor多线程模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reactor主从多线程模型"><span class="nav-number">3.3.</span> <span class="nav-text">Reactor主从多线程模型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#尾言"><span class="nav-number">4.</span> <span class="nav-text">尾言</span></a></li></ol>
+    
+    </div>
+  </aside>
+
+</section>
+        
+      </div>
+      
+      <footer id="footer">
+  
+
+  <div class="container">
+      	<div class="row">
+	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2020 王俊男的技术杂谈 All Rights Reserved.</p>
+	      
+	      
+    		<p class="busuanzi_uv">
+				访客数 : <span id="busuanzi_value_site_uv"></span> |  
+				访问量 : <span id="busuanzi_value_site_pv"></span>
+		    </p>
+  		   
+		</div>
+
+		
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+    var allheader = document.getElementById("allheader");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight + "px";
+    if (allheader != null) {
+      contentdiv.style.minHeight = document.body.offsetHeight - allheader.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    } else {
+      contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    }
+</script>
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/scripts.js"></script>
+
+
+
+
+  <script src="/js/dialog.js"></script>
+
+
+
+
+
+
+
+
+	<div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="myModalLabel">设置</h2>
+      </div>
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+
+
+      <div class="modal-body">
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" onclick="javascript:setFontSize();" aria-expanded="true" aria-controls="collapseOne">
+              正文字号大小
+            </a>
+          </div>
+          <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+          <div class="panel-body">
+            您已调整页面字体大小
+          </div>
+        </div>
+      
+
+
+          <div style="margin:6px;">
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" onclick="javascript:setBackground();" aria-expanded="true" aria-controls="collapseTwo">
+              夜间护眼模式
+            </a>
+        </div>
+          <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+          <div class="panel-body">
+            夜间模式已经开启，再次单击按钮即可关闭 
+          </div>
+        </div>
+
+        <div>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;关 于&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+         <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+          <div class="panel-body">
+            王俊男的技术杂谈
+          </div>
+          <div class="panel-body">
+            Copyright © 2020 王俊男 All Rights Reserved.
+          </div>
+        </div>
+      </div>
+
+
+      <hr style="margin-top:0px; margin-bottom:0px; width:80%; border-top: 1px solid #000;">
+      <hr style="margin-top:2px; margin-bottom:0px; width:80%; border-top: 3px solid #000;">
+      <div class="modal-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
+  
+</body>
+</html>

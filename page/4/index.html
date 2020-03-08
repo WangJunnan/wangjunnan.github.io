@@ -219,6 +219,63 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java-NIO-Channel-通道"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/01/10/Java-NIO-Channel-通道/">Java NIO Channel 通道</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/01/10/Java-NIO-Channel-通道/" class="article-date">
+	  <time datetime="2019-01-10T08:35:06.000Z" itemprop="datePublished">2019-01-10</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/NIO/">NIO</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言上一篇文章主要介绍了Java NIO Buffer的使用及内部实现原理，本期我们将会认识到Java NIO 另一个非常重要的特性Channel（通道）
+对比传统IO流在认识Java NIO Channel通道之前，我们有必要对比一下NIO Channel与传统I/O流的区别，以及它的优势在哪里:
+
+既可以从通道中读取数据，又可以写数据到通道。但流的读写通常是单向的。
+通道可以异步地读写。（不会阻塞进程）
+通道中的数据总是要先读到一个Buffer，或者总是要从一个Buffer中写入(面向...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/01/10/Java-NIO-Channel-通道/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java中的乱码问题"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -739,62 +796,6 @@ finishBeanFactoryInitialization(beanFactory)提前初始化一些非延迟加载
 
 
   
-    <article id="post-Spring-IOC-源码解析四（加载非延迟单例前的操作）"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/11/20/Spring-IOC-源码解析四（加载非延迟单例前的操作）/">Spring IOC 源码解析四（加载非延迟单例前的操作）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/11/20/Spring-IOC-源码解析四（加载非延迟单例前的操作）/" class="article-date">
-	  <time datetime="2018-11-20T07:48:35.000Z" itemprop="datePublished">2018-11-20</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言
-上一期讲述了BeanDefinitions的载入和注册，beanDefinition相当于spring对bean的数据抽象定义，这一期我们继续顺着的 refresh 方法往下讲
-
-回到refresh方法上一期其实主要是介绍了obtainFreshBeanFactory() 这一步，这一期我们继续接着往下看
-123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/11/20/Spring-IOC-源码解析四（加载非延迟单例前的操作）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
 
 
   <nav id="page-nav">
@@ -814,7 +815,7 @@ finishBeanFactoryInitialization(beanFactory)提前初始化一些非延迟加载
   <div class="container">
       	<div class="row">
 	      <p> Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/iTimeTraveler/hexo-theme-hiker" target="_blank">Hexo-theme-hiker</a> </p>
-	      <p id="copyRightEn">Copyright &copy; 2013 - 2019 王俊男的技术杂谈 All Rights Reserved.</p>
+	      <p id="copyRightEn">Copyright &copy; 2013 - 2020 王俊男的技术杂谈 All Rights Reserved.</p>
 	      
 	      
     		<p class="busuanzi_uv">
@@ -968,7 +969,7 @@ finishBeanFactoryInitialization(beanFactory)提前初始化一些非延迟加载
             王俊男的技术杂谈
           </div>
           <div class="panel-body">
-            Copyright © 2019 王俊男 All Rights Reserved.
+            Copyright © 2020 王俊男 All Rights Reserved.
           </div>
         </div>
       </div>
