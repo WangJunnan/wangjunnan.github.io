@@ -219,6 +219,61 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Spring-IOC-源码解析五（非延迟加载bean的初始化）"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2018/11/23/Spring-IOC-源码解析五（非延迟加载bean的初始化）/">Spring IOC 源码解析五（非延迟加载bean的初始化）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/11/23/Spring-IOC-源码解析五（非延迟加载bean的初始化）/" class="article-date">
+	  <time datetime="2018-11-23T07:53:34.000Z" itemprop="datePublished">2018-11-23</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言
+上期分析了refresh方法中大部分，这期我们只分析finishBeanFactoryInitialization(beanFactory)这一个方法，分析这个方法的过程中我们会顺藤摸瓜把bean初始化的整个流程都分析一遍
+
+finishBeanFactoryInitialization(beanFactory)提前初始化一些非延迟加载的单例类型的bean，这里主要看最后一行 beanFactory.preInstantiateSingletons(),这里是初始化非延迟加载单例的入...
+        </p>
+        <p class="article-more-link">
+          <a href="/2018/11/23/Spring-IOC-源码解析五（非延迟加载bean的初始化）/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Spring-IOC-源码解析四（加载非延迟单例前的操作）"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -711,64 +766,6 @@ CAS单点登入的实现先盗个图 ：
         </p>
         <p class="article-more-link">
           <a href="/2017/05/09/关于xml文件-xsi-schemaLocation/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-全面解析JS面向对象-原型链"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2017/05/04/全面解析JS面向对象-原型链/">全面解析JS面向对象 原型链</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2017/05/04/全面解析JS面向对象-原型链/" class="article-date">
-	  <time datetime="2017-05-04T06:33:04.000Z" itemprop="datePublished">2017-05-04</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/前端技术/">前端技术</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          对javascript 这门语言来说，相信大家都不会陌生，但最近发现其实好多人对JS对象的概念很模糊，甚至会惊异于JS竟然也有对象
-
-其实JS是完全基于对象的语言，我们所能看到的都是基于对象，包括 js 方法其实也是一个对象
-
-但是js的面向对象与像java的面向对象相比,又是有着极大的不同，java，C#完全面向对象的语言 中有类这个概念，而js对象则是依靠 构造器constructor利用 原型prototype构造出来的。
-
-简单的理解下，类的概念相当于 模板，原型相当于 各个对象组...
-        </p>
-        <p class="article-more-link">
-          <a href="/2017/05/04/全面解析JS面向对象-原型链/#more">阅读全文</a>
         </p>
       
     </div>

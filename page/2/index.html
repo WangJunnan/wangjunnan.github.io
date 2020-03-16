@@ -219,6 +219,63 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-MVC-HttpRequestHandler接口静态资源的关系"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/08/30/MVC-HttpRequestHandler接口静态资源的关系/">MVC-HttpRequestHandler接口静态资源的关系</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/08/30/MVC-HttpRequestHandler接口静态资源的关系/" class="article-date">
+	  <time datetime="2019-08-30T08:10:15.000Z" itemprop="datePublished">2019-08-30</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/Spring/">Spring</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          在Spring Mvc，一般我们都会配置对静态资源的拦截，因为静态资源处理有别与普通请求，需要进行特殊配置。
+比较常用的配置有这几种
+
+Tomcat defaultServelt 激活tomcat自带的defaultServelt 用来处理静态资源
+
+123456789101112&lt;servlet-mapping&gt;    &lt;servlet-name&gt;default&lt;/servlet-name&gt;    &lt;url-pattern&gt;*.jpg&lt...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/08/30/MVC-HttpRequestHandler接口静态资源的关系/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-手写一个starter"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -737,61 +794,6 @@ http请求报文http的请求报文由三部分组成
         </p>
         <p class="article-more-link">
           <a href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Java字节码常量池"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/04/17/Java字节码常量池/">Java字节码常量池</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/04/17/Java字节码常量池/" class="article-date">
-	  <time datetime="2019-04-17T07:48:48.000Z" itemprop="datePublished">2019-04-17</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JVM/">JVM</a><a class="article-category-link" href="/categories/java基础/JVM/java字节码/">java字节码</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言上篇文章简单介绍了java Class 字节码文件的基本格式。本文我们直接通过阅读字节码文件来进一步理解字节码中的常量池结构
-首先我们新建一个最简单的Java文件
-12345public class Test &#123;    public static void main(String[] args) &#123;        System.out.println("hello world");    &#125;&#125;
-编译之后使用文本编辑器打开，可以看到Class文件最...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/04/17/Java字节码常量池/#more">阅读全文</a>
         </p>
       
     </div>

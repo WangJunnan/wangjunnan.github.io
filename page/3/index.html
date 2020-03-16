@@ -219,6 +219,61 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java字节码常量池"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/04/17/Java字节码常量池/">Java字节码常量池</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/04/17/Java字节码常量池/" class="article-date">
+	  <time datetime="2019-04-17T07:48:48.000Z" itemprop="datePublished">2019-04-17</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JVM/">JVM</a><a class="article-category-link" href="/categories/java基础/JVM/java字节码/">java字节码</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言上篇文章简单介绍了java Class 字节码文件的基本格式。本文我们直接通过阅读字节码文件来进一步理解字节码中的常量池结构
+首先我们新建一个最简单的Java文件
+12345public class Test &#123;    public static void main(String[] args) &#123;        System.out.println("hello world");    &#125;&#125;
+编译之后使用文本编辑器打开，可以看到Class文件最...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/04/17/Java字节码常量池/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java-Class文件结构"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -708,64 +763,6 @@ Server服务器...
         </p>
         <p class="article-more-link">
           <a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-无参read返回int类型为何要与上0xff"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/01/13/无参read返回int类型为何要与上0xff/">无参read返回int类型为何要与上0xff</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/01/13/无参read返回int类型为何要与上0xff/" class="article-date">
-	  <time datetime="2019-01-13T08:08:37.000Z" itemprop="datePublished">2019-01-13</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JDK源码/">JDK源码</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言使用java io 包时，InputStream 类中的有好几个read()方法，并且返回值也都是int类型，这样就使得初学者很容易搞混，其实虽然返回值都是int类型，但所表示的意义确是不一样的
-有参 read(byte b[], int off, int len)先看有参的read方法。有参的read比较好理解，将读取到的数据写入字节数组(从字节数组的指定位置开始写入)
-
-三个入参
-b[]  存储读取到的数据的字节数组
-off  从目标数组b[]的off位开始写入，一般都是从0开始
-...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/01/13/无参read返回int类型为何要与上0xff/#more">阅读全文</a>
         </p>
       
     </div>

@@ -219,6 +219,64 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-无参read返回int类型为何要与上0xff"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/01/13/无参read返回int类型为何要与上0xff/">无参read返回int类型为何要与上0xff</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/01/13/无参read返回int类型为何要与上0xff/" class="article-date">
+	  <time datetime="2019-01-13T08:08:37.000Z" itemprop="datePublished">2019-01-13</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/JDK源码/">JDK源码</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言使用java io 包时，InputStream 类中的有好几个read()方法，并且返回值也都是int类型，这样就使得初学者很容易搞混，其实虽然返回值都是int类型，但所表示的意义确是不一样的
+有参 read(byte b[], int off, int len)先看有参的read方法。有参的read比较好理解，将读取到的数据写入字节数组(从字节数组的指定位置开始写入)
+
+三个入参
+b[]  存储读取到的数据的字节数组
+off  从目标数组b[]的off位开始写入，一般都是从0开始
+...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/01/13/无参read返回int类型为何要与上0xff/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java-NIO-Channel-通道"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -723,61 +781,6 @@ AOP核心接口Pointcut 切点切入点，顾名思义，就...
         </p>
         <p class="article-more-link">
           <a href="/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Spring-IOC-源码解析五（非延迟加载bean的初始化）"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/11/23/Spring-IOC-源码解析五（非延迟加载bean的初始化）/">Spring IOC 源码解析五（非延迟加载bean的初始化）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/11/23/Spring-IOC-源码解析五（非延迟加载bean的初始化）/" class="article-date">
-	  <time datetime="2018-11-23T07:53:34.000Z" itemprop="datePublished">2018-11-23</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言
-上期分析了refresh方法中大部分，这期我们只分析finishBeanFactoryInitialization(beanFactory)这一个方法，分析这个方法的过程中我们会顺藤摸瓜把bean初始化的整个流程都分析一遍
-
-finishBeanFactoryInitialization(beanFactory)提前初始化一些非延迟加载的单例类型的bean，这里主要看最后一行 beanFactory.preInstantiateSingletons(),这里是初始化非延迟加载单例的入...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/11/23/Spring-IOC-源码解析五（非延迟加载bean的初始化）/#more">阅读全文</a>
         </p>
       
     </div>
