@@ -219,6 +219,60 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Netty源码死磕-ChannelPipeline的执行过程"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/">Netty源码死磕(ChannelPipeline的执行过程)</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/" class="article-date">
+	  <time datetime="2020-04-14T02:07:58.000Z" itemprop="datePublished">2020-04-14</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/netty/">netty</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言上文有提到如果Selector轮询到网络IO事件了，则会调用该Channel对应的ChannelPipeline来依次执行对应的ChannelHandler。 
+ChannelPipeline和ChannelHandler的关系那么这里的ChannelPipeline和ChannelHandler之间到底是什么关系呢？其实我们可以理解为类似于一个过滤器模式，其中ChannelPipeline是一个存放各种过滤器的管道容器，而ChannelHandler则对应着单个过滤器实体
+执行流程我...
+        </p>
+        <p class="article-more-link">
+          <a href="/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Netty源码死磕二（Netty的启动流程）"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -699,60 +753,6 @@ NodeSelectorSlot123456789101112131415161718192021222324252627282930/** * 相同�
         </p>
         <p class="article-more-link">
           <a href="/2019/09/26/JAVA中时间的表现形式/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Spring的-Configuration-Bean注解"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/09/03/Spring的-Configuration-Bean注解/">Spring的@Configuration @Bean注解</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/09/03/Spring的-Configuration-Bean注解/" class="article-date">
-	  <time datetime="2019-09-03T08:47:31.000Z" itemprop="datePublished">2019-09-03</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言之前Spring 一直用的xml配置文件比较多，现在发现新公司用的注解比较多。也就是通过定义一个配置类(以@Configuration注解的类)内部在方法上注解 @Bean 注解来完成Bean的依赖注入Spring容器。用注解来配置的话，其实就是减少了配置文件的工作，但总体来说代码可读性其实是会下降的。不过也省去了一大堆的xml配置文件
-直接看源码下面就从源码层面来看看  通过注解配置有什么不同
-之前有分析过Spring对Bean的解析，是通过把我们配置的Bean信息抽象成了一个Bea...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/09/03/Spring的-Configuration-Bean注解/#more">阅读全文</a>
         </p>
       
     </div>

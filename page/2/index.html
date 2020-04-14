@@ -219,6 +219,60 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Spring的-Configuration-Bean注解"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/09/03/Spring的-Configuration-Bean注解/">Spring的@Configuration @Bean注解</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/09/03/Spring的-Configuration-Bean注解/" class="article-date">
+	  <time datetime="2019-09-03T08:47:31.000Z" itemprop="datePublished">2019-09-03</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/Spring/">Spring</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言之前Spring 一直用的xml配置文件比较多，现在发现新公司用的注解比较多。也就是通过定义一个配置类(以@Configuration注解的类)内部在方法上注解 @Bean 注解来完成Bean的依赖注入Spring容器。用注解来配置的话，其实就是减少了配置文件的工作，但总体来说代码可读性其实是会下降的。不过也省去了一大堆的xml配置文件
+直接看源码下面就从源码层面来看看  通过注解配置有什么不同
+之前有分析过Spring对Bean的解析，是通过把我们配置的Bean信息抽象成了一个Bea...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/09/03/Spring的-Configuration-Bean注解/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-MVC-HttpRequestHandler接口静态资源的关系"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -738,62 +792,6 @@ attributes_count
         </p>
         <p class="article-more-link">
           <a href="/2019/04/25/Java字节码方法表/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-使用Java-NIO实现一个HTTP服务器"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/">使用Java NIO实现一个HTTP服务器</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/" class="article-date">
-	  <time datetime="2019-04-19T03:04:30.000Z" itemprop="datePublished">2019-04-19</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/NIO/">NIO</a><a class="article-category-link" href="/categories/NIO/HTTP/">HTTP</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言一直以来都想写一个自己的http服务器，这次趁着稍微空闲了一些，赶紧码了一个mini版的。在这里跟大家分享一下编写的整个思路，总体来说，整个应用非常简单，目前也只是实现了最基本的静态资源访问，但对于想学习Http协议的同学来说，应该还是有所帮助
-HTTP协议先简单介绍一下HTTP协议，HTTP协议是构建于TCP/IP协议之上的一个应用层协议，并且是无连接无状态的。
-http请求报文http的请求报文由三部分组成
-
-状态行  &lt;method&gt; &lt;request-URL&...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/#more">阅读全文</a>
         </p>
       
     </div>

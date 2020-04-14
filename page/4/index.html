@@ -219,6 +219,59 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-Java-NIO-Selector-多路复用选择器"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/01/20/Java-NIO-Selector-多路复用选择器/">Java NIO Selector 多路复用选择器</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/" class="article-date">
+	  <time datetime="2019-01-20T08:36:41.000Z" itemprop="datePublished">2019-01-20</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/NIO/">NIO</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言上篇文章我们简单的使用了NIO的Channel通道，本期我们主要来介绍一下选择器（Selector）的使用，Selector是Java NIO核心组件中的一个。在之前介绍5种I/O模型的时候，有介绍过多路复用模型。多路复用模型使得我们可以使用一个线程来管理成千上万的连接，避免了线程上下文切换带来的开销，使得性能得到极大的提升
+基本模型选择器Selector使用的基本模式，跟传统BIO处理模型不一样。传统BIO往往我们会使用多线程来提升处理性能，也就是说每接入一个Client，Serve...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-无参read返回int类型为何要与上0xff"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -724,63 +777,6 @@ AOP核心接口Pointcut 切点切入点，顾名思义，就...
         </p>
         <p class="article-more-link">
           <a href="/2018/12/10/Spring-AOP-源码解析二-（AOP核心概念及接口分析）/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Spring-AOP-源码解析一-（AOP入口浅谈）"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/">Spring AOP 源码解析一 （AOP入口浅谈）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/" class="article-date">
-	  <time datetime="2018-11-30T07:55:08.000Z" itemprop="datePublished">2018-11-30</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java框架/">java框架</a><a class="article-category-link" href="/categories/java框架/Spring/">Spring</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言在进行aop的源码解析之前，我们首先要知道Spring AOP是怎么用的，只有知道怎么用的，我们才能更好的理解aop，才能进行下一步解析
-使用AOP好了，废话不多说，我们直接动手来用一下spring的AOP实现
-
-首先新建一个MyPointCut接口，并且实现它
-
-12345678910/** * MyPointCut * * @author wangjn * @date 2018/12/7 */public interface MyPointCut &#123;    void sa...
-        </p>
-        <p class="article-more-link">
-          <a href="/2018/11/30/Spring-AOP-源码解析一-（AOP入口浅谈）/#more">阅读全文</a>
         </p>
       
     </div>

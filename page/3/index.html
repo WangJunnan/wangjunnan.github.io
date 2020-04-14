@@ -219,6 +219,62 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-使用Java-NIO实现一个HTTP服务器"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/">使用Java NIO实现一个HTTP服务器</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/" class="article-date">
+	  <time datetime="2019-04-19T03:04:30.000Z" itemprop="datePublished">2019-04-19</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/NIO/">NIO</a><a class="article-category-link" href="/categories/NIO/HTTP/">HTTP</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          引言一直以来都想写一个自己的http服务器，这次趁着稍微空闲了一些，赶紧码了一个mini版的。在这里跟大家分享一下编写的整个思路，总体来说，整个应用非常简单，目前也只是实现了最基本的静态资源访问，但对于想学习Http协议的同学来说，应该还是有所帮助
+HTTP协议先简单介绍一下HTTP协议，HTTP协议是构建于TCP/IP协议之上的一个应用层协议，并且是无连接无状态的。
+http请求报文http的请求报文由三部分组成
+
+状态行  &lt;method&gt; &lt;request-URL&...
+        </p>
+        <p class="article-more-link">
+          <a href="/2019/04/19/使用Java-NIO实现一个HTTP服务器/#more">阅读全文</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-Java字节码常量池"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -710,59 +766,6 @@ Server服务器...
         </p>
         <p class="article-more-link">
           <a href="/2019/01/20/Tomcat源码解析一-架构初窥/#more">阅读全文</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-Java-NIO-Selector-多路复用选择器"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2019/01/20/Java-NIO-Selector-多路复用选择器/">Java NIO Selector 多路复用选择器</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/" class="article-date">
-	  <time datetime="2019-01-20T08:36:41.000Z" itemprop="datePublished">2019-01-20</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/java基础/">java基础</a><a class="article-category-link" href="/categories/java基础/NIO/">NIO</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          引言上篇文章我们简单的使用了NIO的Channel通道，本期我们主要来介绍一下选择器（Selector）的使用，Selector是Java NIO核心组件中的一个。在之前介绍5种I/O模型的时候，有介绍过多路复用模型。多路复用模型使得我们可以使用一个线程来管理成千上万的连接，避免了线程上下文切换带来的开销，使得性能得到极大的提升
-基本模型选择器Selector使用的基本模式，跟传统BIO处理模型不一样。传统BIO往往我们会使用多线程来提升处理性能，也就是说每接入一个Client，Serve...
-        </p>
-        <p class="article-more-link">
-          <a href="/2019/01/20/Java-NIO-Selector-多路复用选择器/#more">阅读全文</a>
         </p>
       
     </div>

@@ -3,23 +3,29 @@
 <head><meta name="generator" content="Hexo 3.9.0">
   <meta charset="utf-8">
   
-  <title>category: netty | 王俊男的技术杂谈</title>
+  <title>netty源码死磕(channelpipeline的执行过程) | 王俊男的技术杂谈</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
+  <meta name="keywords" content="netty">
   
   
   
-  <meta name="description" content="少扯点淡 多做点事">
-<meta name="keywords" content="王俊男 技术">
-<meta property="og:type" content="website">
-<meta property="og:title" content="王俊男的技术杂谈">
-<meta property="og:url" content="http://wangjunnan.github.io/categories/netty/index.html">
+  
+  <meta name="description" content="引言上文有提到如果Selector轮询到网络IO事件了，则会调用该Channel对应的ChannelPipeline来依次执行对应的ChannelHandler。  ChannelPipeline和ChannelHandler的关系那么这里的ChannelPipeline和ChannelHandler之间到底是什么关系呢？其实我们可以理解为类似于一个过滤器模式，其中ChannelPipeline是">
+<meta name="keywords" content="netty">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Netty源码死磕(ChannelPipeline的执行过程)">
+<meta property="og:url" content="http://wangjunnan.github.io/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/index.html">
 <meta property="og:site_name" content="王俊男的技术杂谈">
-<meta property="og:description" content="少扯点淡 多做点事">
+<meta property="og:description" content="引言上文有提到如果Selector轮询到网络IO事件了，则会调用该Channel对应的ChannelPipeline来依次执行对应的ChannelHandler。  ChannelPipeline和ChannelHandler的关系那么这里的ChannelPipeline和ChannelHandler之间到底是什么关系呢？其实我们可以理解为类似于一个过滤器模式，其中ChannelPipeline是">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://wangjunnan.github.io/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/￼http://img.souche.com/f2e/232af441946b83599c5521d190535d08.jpg">
+<meta property="og:image" content="http://img.souche.com/f2e/00fd4d708cd18e28ee677bbeb920c5de.jpg">
+<meta property="og:updated_time" content="2020-04-14T02:09:06.757Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="王俊男的技术杂谈">
-<meta name="twitter:description" content="少扯点淡 多做点事">
+<meta name="twitter:title" content="Netty源码死磕(ChannelPipeline的执行过程)">
+<meta name="twitter:description" content="引言上文有提到如果Selector轮询到网络IO事件了，则会调用该Channel对应的ChannelPipeline来依次执行对应的ChannelHandler。  ChannelPipeline和ChannelHandler的关系那么这里的ChannelPipeline和ChannelHandler之间到底是什么关系呢？其实我们可以理解为类似于一个过滤器模式，其中ChannelPipeline是">
+<meta name="twitter:image" content="http://wangjunnan.github.io/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/￼http://img.souche.com/f2e/232af441946b83599c5521d190535d08.jpg">
   
     <link rel="alternate" href="/atom.xml" title="王俊男的技术杂谈" type="application/atom+xml">
   
@@ -58,8 +64,6 @@
   
 
   
-    <link rel="stylesheet" href="/css/archive.css">
-  
   
   
     <link rel="stylesheet" href="/css/vdonate.css">
@@ -69,7 +73,7 @@
 </html>
 
 
-  <body>
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
 
 
   
@@ -92,7 +96,7 @@
             
               <a class="brand" style="
                  margin-top: 0px;"  
-                 >
+                href="#" data-toggle="modal" data-target="#myModal" >
                   <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
               </a>
             
@@ -161,85 +165,153 @@
             
       <div id="content" class="outer">
         
-          <section id="main" style="float:none;">
-  
-  
-  
+          <section id="main" style="float:none;"><article id="post-Netty源码死磕-ChannelPipeline的执行过程" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
     
     
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <h1><a href="/archives/2020" class="archive-year">2020</a></h1>
-        </div>
-        <div class="archives">
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Netty源码死磕(ChannelPipeline的执行过程)
+    </h1>
+  
+
+      </header>
     
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
+    <div class="article-meta">
       
-	<a href="/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/" class="archive-article-date">
+	<a href="/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/" class="article-date">
 	  <time datetime="2020-04-14T02:07:58.000Z" itemprop="datePublished">2020-04-14</time>
 	</a>
 
       
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/">Netty源码死磕(ChannelPipeline的执行过程)</a>
-    </h1>
-  
+    <a class="article-category-link" href="/categories/netty/">netty</a>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
       
-	<a href="/2020/03/16/Netty源码死磕二（Netty的启动流程）/" class="archive-article-date">
-	  <time datetime="2020-03-16T02:45:47.000Z" itemprop="datePublished">2020-03-16</time>
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		阅读量<span id="busuanzi_value_page_pv"></span>
+	</span>
 	</a>
 
       
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2020/03/16/Netty源码死磕二（Netty的启动流程）/">Netty源码死磕二（Netty的启动流程）</a>
-    </h1>
-  
 
-    </header>
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>上文有提到如果<code>Selector</code>轮询到网络IO事件了，则会调用该<code>Channel</code>对应的<code>ChannelPipeline</code>来依次执行对应的<code>ChannelHandler</code>。 </p>
+<h2 id="ChannelPipeline和ChannelHandler的关系"><a href="#ChannelPipeline和ChannelHandler的关系" class="headerlink" title="ChannelPipeline和ChannelHandler的关系"></a><code>ChannelPipeline</code>和<code>ChannelHandler</code>的关系</h2><p>那么这里的<code>ChannelPipeline</code>和<code>ChannelHandler</code>之间到底是什么关系呢？<br>其实我们可以理解为类似于一个过滤器模式，其中<code>ChannelPipeline</code>是一个存放各种过滤器的管道容器，而<code>ChannelHandler</code>则对应着单个过滤器实体</p>
+<h2 id="执行流程"><a href="#执行流程" class="headerlink" title="执行流程"></a>执行流程</h2><p>我们来看下<code>ChannelPipline</code>的工作流程</p>
+<ol>
+<li><code>NioEventLoop</code> 触发读事件，会调用<code>SocketChannel</code>所关联的<code>ChannelPipline</code></li>
+<li>由上一步读取到的消息会在<code>ChannelPipline</code>中依次被多个<code>ChannelHandler</code>处理</li>
+<li>处理完消息会调用<code>ChannelHandlerContext</code>的<code>write</code>方法发送消息，发送的消息同样也会经过<code>ChannelPipline</code>中的多个<code>ChannelHandler</code>处理</li>
+</ol>
+<p>上面的流程其实主要分成了两步，触发读事件和写事件。对应这两种事件，<code>Netty</code>把<code>ChannelHandler</code>也分为了两大类 </p>
+<ol>
+<li><code>ChannelInboundHandler</code> 顾明思义，负责处理链路读事件的<code>Handler</code>。通常由IO线程触发</li>
+<li><code>ChannelOutboundHandler</code>，负责链路写事件的<code>Handler</code><br>也就是说当IO线程触发读事件时，只会调用<code>ChannelInboundHandler</code>的实现<code>handler</code></li>
+</ol>
+<p>下面我们看下<code>ChannelHandler</code>在<code>ChannelPipline</code>中是一个什么样的结构</p>
+<p><img src="￼http://img.souche.com/f2e/232af441946b83599c5521d190535d08.jpg" alt></p>
+<p>可以看到<code>ChannelHandler</code>在加入<code>ChannelPipline</code>之前会被封装成一个<code>ChannelHandlerContext</code>节点类加入到一个双向链表结构中。除了头尾两个特殊的<code>ChannelHandlerContext</code>实现类，我们自定义加入的<code>ChannelHandler</code>最终都会被封装成一个<code>DefaultChannelHandlerContext</code>类。</p>
+<p><img src="http://img.souche.com/f2e/00fd4d708cd18e28ee677bbeb920c5de.jpg" alt></p>
+<p>当有读事件被触发时，<code>ChannelHandler</code>(会筛选类型为<code>ChannelInboundHandler</code>的Handler) 的触发顺序是 <code>HeaderContext</code> -&gt; <code>TailContext</code><br>当有写事件被触发时，<code>ChannelHandler</code>(会筛选类型为<code>ChannelOutboundHandler</code>的Handler) 的触发顺序与读事件相反是 <code>TailContext</code> -&gt; <code>HeaderContext</code></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文比较简短，主要是为了理清<code>ChannelPipeline</code>和<code>ChannelHandler</code>的关系，以及<code>ChannelHandler</code>在<code>ChannelPipeline</code>中的执行过程是怎样的</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+<script src="/js/vdonate.js"></script>
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: '打赏支持', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'http://img.souche.com/f2e/3c3374fc838ac997a0011cb3da7fac78.jpeg',
+  alipayImage: 'http://img.souche.com/f2e/f2441247d500739b7e8a76e90c2b70eb.jpeg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>本文作者:  </strong>王俊男</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>本文链接:  </strong>
+          <a href="/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/" target="_blank" title="Netty源码死磕(ChannelPipeline的执行过程)">http://wangjunnan.github.io/2020/04/14/Netty源码死磕-ChannelPipeline的执行过程/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>版权声明:   </strong>
+            本博客所有文章除特别声明外，均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            许可协议。转载请注明出处
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC80MDkxMi8xNzQzNw==">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+
+    </footer>
   </div>
-</article>
   
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2020/03/08/Netty源码死磕一（netty线程模型及EventLoop机制）/" class="archive-article-date">
-	  <time datetime="2020-03-08T08:15:13.000Z" itemprop="datePublished">2020-03-08</time>
-	</a>
-
-      
+<nav id="article-nav">
   
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2020/03/08/Netty源码死磕一（netty线程模型及EventLoop机制）/">Netty源码死磕一（netty线程模型及EventLoop机制）</a>
-    </h1>
   
+    <a href="/2020/03/16/Netty源码死磕二（Netty的启动流程）/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">Netty源码死磕二（Netty的启动流程）</div>
+    </a>
+  
+</nav>
 
-    </header>
-  </div>
+  
 </article>
-  
-  
-    </div></section>
-  
 
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ChannelPipeline和ChannelHandler的关系"><span class="nav-number">2.</span> <span class="nav-text">ChannelPipeline和ChannelHandler的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行流程"><span class="nav-number">3.</span> <span class="nav-text">执行流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol>
+    
+    </div>
+  </aside>
 
 </section>
         
@@ -337,6 +409,8 @@
 
 
 
+  <script src="/js/dialog.js"></script>
+
 
 
 
@@ -420,6 +494,8 @@
   
   <a id="rocket" href="#top" class=""></a>
   <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
   
 </body>
 </html>
